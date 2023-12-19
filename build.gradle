@@ -16,6 +16,10 @@ repositories {
         url "https://cursemaven.com"
     }
 
+    maven {
+        url 'https://maven.dynamx.fr/artifactory/ACsLibRepo'
+    }
+
     flatDir {
         dir 'libs'
     }
@@ -55,10 +59,12 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
     implementation ("net.minecraftforge:mergetool:0.2.3.3") { force = true }
 
+    implementation "fr.aym:ACsLib:1.2.12"
     implementation ":Sqript+v1.3.2:"
     compileOnly 'org.projectlombok:lombok:1.18.24'
 
     //shadow fileTree(dir: 'libs', include: '*.jar')
+    //c dans DynamX donc c bon shadow "fr.aym:ACsLib:1.2.12"
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
 }
 
