@@ -136,12 +136,16 @@ public class PathNode implements ISerializable, ISerializablePacket {
         return (float) around.subtract(position.x, position.y, position.z).length();
     }
 
+    public double getDistance(PathNode node) {
+        return getDistance(node.getPosition());
+    }
+
     @Override
     public String toString() {
         return "PathNode{" +
                 "id=" + id +
                 ", position=" + position +
-                ", neighbors=" + neighbors +
+                ", neighbors=" + (neighbors == null ? null : neighbors.stream().map(n -> "N{id=" + n.getId() + ", pos=" + n.getPosition()).collect(Collectors.toList())) +
                 ", neighborsIds=" + neighborsIds +
                 '}';
     }

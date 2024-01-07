@@ -50,14 +50,14 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
         //this.tasks.addTask(5, new EntityAIMoveTowardsRestriction(this, 0.3D));
         //this.tasks.addTask(6, followPlayerAI = new EntityAIFollowPlayer(this, 1.0D, 10.0F, 2.0F));
         this.tasks.addTask(9, new EntityAIWatchClosest2(this, EntityPlayer.class, 3.0F, 1.0F));
-        this.tasks.addTask(9, new EntityAIMoveToNodes(this, 0.3D));
+        this.tasks.addTask(9, new EntityAIMoveToNodes(this, 0.6D));
         this.tasks.addTask(10, new EntityAIWatchClosest(this, EntityLiving.class, 8.0F));
     }
 
     @Override
     protected void applyEntityAttributes() {
         super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.3D);
+        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.5D);
     }
 
     public EntityLivingBase getEntityToFollow() {
@@ -66,7 +66,8 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
 
     public void setEntityToFollow(EntityLivingBase entityToFollow) {
         this.entityToFollow = entityToFollow;
-        followPlayerAI.setOwner(null); //Reset entity to follow
+        if(followPlayerAI != null)
+            followPlayerAI.setOwner(null); //Reset entity to follow
     }
 
     public void setState(String state) {

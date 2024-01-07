@@ -1,6 +1,7 @@
 package fr.aym.gtwnpc.client.render;
 
 import fr.aym.gtwnpc.common.GtwNpcsItems;
+import fr.aym.gtwnpc.entity.ai.EntityAIMoveToNodes;
 import fr.aym.gtwnpc.path.PathNode;
 import fr.aym.gtwnpc.path.PedestrianPathNodes;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
@@ -97,6 +98,11 @@ public class NodesRenderer {
                     NodeColor.IDLE.apply();
                 }
                 GlStateManager.translate(center.x, center.y, center.z);
+                if(EntityAIMoveToNodes.BIG_TARGET != null && node.getId().equals(EntityAIMoveToNodes.BIG_TARGET.getId())) {
+                    NodeColor.POINTED_LINKING.apply();
+                } else if(EntityAIMoveToNodes.INTERMEDIATE_TARGET != null && node.getId().equals(EntityAIMoveToNodes.INTERMEDIATE_TARGET.getId())) {
+                    NodeColor.POINTED_UNLINKING.apply();
+                }
                 sphere.draw(0.9f, 30, 30);
                 GlStateManager.popMatrix();
                 renderedNodes.add(node.getId());

@@ -87,6 +87,7 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
     @Override
     public PathNode selectRandomPathNode(Vec3d around, float radiusMin, float radiusMax) {
         Collection<PathNode> nodes = getNodesWithinAABB(new AxisAlignedBB(around.x - radiusMax, around.y - radiusMax, around.z - radiusMax, around.x + radiusMax, around.y + radiusMax, around.z + radiusMax));
+        System.out.println("Selecting random node from " + nodes.size() + " nodes " + nodes.stream().map(n -> n.getDistance(around )).collect(java.util.stream.Collectors.toList()));
         nodes = nodes.stream().filter(pathNode -> pathNode.getDistance(around) >= radiusMin).collect(java.util.stream.Collectors.toList());
         if (nodes.size() > 0)
             return nodes.stream().skip(new Random().nextInt(nodes.size())).findFirst().get();
@@ -94,26 +95,41 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
     }
 
     @Override
-    public Queue<PathNode> createPathToNode(Vec3d start, PathNode end) {
+    public Queue<PathNode> createPathToNode(Vec3d startPos, PathNode end) {
         //TOO REWORK
-        PathNode startNode = nodes.values().stream().sorted(Comparator.comparingDouble(pathNode -> pathNode.getDistance(start))).findFirst().get();
-        System.out.println("Start node : " + startNode +" from " + start);
-        Queue<PathNode> path = new ArrayDeque<>();
-        Set<PathNode> visited = new HashSet<>();
-        path.add(startNode);
-        int step = 0;
-        // Dijkstra algorithm
-        while (path.peek() != end) {
-            PathNode currentNode = path.peek();
-            PathNode nextNode = currentNode.getNeighbors(this).stream().sorted(Comparator.comparingDouble(pathNode -> pathNode.getDistance(end.getPosition()))).findFirst().get();
-            path.add(nextNode);
-            step++;
-            if(step > 600) {
-                System.out.println("Pathfinding failed ! Too many steps in path from " + start + " to " + end.getPosition());
-                return null;
+        PathNode startNode = nodes.values().stream().sorted(Comparator.comparingDouble(pathNode -> pathNode.getDistance(startPos))).findFirst().get();
+        System.out.println("Start node : " + startNode + " from " + startPos);
+        Queue<RouteNode> openSet = new PriorityQueue<>();
+        Map<PathNode, RouteNode> allNodes = new HashMap<>();
+        RouteNode start = new RouteNode(startNode, null, 0d, startNode.getDistance(end));
+        openSet.add(start);
+        allNodes.put(startNode, start);
+        while (!openSet.isEmpty()) {
+            RouteNode next = openSet.poll();
+            if (next.getCurrent().equals(end)) {
+                Queue<PathNode> route = new ArrayDeque<>();
+                RouteNode current = next;
+                do {
+                    route.add(current.getCurrent());
+                    current = allNodes.get(current.getPrevious());
+                } while (current != null);
+                System.out.println("Created path : " + route.stream().map(PathNode::getPosition).collect(java.util.stream.Collectors.toList()));
+                return route;
             }
+            next.getCurrent().getNeighbors(this).forEach(connection -> {
+                RouteNode nextNode = allNodes.getOrDefault(connection, new RouteNode(connection));
+                allNodes.put(connection, nextNode);
+                double newScore = next.getRouteScore() + next.getCurrent().getDistance(connection);
+                if (newScore < nextNode.getRouteScore()) {
+                    nextNode.setPrevious(next.getCurrent());
+                    nextNode.setRouteScore(newScore);
+                    nextNode.setEstimatedScore(newScore + connection.getDistance(end));
+                    openSet.add(nextNode);
+                }
+            });
         }
-        return path;
+        System.out.println("No path found from " + startNode + " to " + end);
+        return null;
     }
 
     @Override
