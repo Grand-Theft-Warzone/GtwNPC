@@ -6,6 +6,7 @@ import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
 import lombok.Getter;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.Vec3d;
 
 import javax.vecmath.Vector3f;
 import java.util.*;
@@ -129,5 +130,23 @@ public class PathNode implements ISerializable, ISerializablePacket {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public float getDistance(Vec3d around) {
+        return (float) around.subtract(position.x, position.y, position.z).length();
+    }
+
+    @Override
+    public String toString() {
+        return "PathNode{" +
+                "id=" + id +
+                ", position=" + position +
+                ", neighbors=" + neighbors +
+                ", neighborsIds=" + neighborsIds +
+                '}';
+    }
+
+    public double getDistance(Vector3f position) {
+        return Math.sqrt(Math.pow(position.x - this.position.x, 2) + Math.pow(position.y - this.position.y, 2) + Math.pow(position.z - this.position.z, 2));
     }
 }

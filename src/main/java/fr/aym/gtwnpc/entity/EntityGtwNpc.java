@@ -2,6 +2,7 @@ package fr.aym.gtwnpc.entity;
 
 import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.entity.ai.EntityAIFollowPlayer;
+import fr.aym.gtwnpc.entity.ai.EntityAIMoveToNodes;
 import lombok.Getter;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.*;
@@ -36,27 +37,27 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
     @Override
     protected void entityInit() {
         super.entityInit();
-        this.dataManager.register(STATE, "idle");
+        this.dataManager.register(STATE, "wandering");
     }
 
     @Override
     protected void initEntityAI() {
         this.tasks.addTask(0, new EntityAISwimming(this));
         this.tasks.addTask(1, new EntityAIPanic(this, 1.25D));
-        this.tasks.addTask(2, new EntityAIMoveIndoors(this));
+        //this.tasks.addTask(2, new EntityAIMoveIndoors(this));
         this.tasks.addTask(3, new EntityAIRestrictOpenDoor(this));
         this.tasks.addTask(4, new EntityAIOpenDoor(this, true));
-        this.tasks.addTask(5, new EntityAIMoveTowardsRestriction(this, 0.6D));
-        this.tasks.addTask(6, followPlayerAI = new EntityAIFollowPlayer(this, 1.0D, 10.0F, 2.0F));
+        //this.tasks.addTask(5, new EntityAIMoveTowardsRestriction(this, 0.3D));
+        //this.tasks.addTask(6, followPlayerAI = new EntityAIFollowPlayer(this, 1.0D, 10.0F, 2.0F));
         this.tasks.addTask(9, new EntityAIWatchClosest2(this, EntityPlayer.class, 3.0F, 1.0F));
-        this.tasks.addTask(9, new EntityAIWanderAvoidWater(this, 0.6D));
+        this.tasks.addTask(9, new EntityAIMoveToNodes(this, 0.3D));
         this.tasks.addTask(10, new EntityAIWatchClosest(this, EntityLiving.class, 8.0F));
     }
 
     @Override
     protected void applyEntityAttributes() {
         super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.5D);
+        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.3D);
     }
 
     public EntityLivingBase getEntityToFollow() {

@@ -8,16 +8,14 @@ import lombok.Getter;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Mod.EventBusSubscriber(modid = GtwNpcConstants.ID)
 public class PedestrianPathNodes extends WorldSavedData implements PathNodesManager, ISerializable {
@@ -84,6 +82,38 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
     @Override
     public boolean hasNode(UUID id) {
         return nodes.containsKey(id);
+    }
+
+    @Override
+    public PathNode selectRandomPathNode(Vec3d around, float radiusMin, float radiusMax) {
+        Collection<PathNode> nodes = getNodesWithinAABB(new AxisAlignedBB(around.x - radiusMax, around.y - radiusMax, around.z - radiusMax, around.x + radiusMax, around.y + radiusMax, around.z + radiusMax));
+        nodes = nodes.stream().filter(pathNode -> pathNode.getDistance(around) >= radiusMin).collect(java.util.stream.Collectors.toList());
+        if (nodes.size() > 0)
+            return nodes.stream().skip(new Random().nextInt(nodes.size())).findFirst().get();
+        return null;
+    }
+
+    @Override
+    public Queue<PathNode> createPathToNode(Vec3d start, PathNode end) {
+        //TOO REWORK
+        PathNode startNode = nodes.values().stream().sorted(Comparator.comparingDouble(pathNode -> pathNode.getDistance(start))).findFirst().get();
+        System.out.println("Start node : " + startNode +" from " + start);
+        Queue<PathNode> path = new ArrayDeque<>();
+        Set<PathNode> visited = new HashSet<>();
+        path.add(startNode);
+        int step = 0;
+        // Dijkstra algorithm
+        while (path.peek() != end) {
+            PathNode currentNode = path.peek();
+            PathNode nextNode = currentNode.getNeighbors(this).stream().sorted(Comparator.comparingDouble(pathNode -> pathNode.getDistance(end.getPosition()))).findFirst().get();
+            path.add(nextNode);
+            step++;
+            if(step > 600) {
+                System.out.println("Pathfinding failed ! Too many steps in path from " + start + " to " + end.getPosition());
+                return null;
+            }
+        }
+        return path;
     }
 
     @Override

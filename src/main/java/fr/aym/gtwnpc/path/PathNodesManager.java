@@ -1,8 +1,10 @@
 package fr.aym.gtwnpc.path;
 
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.Collection;
+import java.util.Queue;
 import java.util.UUID;
 
 public interface PathNodesManager {
@@ -21,4 +23,8 @@ public interface PathNodesManager {
     void markDirty();
 
     boolean hasNode(UUID id);
+
+    PathNode selectRandomPathNode(Vec3d around, float radiusMin, float radiusMax);
+
+    Queue<PathNode> createPathToNode(Vec3d start, PathNode end);
 }
