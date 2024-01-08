@@ -101,7 +101,7 @@ public class PathNode implements ISerializable, ISerializablePacket {
         else {
             getNeighbors(manager).add(pointedNode);
             pointedNode.getNeighbors(manager).add(this);
-            manager.markDirty();
+            manager.markDirty2();
         }
     }
 
@@ -111,7 +111,7 @@ public class PathNode implements ISerializable, ISerializablePacket {
         else {
             getNeighbors(manager).remove(pointedNode);
             pointedNode.getNeighbors(manager).remove(this);
-            manager.markDirty();
+            manager.markDirty2();
         }
     }
 

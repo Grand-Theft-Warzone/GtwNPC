@@ -12,6 +12,7 @@ public class SkinRepository {
     private static final Map<SkinType, List<ResourceLocation>> SKINS = new HashMap<>();
 
     public static void loadSkins(File skinsFolder) {
+        skinsFolder.mkdirs();
         loadDirectory(FMLCommonHandler.instance().getSide().isClient(), skinsFolder, "skin/", null);
     }
 
@@ -43,6 +44,8 @@ public class SkinRepository {
     }
 
     public static ResourceLocation getRandomSkin(SkinType type, Random random) {
+        if(SKINS.get(type).isEmpty())
+            return new ResourceLocation("textures/entity/steve.png");
         return SKINS.get(type).get(random.nextInt(SKINS.get(type).size()));
     }
 

@@ -20,7 +20,7 @@ public interface PathNodesManager {
 
     void removeNode(PathNode pathNode);
 
-    void markDirty();
+    void markDirty2();
 
     boolean hasNode(UUID id);
 

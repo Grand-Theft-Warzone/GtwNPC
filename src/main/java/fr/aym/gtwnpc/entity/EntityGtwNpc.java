@@ -12,6 +12,7 @@ import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public class EntityGtwNpc extends EntityCreature implements INpc {
@@ -35,6 +36,12 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
     }
 
     @Override
+    public boolean isWithinHomeDistanceFromPosition(BlockPos pos) {
+        System.out.println("Is home : " + super.isWithinHomeDistanceFromPosition(pos));
+        return super.isWithinHomeDistanceFromPosition(pos);
+    }
+
+    @Override
     protected void entityInit() {
         super.entityInit();
         this.dataManager.register(STATE, "wandering");
@@ -51,13 +58,14 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
         //this.tasks.addTask(6, followPlayerAI = new EntityAIFollowPlayer(this, 1.0D, 10.0F, 2.0F));
         this.tasks.addTask(9, new EntityAIWatchClosest2(this, EntityPlayer.class, 3.0F, 1.0F));
         this.tasks.addTask(9, new EntityAIMoveToNodes(this, 0.6D));
-        this.tasks.addTask(10, new EntityAIWatchClosest(this, EntityLiving.class, 8.0F));
+        //this.tasks.addTask(10, new EntityAIWatchClosest(this, EntityLiving.class, 8.0F));
     }
 
     @Override
     protected void applyEntityAttributes() {
         super.applyEntityAttributes();
         this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.5D);
+        this.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).setBaseValue(100);
     }
 
     public EntityLivingBase getEntityToFollow() {
@@ -71,7 +79,7 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
     }
 
     public void setState(String state) {
-        System.out.println("Set state to " + state);
+        //System.out.println("Set state to " + state);
         dataManager.set(STATE, state);
         if (!state.equals("following"))
             setEntityToFollow(null);

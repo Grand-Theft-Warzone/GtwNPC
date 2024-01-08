@@ -16,6 +16,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @Mod.EventBusSubscriber(modid = GtwNpcConstants.ID)
 public class PedestrianPathNodes extends WorldSavedData implements PathNodesManager, ISerializable {
@@ -73,6 +74,11 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
     }
 
     @Override
+    public void markDirty2() {
+        markDirty();
+    }
+
+    @Override
     public void removeNode(PathNode pathNode) {
         // This DOES NOT remove the links with other nodes
         nodes.remove(pathNode.getId());
@@ -87,7 +93,7 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
     @Override
     public PathNode selectRandomPathNode(Vec3d around, float radiusMin, float radiusMax) {
         Collection<PathNode> nodes = getNodesWithinAABB(new AxisAlignedBB(around.x - radiusMax, around.y - radiusMax, around.z - radiusMax, around.x + radiusMax, around.y + radiusMax, around.z + radiusMax));
-        System.out.println("Selecting random node from " + nodes.size() + " nodes " + nodes.stream().map(n -> n.getDistance(around )).collect(java.util.stream.Collectors.toList()));
+       // System.out.println("Selecting random node from " + nodes.size() + " nodes " + nodes.stream().map(n -> n.getDistance(around )).collect(java.util.stream.Collectors.toList()));
         nodes = nodes.stream().filter(pathNode -> pathNode.getDistance(around) >= radiusMin).collect(java.util.stream.Collectors.toList());
         if (nodes.size() > 0)
             return nodes.stream().skip(new Random().nextInt(nodes.size())).findFirst().get();
@@ -98,7 +104,7 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
     public Queue<PathNode> createPathToNode(Vec3d startPos, PathNode end) {
         //TOO REWORK
         PathNode startNode = nodes.values().stream().sorted(Comparator.comparingDouble(pathNode -> pathNode.getDistance(startPos))).findFirst().get();
-        System.out.println("Start node : " + startNode + " from " + startPos);
+       // System.out.println("Start node : " + startNode + " from " + startPos);
         Queue<RouteNode> openSet = new PriorityQueue<>();
         Map<PathNode, RouteNode> allNodes = new HashMap<>();
         RouteNode start = new RouteNode(startNode, null, 0d, startNode.getDistance(end));
@@ -107,14 +113,18 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
         while (!openSet.isEmpty()) {
             RouteNode next = openSet.poll();
             if (next.getCurrent().equals(end)) {
-                Queue<PathNode> route = new ArrayDeque<>();
+                List<PathNode> route = new ArrayList<>();
                 RouteNode current = next;
                 do {
-                    route.add(current.getCurrent());
+                    route.add(0, current.getCurrent());
                     current = allNodes.get(current.getPrevious());
                 } while (current != null);
-                System.out.println("Created path : " + route.stream().map(PathNode::getPosition).collect(java.util.stream.Collectors.toList()));
-                return route;
+                //Reverse
+                Queue<PathNode> path = new ArrayDeque<>(route.size());
+                for (PathNode p : route)
+                    path.add(p);
+                //System.out.println("Created path : " + route.stream().map(PathNode::getPosition).collect(java.util.stream.Collectors.toList()));
+                return path;
             }
             next.getCurrent().getNeighbors(this).forEach(connection -> {
                 RouteNode nextNode = allNodes.getOrDefault(connection, new RouteNode(connection));
