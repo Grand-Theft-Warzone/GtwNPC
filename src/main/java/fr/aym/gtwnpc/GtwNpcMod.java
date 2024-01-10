@@ -5,9 +5,11 @@ import fr.aym.gtwnpc.common.CommonProxy;
 import fr.aym.gtwnpc.common.GtwNpcsItems;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
-import fr.aym.lib.LibRegistry;
+import net.minecraft.block.material.Material;
+import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.MinecraftForge;
+import net.minecraft.world.biome.Biome;
+import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -21,6 +23,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static fr.aym.gtwnpc.utils.GtwNpcConstants.*;
 
@@ -53,5 +58,17 @@ public class GtwNpcMod {
         network.registerMessage(BBMessagePathNodes.HandlerServer.class, BBMessagePathNodes.class, 2, Side.SERVER);
 
         SkinRepository.loadSkins(new File("GtwNpc", "skins"));
+    }
+
+    @Mod.EventHandler
+    public void postInit(FMLInitializationEvent event) {
+        List<String> excludedBiomes = Arrays.asList("void", "hell", "sky", "river", "ocean", "ice");
+        List<Biome> biomes = new ArrayList<>();
+        Biome.REGISTRY.forEach(b -> {
+            if (excludedBiomes.stream().noneMatch(biome -> b.getBiomeName().contains(biome)))
+                biomes.add(b);
+        });
+        EnumCreatureType npcType = EnumHelper.addCreatureType("npc", EntityGtwNpc.class, 10, Material.AIR, true, false);
+        EntityRegistry.addSpawn(EntityGtwNpc.class, 20, 1, 1, npcType, biomes.toArray(new Biome[0]));
     }
 }

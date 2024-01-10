@@ -150,7 +150,7 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound) {
         NBTBase base = NBTSerializer.serialize(this);
-        System.out.println("Saving nodes : " + base);
+        //System.out.println("Saving nodes : " + base);
         compound.setTag("nodes", base);
         return compound;
     }
@@ -177,7 +177,7 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
 
     @SubscribeEvent
     public static void unload(WorldEvent.Unload event) {
-        System.out.println("Unloading nodes");
+        //System.out.println("Unloading nodes");
         if (event.getWorld().provider.getDimensionType() == DimensionType.OVERWORLD && instance != null && !event.getWorld().isRemote) {
             //TODO CLEAR SUR LES CLIENTS EN MULTIJOUEUR
             instance.nodes.clear();

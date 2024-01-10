@@ -61,7 +61,7 @@ public class BBMessagePathNodes implements ISerializablePacket {
     public static class HandlerClient implements IMessageHandler<BBMessagePathNodes, IMessage> {
         @Override
         public IMessage onMessage(BBMessagePathNodes message, MessageContext ctx) {
-            System.out.println("Received nodes from server : " + message.action + " " + message.nodeType + " " + message.ids + " " + message.nodes);
+            //System.out.println("Received nodes from server : " + message.action + " " + message.nodeType + " " + message.ids + " " + message.nodes);
             PathNodesManager manager = message.nodeType.getManager();
             Minecraft.getMinecraft().addScheduledTask(() -> {
                 switch (message.action) {
