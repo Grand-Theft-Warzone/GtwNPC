@@ -5,6 +5,7 @@ import fr.aym.gtwnpc.common.CommonProxy;
 import fr.aym.gtwnpc.common.GtwNpcsItems;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
+import fr.aym.gtwnpc.utils.GtwNpcsConfig;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.util.ResourceLocation;
@@ -49,6 +50,7 @@ public class GtwNpcMod {
     public void preInit(FMLPreInitializationEvent event) {
         EntityRegistry.registerModEntity(new ResourceLocation(ID, "entity_gtw_npc"), EntityGtwNpc.class, "entity_gtw_npc", 1, this, 80, 3, false, new Color(0, 255, 0).getRGB(), new Color(255, 0, 0).getRGB());
         proxy.preInit(event);
+        GtwNpcsConfig.load(event.getSuggestedConfigurationFile());
     }
 
     @Mod.EventHandler
@@ -68,7 +70,7 @@ public class GtwNpcMod {
             if (excludedBiomes.stream().noneMatch(biome -> b.getBiomeName().contains(biome)))
                 biomes.add(b);
         });
-        EnumCreatureType npcType = EnumHelper.addCreatureType("npc", EntityGtwNpc.class, 10, Material.AIR, true, false);
+        EnumCreatureType npcType = EnumHelper.addCreatureType("npc", EntityGtwNpc.class, GtwNpcsConfig.spawnClusterSize, Material.AIR, true, false);
         EntityRegistry.addSpawn(EntityGtwNpc.class, 20, 1, 1, npcType, biomes.toArray(new Biome[0]));
     }
 }

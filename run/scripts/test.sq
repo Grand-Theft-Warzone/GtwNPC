@@ -1,0 +1,7 @@
+on gtw entity init:
+    print "lol"
+    set "state" of npc entity to "wandering"
+    set "friendly" of npc entity to "true"
+    set ${pzk} to "state" of npc entity
+    print ${pzk}
+    print "end"

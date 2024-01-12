@@ -15,7 +15,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 
-public class EntityAIFollowPlayer extends EntityAIBase {
+public class GEntityAIFollowPlayer extends EntityAIBase {
     private final EntityGtwNpc tameable;
     private EntityLivingBase owner;
     World world;
@@ -26,7 +26,7 @@ public class EntityAIFollowPlayer extends EntityAIBase {
     float minDist;
     private float oldWaterCost;
 
-    public EntityAIFollowPlayer(EntityGtwNpc tameableIn, double followSpeedIn, float minDistIn, float maxDistIn) {
+    public GEntityAIFollowPlayer(EntityGtwNpc tameableIn, double followSpeedIn, float minDistIn, float maxDistIn) {
         this.tameable = tameableIn;
         this.world = tameableIn.world;
         this.followSpeed = followSpeedIn;

@@ -9,21 +9,15 @@ import javax.vecmath.Vector3f;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-public class EntityAIMoveToNodes extends EntityAIBase {
+public class GEntityAIMoveToNodes extends EntityAIBase {
     private final EntityGtwNpc entity;
     private final Queue<PathNode> path = new ArrayDeque<>();
     protected double x;
     protected double y;
     protected double z;
-    protected final double speed;
 
-    public EntityAIMoveToNodes(EntityGtwNpc creatureIn, double speedIn) {
-        this(creatureIn, speedIn, 0.001f);
-    }
-
-    public EntityAIMoveToNodes(EntityGtwNpc creatureIn, double speedIn, float probability) {
+    public GEntityAIMoveToNodes(EntityGtwNpc creatureIn) {
         this.entity = creatureIn;
-        this.speed = speedIn;
         this.setMutexBits(1);
     }
 
@@ -164,7 +158,7 @@ public class EntityAIMoveToNodes extends EntityAIBase {
                 this.y = entity.posY + dy;
                 this.z = entity.posZ + dz;
                 //System.out.println("Continue to " + target + " at " + x + " " + y + " " + z);
-                this.entity.getNavigator().tryMoveToXYZ(this.x, this.y, this.z, this.speed);
+                this.entity.getNavigator().tryMoveToXYZ(this.x, this.y, this.z, entity.getAIMoveSpeed());
                 if (entity.getNavigator().noPath()) {
                     //System.out.println("Move to " + x + " " + y + " " + z + " at speed " + speed +" : " + this.entity.getNavigator().getPath() +" ist " + target.getDistance(entity.getPositionVector()));
                     //System.out.println("No path vanilla");
@@ -188,7 +182,7 @@ public class EntityAIMoveToNodes extends EntityAIBase {
     @Override
     public void startExecuting() {
         //System.out.println("Start executing");
-        this.entity.getNavigator().tryMoveToXYZ(this.x, this.y, this.z, this.speed);
+        this.entity.getNavigator().tryMoveToXYZ(this.x, this.y, this.z, entity.getAIMoveSpeed());
         //System.out.println("Move to " + x + " " + y + " " + z + " at speed " + speed +" : " + this.entity.getNavigator().getPath());
     }
 }

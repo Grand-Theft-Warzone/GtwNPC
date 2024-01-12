@@ -4,7 +4,6 @@ import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.ai.RandomPositionGenerator;
 import net.minecraft.util.math.BlockPos;
@@ -13,7 +12,7 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 
-public class EntityAIPanic extends EntityAIBase
+public class GEntityAIPanic extends EntityAIBase
 {
     protected final EntityGtwNpc creature;
     protected double speed;
@@ -22,7 +21,7 @@ public class EntityAIPanic extends EntityAIBase
     protected double randPosZ;
     protected String previousState;
 
-    public EntityAIPanic(EntityGtwNpc creature, double speedIn)
+    public GEntityAIPanic(EntityGtwNpc creature, double speedIn)
     {
         this.creature = creature;
         this.speed = speedIn;
@@ -125,5 +124,13 @@ public class EntityAIPanic extends EntityAIBase
         }
 
         return blockpos1;
+    }
+
+    public void setSpeed(double speed) {
+        this.speed = speed;
+    }
+
+    public double getSpeed() {
+        return speed;
     }
 }

@@ -1,10 +1,8 @@
 package fr.aym.gtwnpc.entity;
 
 import fr.aym.gtwnpc.client.skin.SkinRepository;
-import fr.aym.gtwnpc.entity.ai.EntityAIFollowPlayer;
-import fr.aym.gtwnpc.entity.ai.EntityAIHurtByTarget;
-import fr.aym.gtwnpc.entity.ai.EntityAIMoveToNodes;
-import fr.aym.gtwnpc.entity.ai.EntityAIPanic;
+import fr.aym.gtwnpc.entity.ai.*;
+import fr.aym.gtwnpc.utils.GtwNpcsConfig;
 import lombok.Getter;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.*;
@@ -30,7 +28,9 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
 
     @Getter
     private EntityLivingBase entityToFollow;
-    private EntityAIFollowPlayer followPlayerAI;
+    private GEntityAIFollowPlayer followPlayerAI;
+    private GEntityAIPanic panicAI;
+    private GEntityAIAttackMelee attackAI;
     @Getter
     private ResourceLocation skin;
 
@@ -55,34 +55,35 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
     protected void entityInit() {
         super.entityInit();
         this.dataManager.register(STATE, "wandering");
-        this.dataManager.register(IS_FRIENDLY, rand.nextBoolean());
+        this.dataManager.register(IS_FRIENDLY, rand.nextInt(100) < GtwNpcsConfig.attackBackChance);
+        setAIMoveSpeed((float) (GtwNpcsConfig.minNpcMoveSpeed + rand.nextDouble() * (GtwNpcsConfig.maxNpcMoveSpeed - GtwNpcsConfig.minNpcMoveSpeed)));
     }
 
     @Override
     protected void initEntityAI() {
         this.tasks.addTask(0, new EntityAISwimming(this));
-        this.tasks.addTask(1, new EntityAIPanic(this, 0.8D));
+        this.tasks.addTask(1, panicAI = new GEntityAIPanic(this, GtwNpcsConfig.panicMoveSpeed));
         //this.tasks.addTask(2, new EntityAIMoveIndoors(this));
         //this.tasks.addTask(3, new EntityAIRestrictOpenDoor(this));
         this.tasks.addTask(3, new EntityAIOpenDoor(this, true));
-        this.tasks.addTask(5, new EntityAIAttackMelee(this, 0.65D, true));
+        this.tasks.addTask(5, attackAI = new GEntityAIAttackMelee(this, GtwNpcsConfig.attackingMoveSpeed, true));
         //this.tasks.addTask(5, new EntityAIMoveTowardsRestriction(this, 0.3D));
         //this.tasks.addTask(6, followPlayerAI = new EntityAIFollowPlayer(this, 1.0D, 10.0F, 2.0F));
         this.tasks.addTask(9, new EntityAIWatchClosest2(this, EntityPlayer.class, 3.0F, 1.0F));
-        this.tasks.addTask(9, new EntityAIMoveToNodes(this, 0.45D + rand.nextDouble() * 0.15));
+        this.tasks.addTask(9, new GEntityAIMoveToNodes(this));
         //this.tasks.addTask(10, new EntityAIWatchClosest(this, EntityLiving.class, 8.0F));
 
-        this.targetTasks.addTask(1, new EntityAIHurtByTarget(this, false));
+        this.targetTasks.addTask(1, new GEntityAIHurtByTarget(this, false));
     }
 
     @Override
     protected void applyEntityAttributes() {
         super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.5D);
-        this.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).setBaseValue(100);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(2);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_SPEED).setBaseValue(4);
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(20);
+        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(getAIMoveSpeed());
+        this.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).setBaseValue(40);
+        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(GtwNpcsConfig.attackDamage);
+        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_SPEED).setBaseValue(GtwNpcsConfig.attackSpeed);
+        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(GtwNpcsConfig.npcHealth);
     }
 
     @Override
@@ -164,8 +165,24 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
             case "state":
                 setState(value);
                 break;
-            case "speed":
-                getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(Double.parseDouble(value));
+            case "move_speed":
+                setAIMoveSpeed(Float.parseFloat(value));
+                getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(getAIMoveSpeed());
+                break;
+            case "panic_move_speed":
+                panicAI.setSpeed(Double.parseDouble(value));
+                break;
+            case "attacking_move_speed":
+                attackAI.setSpeedTowardsTarget(Double.parseDouble(value));
+                break;
+            case "health":
+                getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(Double.parseDouble(value));
+                break;
+            case "attack_damage":
+                getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(Double.parseDouble(value));
+                break;
+            case "attack_speed":
+                getEntityAttribute(SharedMonsterAttributes.ATTACK_SPEED).setBaseValue(Double.parseDouble(value));
                 break;
             case "friendly":
                 setFriendly(Boolean.parseBoolean(value));
@@ -178,8 +195,18 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
         switch (attribute) {
             case "state":
                 return getState();
-            case "speed":
-                return String.valueOf(getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getBaseValue());
+            case "move_speed":
+                return String.valueOf(getAIMoveSpeed());
+            case "panic_move_speed":
+                return String.valueOf(panicAI.getSpeed());
+            case "attacking_move_speed":
+                return String.valueOf(attackAI.getSpeedTowardsTarget());
+            case "health":
+                return String.valueOf(getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).getBaseValue());
+            case "attack_damage":
+                return String.valueOf(getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getBaseValue());
+            case "attack_speed":
+                return String.valueOf(getEntityAttribute(SharedMonsterAttributes.ATTACK_SPEED).getBaseValue());
             case "friendly":
                 return String.valueOf(isFriendly());
         }
