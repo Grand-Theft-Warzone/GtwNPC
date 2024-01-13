@@ -4,9 +4,9 @@ import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.entity.ai.*;
 import fr.aym.gtwnpc.utils.GtwNpcsConfig;
 import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.*;
-import net.minecraft.entity.ai.EntityAIAttackMelee;
 import net.minecraft.entity.ai.EntityAIOpenDoor;
 import net.minecraft.entity.ai.EntityAISwimming;
 import net.minecraft.entity.ai.EntityAIWatchClosest2;
@@ -33,6 +33,9 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
     private GEntityAIAttackMelee attackAI;
     @Getter
     private ResourceLocation skin;
+    @Getter
+    @Setter
+    private SkinRepository.NpcType npcType = SkinRepository.NpcType.NPC;
 
     //todo
     // déplacement
@@ -42,7 +45,13 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
     public EntityGtwNpc(World worldIn) {
         super(worldIn);
         this.setSize(0.6F, 1.95F);
-        this.skin = SkinRepository.getRandomSkin(SkinRepository.SkinType.NPC, worldIn.rand);
+        this.skin = SkinRepository.getRandomSkin(npcType, worldIn.rand);
+        this.setCanPickUpLoot(true);
+    }
+
+    public void setNpcType(SkinRepository.NpcType npcType) {
+        this.npcType = npcType;
+        this.skin = SkinRepository.getRandomSkin(npcType, world.rand);
     }
 
     @Override
@@ -56,7 +65,6 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
         super.entityInit();
         this.dataManager.register(STATE, "wandering");
         this.dataManager.register(IS_FRIENDLY, rand.nextInt(100) < GtwNpcsConfig.attackBackChance);
-        setAIMoveSpeed((float) (GtwNpcsConfig.minNpcMoveSpeed + rand.nextDouble() * (GtwNpcsConfig.maxNpcMoveSpeed - GtwNpcsConfig.minNpcMoveSpeed)));
     }
 
     @Override
@@ -79,7 +87,7 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
     @Override
     protected void applyEntityAttributes() {
         super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(getAIMoveSpeed());
+        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((float) (GtwNpcsConfig.minNpcMoveSpeed + rand.nextDouble() * (GtwNpcsConfig.maxNpcMoveSpeed - GtwNpcsConfig.minNpcMoveSpeed)));
         this.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).setBaseValue(40);
         this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(GtwNpcsConfig.attackDamage);
         this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_SPEED).setBaseValue(GtwNpcsConfig.attackSpeed);
@@ -162,12 +170,14 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
     public void setAttribute(String attribute, String value) {
         System.out.println("Set attribute " + attribute + " to " + value);
         switch (attribute) {
+            case "type":
+                setNpcType(SkinRepository.NpcType.valueOf(value));
+                break;
             case "state":
                 setState(value);
                 break;
             case "move_speed":
-                setAIMoveSpeed(Float.parseFloat(value));
-                getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(getAIMoveSpeed());
+                getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(Float.parseFloat(value));
                 break;
             case "panic_move_speed":
                 panicAI.setSpeed(Double.parseDouble(value));
@@ -187,16 +197,20 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
             case "friendly":
                 setFriendly(Boolean.parseBoolean(value));
                 break;
+            default:
+                throw new IllegalArgumentException("Unknown attribute " + attribute);
         }
     }
 
     public String getAttribute(String attribute) {
         System.out.println("Get attribute " + attribute);
         switch (attribute) {
+            case "type":
+                return npcType.getName();
             case "state":
                 return getState();
             case "move_speed":
-                return String.valueOf(getAIMoveSpeed());
+                return String.valueOf(getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getBaseValue());
             case "panic_move_speed":
                 return String.valueOf(panicAI.getSpeed());
             case "attacking_move_speed":
@@ -209,8 +223,13 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
                 return String.valueOf(getEntityAttribute(SharedMonsterAttributes.ATTACK_SPEED).getBaseValue());
             case "friendly":
                 return String.valueOf(isFriendly());
+            default:
+                throw new IllegalArgumentException("Unknown attribute " + attribute);
         }
-        return null;
+    }
+
+    public float getMoveSpeed() {
+        return (float) getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getAttributeValue();
     }
 
     @Override

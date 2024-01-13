@@ -2,9 +2,11 @@ package fr.aym.gtwnpc.common;
 
 import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
+import fr.aym.gtwnpc.entity.EntityNpcTypes;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
 import fr.aym.gtwnpc.path.NodeType;
 import fr.aym.gtwnpc.path.PedestrianPathNodes;
+import fr.aym.gtwnpc.player.PlayerManager;
 import fr.aym.gtwnpc.sqript.EventGNpcInit;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.nico.sqript.ScriptManager;
@@ -29,11 +31,28 @@ public class CommonEventHandler {
     public static void onSpawnListing(WorldEvent.PotentialSpawns event) {
         if (event.getType().getCreatureClass() == EntityGtwNpc.class) {
             Vec3d pos = new Vec3d(event.getPos().getX(), event.getPos().getY(), event.getPos().getZ());
-            event.getList().removeIf(e -> {
-                boolean deny = event.getWorld().rand.nextInt(100) >= 25 || PedestrianPathNodes.getInstance().getNodes().stream().noneMatch(node -> node.getDistance(pos) < 37);
-                //System.out.println("Checking spawn at " + pos);
-                return deny;
-            });
+            if(event.getType() == EntityNpcTypes.getNpcType()) {
+                event.getList().removeIf(e -> {
+                    boolean deny = event.getWorld().rand.nextInt(100) >= 25 || PedestrianPathNodes.getInstance().getNodes().stream().noneMatch(node -> node.getDistance(pos) < 37);
+                    //System.out.println("Checking spawn at " + pos);
+                    return deny;
+                });
+            } else if(event.getType() == EntityNpcTypes.getPoliceNpcType()) {
+                event.getList().removeIf(e -> {
+                    boolean deny = PlayerManager.getPlayerInfos().values().stream().noneMatch(info -> info.getWantedLevel() > 0 && info.getPlayerIn().getPositionVector().distanceTo(pos) < 50);
+                    //System.out.println("Checking spawn at " + pos);
+                    System.out.println("Spawn police: " + deny);
+                    return deny;
+                });
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onSpawnCheck0(LivingSpawnEvent.CheckSpawn event) {
+        //System.out.println("Checking spawn at " + event.getEntity().getPositionVector());
+        if(event.getEntity() instanceof EntityGtwNpc) {
+            event.getSpawner().
         }
     }
 

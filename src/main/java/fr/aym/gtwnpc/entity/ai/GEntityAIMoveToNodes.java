@@ -84,6 +84,8 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
                     dx *= red;
                     dy *= red;
                     dz *= red;
+                    dx = dx - 1 + entity.getRNG().nextFloat() * 2;
+                    dz = dz - 1 + entity.getRNG().nextFloat() * 2;
                 } else if (adz > adx && adz > ady) {
                     float red = 10 / (float) adz;
                     dx *= red;
@@ -145,6 +147,8 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
                         dx *= red;
                         dy *= red;
                         dz *= red;
+                        dx = dx - 1 + entity.getRNG().nextFloat() * 2;
+                        dz = dz - 1 + entity.getRNG().nextFloat() * 2;
                     } else if (adz > adx && adz > ady) {
                         float red = 10 / (float) adz;
                         dx *= red;
@@ -158,7 +162,7 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
                 this.y = entity.posY + dy;
                 this.z = entity.posZ + dz;
                 //System.out.println("Continue to " + target + " at " + x + " " + y + " " + z);
-                this.entity.getNavigator().tryMoveToXYZ(this.x, this.y, this.z, entity.getAIMoveSpeed());
+                this.entity.getNavigator().tryMoveToXYZ(this.x, this.y, this.z, entity.getMoveSpeed());
                 if (entity.getNavigator().noPath()) {
                     //System.out.println("Move to " + x + " " + y + " " + z + " at speed " + speed +" : " + this.entity.getNavigator().getPath() +" ist " + target.getDistance(entity.getPositionVector()));
                     //System.out.println("No path vanilla");
@@ -182,7 +186,7 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
     @Override
     public void startExecuting() {
         //System.out.println("Start executing");
-        this.entity.getNavigator().tryMoveToXYZ(this.x, this.y, this.z, entity.getAIMoveSpeed());
+        this.entity.getNavigator().tryMoveToXYZ(this.x, this.y, this.z, entity.getMoveSpeed());
         //System.out.println("Move to " + x + " " + y + " " + z + " at speed " + speed +" : " + this.entity.getNavigator().getPath());
     }
 }

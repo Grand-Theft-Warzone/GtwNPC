@@ -9,17 +9,17 @@ import java.io.File;
 import java.util.*;
 
 public class SkinRepository {
-    private static final Map<SkinType, List<ResourceLocation>> SKINS = new HashMap<>();
+    private static final Map<NpcType, List<ResourceLocation>> SKINS = new HashMap<>();
 
     public static void loadSkins(File skinsFolder) {
         skinsFolder.mkdirs();
         loadDirectory(FMLCommonHandler.instance().getSide().isClient(), skinsFolder, "skin/", null);
     }
 
-    private static void loadDirectory(boolean isClient, File directory, String path, SkinType type) {
+    private static void loadDirectory(boolean isClient, File directory, String path, NpcType type) {
         for (File file : directory.listFiles()) {
             if (file.isDirectory()) {
-                SkinType stype = type == null ? SkinType.valueOf(file.getName().split("_")[0].toUpperCase()) : type;
+                NpcType stype = type == null ? NpcType.valueOf(file.getName().split("_")[0].toUpperCase()) : type;
                 loadDirectory(isClient, file, path + file.getName() + "/", stype);
             } else {
                 if (type == null)
@@ -35,28 +35,28 @@ public class SkinRepository {
         }
     }
 
-    public static Map<SkinType, List<ResourceLocation>> getSkins() {
+    public static Map<NpcType, List<ResourceLocation>> getSkins() {
         return SKINS;
     }
 
-    public static Collection<ResourceLocation> getSkinsOfType(SkinType type) {
+    public static Collection<ResourceLocation> getSkinsOfType(NpcType type) {
         return SKINS.get(type);
     }
 
-    public static ResourceLocation getRandomSkin(SkinType type, Random random) {
+    public static ResourceLocation getRandomSkin(NpcType type, Random random) {
         if(SKINS.get(type).isEmpty())
             return new ResourceLocation("textures/entity/steve.png");
         return SKINS.get(type).get(random.nextInt(SKINS.get(type).size()));
     }
 
     @Getter
-    public enum SkinType {
+    public enum NpcType {
         NPC("npc"),
         POLICE("police");
 
         private final String name;
 
-        SkinType(String name) {
+        NpcType(String name) {
             this.name = name;
             SKINS.put(this, new ArrayList<>());
         }

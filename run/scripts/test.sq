@@ -1,7 +1,29 @@
 on gtw entity init:
-    print "lol"
+    print "start"
     set "state" of npc entity to "wandering"
-    set "friendly" of npc entity to "true"
-    set ${pzk} to "state" of npc entity
-    print ${pzk}
+    #set "friendly" of npc entity to "true"
+    #set ${pzk} to "state" of npc entity
+    #print ${pzk}
+    set "speed" of npc entity to 0.6
     print "end"
+²
+command /gtwnpc <"get_attribute|set_attribute"> <"attribute"> <"value">:
+    usage: /gtwnpc <get_attribute|set_attribute> <attribute> [value]
+    description: get or set an attribute of the target npc entity
+    #permission: gtw.command.gtwnpc
+    if {arg 1} is "get_attribute":
+        set {entity_target} to sender's entity target
+        if {entity_target} is not set:
+            send "&cYou must be looking at an entity to use this command" to sender
+        else:
+            set {ans} to {arg 2} of npc {entity_target}
+            send "&e%{arg 2}%&f: &e%{ans}%" to sender
+    else if {arg 1} is "set_attribute":
+        set {entity_target} to sender's entity target
+        if {entity_target} is not set:
+            send "&cYou must be looking at an entity to use this command" to sender
+        else:
+            set {arg 2} of npc {entity_target} to {arg 3}
+            send "&e%{arg 2}%&f: &e%{arg 3}%" to sender
+    else:
+        send "&cUnknown command: &e%{arg 1}%" to sender

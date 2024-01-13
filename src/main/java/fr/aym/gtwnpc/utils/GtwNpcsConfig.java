@@ -11,6 +11,7 @@ public class GtwNpcsConfig
 {
     private static Configuration config;
     public static int spawnClusterSize = 10;
+    public static int policeSpawnClusterSize = 20; //integrate
     public static int spawnChance = 25;
     public static float minNpcMoveSpeed = 0.45f;
     public static float maxNpcMoveSpeed = 0.60f;
