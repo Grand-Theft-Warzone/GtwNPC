@@ -25,14 +25,13 @@ import net.minecraft.world.World;
 public class EntityGtwNpc extends EntityCreature implements INpc {
     private static final DataParameter<String> STATE = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.STRING);
     private static final DataParameter<Boolean> IS_FRIENDLY = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.BOOLEAN);
+    private static final DataParameter<String> SKIN = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.STRING);
 
     @Getter
     private EntityLivingBase entityToFollow;
     private GEntityAIFollowPlayer followPlayerAI;
     private GEntityAIPanic panicAI;
     private GEntityAIAttackMelee attackAI;
-    @Getter
-    private ResourceLocation skin;
     @Getter
     @Setter
     private SkinRepository.NpcType npcType = SkinRepository.NpcType.NPC;
@@ -45,13 +44,12 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
     public EntityGtwNpc(World worldIn) {
         super(worldIn);
         this.setSize(0.6F, 1.95F);
-        this.skin = SkinRepository.getRandomSkin(npcType, worldIn.rand);
         this.setCanPickUpLoot(true);
     }
 
     public void setNpcType(SkinRepository.NpcType npcType) {
         this.npcType = npcType;
-        this.skin = SkinRepository.getRandomSkin(npcType, world.rand);
+        setSkin(SkinRepository.getRandomSkin(npcType, world.rand).toString());
     }
 
     @Override
@@ -65,6 +63,7 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
         super.entityInit();
         this.dataManager.register(STATE, "wandering");
         this.dataManager.register(IS_FRIENDLY, rand.nextInt(100) < GtwNpcsConfig.attackBackChance);
+        this.dataManager.register(SKIN, SkinRepository.getRandomSkin(SkinRepository.NpcType.NPC, world.rand).toString());
     }
 
     @Override
@@ -82,6 +81,7 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
         //this.tasks.addTask(10, new EntityAIWatchClosest(this, EntityLiving.class, 8.0F));
 
         this.targetTasks.addTask(1, new GEntityAIHurtByTarget(this, false));
+        this.targetTasks.addTask(2, new GEntityAIPoliceTarget(this));
     }
 
     @Override
@@ -167,6 +167,22 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
         return dataManager.get(IS_FRIENDLY);
     }
 
+    private ResourceLocation skin;
+
+    public ResourceLocation getSkinRes() {
+        if(skin == null)
+            skin = new ResourceLocation(getSkin());
+        return skin;
+    }
+
+    public String getSkin() {
+        return dataManager.get(SKIN);
+    }
+
+    public void setSkin(String skin) {
+        dataManager.set(SKIN, skin);
+    }
+
     public void setAttribute(String attribute, String value) {
         System.out.println("Set attribute " + attribute + " to " + value);
         switch (attribute) {
@@ -235,19 +251,21 @@ public class EntityGtwNpc extends EntityCreature implements INpc {
     @Override
     public void onUpdate() {
         super.onUpdate();
+        if(skin != null && !skin.toString().equals(getSkin()))
+            skin = new ResourceLocation(getSkin());
     }
 
     @Override
     public void writeEntityToNBT(NBTTagCompound compound) {
         super.writeEntityToNBT(compound);
-        compound.setString("skin", skin.toString());
+        compound.setString("skin", getSkin());
         compound.setString("state", getState());
     }
 
     @Override
     public void readEntityFromNBT(NBTTagCompound compound) {
         super.readEntityFromNBT(compound);
-        skin = new ResourceLocation(compound.getString("skin"));
+        setSkin(compound.getString("skin"));
         setState(compound.getString("state"));
     }
 }

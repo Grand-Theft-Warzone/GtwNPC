@@ -4,7 +4,11 @@ on gtw entity init:
     #set "friendly" of npc entity to "true"
     #set ${pzk} to "state" of npc entity
     #print ${pzk}
-    set "speed" of npc entity to 0.6
+    set "move_speed" of npc entity to 0.6
+    if "type" of npc entity is "police":
+        print "popopolice"
+        set "state" of npc entity to "tracking_wanted"
+        set "move_speed" of npc entity to 0.6
     print "end"
 ²
 command /gtwnpc <"get_attribute|set_attribute"> <"attribute"> <"value">:

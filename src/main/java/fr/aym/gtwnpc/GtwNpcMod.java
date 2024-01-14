@@ -4,6 +4,7 @@ import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.common.CommonProxy;
 import fr.aym.gtwnpc.common.GtwNpcsItems;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
+import fr.aym.gtwnpc.entity.EntityGtwPoliceNpc;
 import fr.aym.gtwnpc.entity.EntityNpcTypes;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
 import fr.aym.gtwnpc.server.CommandGtwNpcConfig;
@@ -52,6 +53,7 @@ public class GtwNpcMod {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         EntityRegistry.registerModEntity(new ResourceLocation(ID, "entity_gtw_npc"), EntityGtwNpc.class, "entity_gtw_npc", 1, this, 80, 3, false, new Color(0, 255, 0).getRGB(), new Color(255, 0, 0).getRGB());
+        EntityRegistry.registerModEntity(new ResourceLocation(ID, "entity_police_gtw_npc"), EntityGtwPoliceNpc.class, "entity_police_gtw_npc", 1, this, 80, 3, false, new Color(0, 255, 0).getRGB(), new Color(0, 0, 255).getRGB());
         proxy.preInit(event);
         GtwNpcsConfig.load(event.getSuggestedConfigurationFile());
     }

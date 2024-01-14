@@ -25,7 +25,7 @@ public class GtwNpcsConfig
     public static void load(File configFile) {
         config = new Configuration(configFile);
         config.load();
-        spawnClusterSize = config.getInt("SpawnClusterSize", "Spawning", 10, 1, 100, "The maximum number of npcs around you");
+        spawnClusterSize = 20;//config.getInt("SpawnClusterSize", "Spawning", 10, 1, 100, "The maximum number of npcs around you");
         spawnChance = config.getInt("SpawnChance", "Spawning", 25, 0, 100, "The npcs spawn chance");
         minNpcMoveSpeed = config.getFloat("MinNpcMoveSpeed", "Npc", 0.45f, 0.1f, 1f, "The min npc move speed");
         maxNpcMoveSpeed = config.getFloat("MaxNpcMoveSpeed", "Npc", 0.65f, 0.1f, 1f, "The max npc move speed");

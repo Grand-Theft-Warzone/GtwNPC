@@ -24,9 +24,10 @@ public class EntityNpcTypes
             if (excludedBiomes.stream().noneMatch(biome -> b.getBiomeName().contains(biome)))
                 biomes.add(b);
         });
+        Biome[] biomesArray = biomes.toArray(new Biome[0]);
         npcType = EnumHelper.addCreatureType("npc", EntityGtwNpc.class, GtwNpcsConfig.spawnClusterSize, Material.AIR, true, false);
-        EntityRegistry.addSpawn(EntityGtwNpc.class, 20, 1, 1, npcType, biomes.toArray(new Biome[0]));
-        policeNpcType = EnumHelper.addCreatureType("npc_police", EntityGtwNpc.class, GtwNpcsConfig.policeSpawnClusterSize, Material.AIR, true, false);
-        EntityRegistry.addSpawn(EntityGtwNpc.class, 20, 1, 4, policeNpcType, biomes.toArray(new Biome[0]));
+        EntityRegistry.addSpawn(EntityGtwNpc.class, 20, 1, 1, npcType, biomesArray);
+        //policeNpcType = EnumHelper.addCreatureType("npc_police", EntityGtwPoliceNpc.class, GtwNpcsConfig.policeSpawnClusterSize, Material.AIR, true, false);
+        EntityRegistry.addSpawn(EntityGtwPoliceNpc.class, 80, 1, 4, npcType, biomesArray);
     }
 }

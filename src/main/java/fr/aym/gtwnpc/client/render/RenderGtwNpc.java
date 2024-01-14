@@ -19,6 +19,6 @@ public class RenderGtwNpc extends RenderBiped<EntityGtwNpc> {
     @Nullable
     @Override
     protected ResourceLocation getEntityTexture(EntityGtwNpc entity) {
-        return entity.getSkin();
+        return entity.getSkinRes();
     }
 }
