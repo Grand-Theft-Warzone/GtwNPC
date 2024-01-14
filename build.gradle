@@ -60,7 +60,8 @@ dependencies {
     implementation ("net.minecraftforge:mergetool:0.2.3.3") { force = true }
 
     implementation "fr.aym:ACsLib:1.2.12"
-    implementation ":Sqript+v1.3.2:"
+    implementation ":Sqript+v1.3.2:deobf"
+    implementation ":modularwarfare-2.4.2f:deobf"
     compileOnly 'org.projectlombok:lombok:1.18.24'
 
     //shadow fileTree(dir: 'libs', include: '*.jar')

@@ -9,7 +9,7 @@ import fr.nico.sqript.meta.Feature;
         features = @Feature(
                 name = "Follow entity",
                 description = "Follows an entity",
-                examples = "follow entity \"my_npc\" with speed 0.5",
+                examples = "set my_npc to follow player",
                 pattern = "set {gnpc} to follow {entity}"))
 public class ActionFollowEntity extends ScriptAction {
 //TODO

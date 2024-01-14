@@ -9,6 +9,12 @@ on gtw entity init:
         print "popopolice"
         set "state" of npc entity to "tracking_wanted"
         set "move_speed" of npc entity to 0.6
+        #set held item of npc entity to modularwarfare:prototype.fnx45
+        set held item of npc entity to modularwarfare:prototype.hk416
+        set head item of npc entity to minecraft:iron_helmet
+        set chest item of npc entity to minecraft:iron_chestplate
+        set legs item of npc entity to minecraft:iron_leggings
+        set feet item of npc entity to minecraft:iron_boots
 
     print "end"
 
