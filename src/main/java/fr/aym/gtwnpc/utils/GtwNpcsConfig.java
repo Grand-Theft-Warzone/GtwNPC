@@ -10,6 +10,9 @@ import java.io.File;
 public class GtwNpcsConfig
 {
     private static Configuration config;
+    public static int maxNpcs = 1000; //integrate
+    public static int npcsLimitRadius = 40; //integrate
+    public static int npcsLimit = 20; //integrate
     public static int spawnClusterSize = 10;
     public static int policeSpawnClusterSize = 20; //integrate
     public static int spawnChance = 25;
