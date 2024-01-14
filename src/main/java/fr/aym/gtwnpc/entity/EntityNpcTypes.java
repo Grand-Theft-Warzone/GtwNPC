@@ -14,7 +14,7 @@ import java.util.List;
 
 public class EntityNpcTypes
 {
-    @Getter
+    /*@Getter
     private static EnumCreatureType npcType, policeNpcType;
 
     public static void init() {
@@ -29,5 +29,5 @@ public class EntityNpcTypes
         EntityRegistry.addSpawn(EntityGtwNpc.class, 20, 1, 1, npcType, biomesArray);
         //policeNpcType = EnumHelper.addCreatureType("npc_police", EntityGtwPoliceNpc.class, GtwNpcsConfig.policeSpawnClusterSize, Material.AIR, true, false);
         EntityRegistry.addSpawn(EntityGtwPoliceNpc.class, 80, 1, 4, npcType, biomesArray);
-    }
+    }*/
 }

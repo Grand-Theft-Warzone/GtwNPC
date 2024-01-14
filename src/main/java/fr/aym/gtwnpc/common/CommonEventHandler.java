@@ -33,15 +33,19 @@ public class CommonEventHandler {
         GtwNpcMod.network.sendTo(new BBMessagePathNodes(NodeType.PEDESTRIAN, PedestrianPathNodes.getInstance().getNodes()), (EntityPlayerMP) event.player);
     }
 
-    @SubscribeEvent
+    //TODO MAX NPC NUMBER DEPENDING ON PLAYER NUMBER AND STARS
+    //TODO "REGISTER" NPCS ON PLAYERS
+    //TODO DO THINGS WHEN PLAYER DIED
+    //TODO SPAWN CONTROL SQRIPT ACTIONS AND COMMANDS
+    //TODO ITEM CONTROL ACTIONS
+    //TODO RANGED
+
+    /*@SubscribeEvent
     public static void onSpawnListing(WorldEvent.PotentialSpawns event) {
         if (event.getType().getCreatureClass() == EntityGtwNpc.class || event.getType().getCreatureClass() == EntityGtwPoliceNpc.class) {
             Vec3d pos = new Vec3d(event.getPos().getX(), event.getPos().getY(), event.getPos().getZ());
             event.getList().removeIf(e -> {
                 if(e.entityClass == EntityGtwPoliceNpc.class) {
-                    //TODO MAX NPC NUMBER DEPENDING ON PLAYER NUMBER AND STARS
-                    //TODO "REGISTER" NPCS ON PLAYERS
-                    //TODO DO THINGS WHEN PLAYER DIED
                     boolean deny = PlayerManager.getPlayerInfos().values().stream().noneMatch(info -> info.getWantedLevel() > 0 && info.getPlayerIn().getPositionVector().distanceTo(pos) < 50);
                     //System.out.println("Checking spawn at " + pos);
                     System.out.println("Spawn police: " + deny);
@@ -49,7 +53,6 @@ public class CommonEventHandler {
                 }
                 boolean deny = event.getWorld().rand.nextInt(100) >= 25 || PedestrianPathNodes.getInstance().getNodes().stream().noneMatch(node -> node.getDistance(pos) < 37);
                 //System.out.println("Checking spawn at " + pos);
-                //TODO OPTIMIZE
                 int radius = 40;
                 AxisAlignedBB bb = new AxisAlignedBB(pos.x - radius, pos.y - radius, pos.z - radius, pos.x + radius, pos.y + radius, pos.z + radius);
                 List<EntityGtwNpc> npcs = event.getWorld().getEntitiesWithinAABB(EntityGtwNpc.class, bb);
@@ -57,7 +60,7 @@ public class CommonEventHandler {
                 return deny;
             });
         }
-    }
+    }*/
 
     @SubscribeEvent
     public static void onSpawnCheck(EntityJoinWorldEvent event) {

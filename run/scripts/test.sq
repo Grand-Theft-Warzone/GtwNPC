@@ -9,8 +9,10 @@ on gtw entity init:
         print "popopolice"
         set "state" of npc entity to "tracking_wanted"
         set "move_speed" of npc entity to 0.6
+
     print "end"
-²
+
+
 command /gtwnpc <"get_attribute|set_attribute"> <"attribute"> <"value">:
     usage: /gtwnpc <get_attribute|set_attribute> <attribute> [value]
     description: get or set an attribute of the target npc entity

@@ -1,5 +1,7 @@
 package fr.aym.gtwnpc.utils;
 
+import fr.aym.gtwnpc.entity.EntityGtwNpc;
+import fr.aym.gtwnpc.entity.EntityGtwPoliceNpc;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.WrongUsageException;
@@ -10,12 +12,13 @@ import java.io.File;
 public class GtwNpcsConfig
 {
     private static Configuration config;
-    public static int maxNpcs = 1000; //integrate
-    public static int npcsLimitRadius = 40; //integrate
-    public static int npcsLimit = 20; //integrate
-    public static int spawnClusterSize = 10;
-    public static int policeSpawnClusterSize = 20; //integrate
-    public static int spawnChance = 25;
+    public static int maxNpcs = 1000; //TODO integrate
+    public static SpawningConfig citizenSpawningConfig = new SpawningConfig(EntityGtwNpc.class, EntityGtwNpc::new,
+            60, 20, 1, 20);
+    public static SpawningConfig.PoliceSpawningConfig policeSpawningConfig = new SpawningConfig.PoliceSpawningConfig(EntityGtwPoliceNpc.class,
+            EntityGtwPoliceNpc::new, 60, 20, 4, new int[] {40, 50, 60, 70, 80});
+    public static int spawnClusterSize = 10; //TODO REMOVE
+    public static int spawnChance = 25; //TODO REMOVE
     public static float minNpcMoveSpeed = 0.45f;
     public static float maxNpcMoveSpeed = 0.60f;
     public static float panicMoveSpeed = 0.8f;

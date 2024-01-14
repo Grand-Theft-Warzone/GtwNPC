@@ -69,7 +69,7 @@ public class GtwNpcMod {
 
     @Mod.EventHandler
     public void postInit(FMLInitializationEvent event) {
-        EntityNpcTypes.init();
+        //EntityNpcTypes.init();
     }
 
     @Mod.EventHandler
