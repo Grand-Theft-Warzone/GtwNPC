@@ -7,6 +7,8 @@ import net.minecraft.entity.ai.EntityAIBase;
 
 import javax.vecmath.Vector3f;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 
 public class GEntityAIMoveToNodes extends EntityAIBase {
@@ -15,6 +17,9 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
     protected double x;
     protected double y;
     protected double z;
+
+    protected boolean hasReachedStartPoint;
+    protected List<PathNode> nodeBlacklist = new ArrayList<>();
 
     public GEntityAIMoveToNodes(EntityGtwNpc creatureIn) {
         this.entity = creatureIn;
@@ -45,9 +50,16 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
         BIG_TARGET = target;
         if (target == null) {
             //System.out.println("No target");
+            entity.setState("lost_no_target");
             return false;
         }
-        Queue<PathNode> path = PedestrianPathNodes.getInstance().createPathToNode(entity.getPositionVector(), target);
+        PathNode start = PedestrianPathNodes.getInstance().findNearestNode(entity.getPositionVector(), nodeBlacklist);
+        if (start == null) {
+            //System.out.println("No start");
+            entity.setState("lost_no_start");
+            return false;
+        }
+        Queue<PathNode> path = PedestrianPathNodes.getInstance().createPathToNode(start, target);
         if (path == null) {
             //System.out.println("No path to " + target);
             return false;
@@ -59,6 +71,10 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
             //System.out.println("00 Intermediate joined !");
             this.path.remove();
             target = this.path.peek();
+            nodeBlacklist.clear();
+            hasReachedStartPoint = true;
+        } else {
+            hasReachedStartPoint = false;
         }
         INTERMEDIATE_TARGET = target;
         Vector3f tare = target == null ? null : target.getPosition();
@@ -111,6 +127,10 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
         ////System.out.println("Intermediate dist " + target.getDistance(entity.getPositionVector()));
         if (target.getDistance(entity.getPositionVector()) < 1) {
             //System.out.println("Intermediate joined !");
+            if (!hasReachedStartPoint) {
+                hasReachedStartPoint = true;
+                nodeBlacklist.clear();
+            }
             path.remove();
             if (path.isEmpty()) {
                 //System.out.println("22 No path left");
@@ -167,6 +187,10 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
                     //System.out.println("Move to " + x + " " + y + " " + z + " at speed " + speed +" : " + this.entity.getNavigator().getPath() +" ist " + target.getDistance(entity.getPositionVector()));
                     //System.out.println("No path vanilla");
                     entity.setState("lost");
+                    if (!hasReachedStartPoint) {
+                        nodeBlacklist.add(target);
+                        //System.out.println("Blacklisted1 " + target);
+                    }
                     return false;
                 }
                 ////System.out.println("Indexes " + entity.getNavigator().getPath().getCurrentPathIndex() + " on " + entity.getNavigator().getPath());
@@ -178,6 +202,10 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
         if (entity.getNavigator().noPath()) {
             System.out.println("00 No path vanilla");
             entity.setState("lost");
+            if (!hasReachedStartPoint && target != null) {
+                nodeBlacklist.add(target);
+                //System.out.println("Blacklisted2 " + target);
+            }
             return false;
         }
         return true;

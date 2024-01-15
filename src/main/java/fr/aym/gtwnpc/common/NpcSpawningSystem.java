@@ -24,33 +24,36 @@ import java.util.stream.Collectors;
 
 public class NpcSpawningSystem {
     public static void tick(WorldServer world) {
+        if(!GtwNpcsConfig.config.isEnableSpawning()) {
+            return;
+        }
         int i = 0;
         for (Entity e : world.loadedEntityList) {
             if (e instanceof EntityGtwNpc) {
                 i++;
             }
         }
-        if (i > GtwNpcsConfig.maxNpcs) {
+        if (i > GtwNpcsConfig.config.getMaxNpcs()) {
             return;
         }
+        Random r = world.rand;
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
         for (EntityPlayer player : world.playerEntities) {
-            doSpawning(world, GtwNpcsConfig.citizenSpawningConfig, player, blockpos$mutableblockpos);
             PlayerInformation info = PlayerManager.getPlayerInformation(player.getUniqueID());
-            if (info != null && info.getWantedLevel() > 0) {
-                GtwNpcsConfig.policeSpawningConfig.setWantedLevel(info.getWantedLevel());
-                doSpawning(world, GtwNpcsConfig.policeSpawningConfig, player, blockpos$mutableblockpos);
+            doSpawning(world, GtwNpcsConfig.citizenSpawningConfig, player, blockpos$mutableblockpos, r, info);
+            if (info == null || info.getWantedLevel() == 0 || info.getTrackingPolicemen().size() < GtwNpcsConfig.policeSpawningConfig.getMaxTrackingPolicemen()[info.getWantedLevel()]) {
+                GtwNpcsConfig.policeSpawningConfig.setWantedLevel(info == null ? 0 : info.getWantedLevel());
+                doSpawning(world, GtwNpcsConfig.policeSpawningConfig, player, blockpos$mutableblockpos, r, info);
             }
         }
     }
 
-    public static void doSpawning(WorldServer world, SpawningConfig config, EntityPlayer player, BlockPos.MutableBlockPos blockpos$mutableblockpos) {
-        Random r = world.rand;
+    public static void doSpawning(WorldServer world, SpawningConfig config, EntityPlayer player, BlockPos.MutableBlockPos blockpos$mutableblockpos, Random r, PlayerInformation info) {
         if (r.nextInt(100) > config.getNpcSpawnChance()) {
             return;
         }
         Collection<PathNode> nodeList = PedestrianPathNodes.getInstance().getNodes();
-        nodeList = nodeList.stream().filter(node -> node.getDistance(player.getPositionVector()) < 128 && node.getDistance(player.getPositionVector()) > 42).collect(Collectors.toList());
+        nodeList = nodeList.stream().filter(node -> node.getDistance(player.getPositionVector()) < config.getMaxSpawnRadius() && node.getDistance(player.getPositionVector()) > config.getMinSpawnRadius()).collect(Collectors.toList());
         if (nodeList.isEmpty()) {
             return;
         }
@@ -85,7 +88,7 @@ public class NpcSpawningSystem {
                     float f1 = (float) j3 + 0.5F;
 
                     if (WorldEntitySpawner.canCreatureTypeSpawnAtLocation(EntitySpawnPlacementRegistry.getPlacementForEntity(config.getEntityClass()), world, blockpos$mutableblockpos)) {
-                        EntityLiving entityliving = config.getEntityFactory().apply(world);
+                        EntityLiving entityliving = config.getEntityFactory().apply(world, info);
                         entityliving.setLocationAndAngles(f, i3, f1, world.rand.nextFloat() * 360.0F, 0.0F);
                         if (entityliving.getCanSpawnHere() && entityliving.isNotColliding()) {
                             ientitylivingdata = entityliving.onInitialSpawn(world.getDifficultyForLocation(new BlockPos(entityliving)), ientitylivingdata);

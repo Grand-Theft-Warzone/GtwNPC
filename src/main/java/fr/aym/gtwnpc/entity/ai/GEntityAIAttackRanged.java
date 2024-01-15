@@ -14,7 +14,6 @@ public class GEntityAIAttackRanged extends EntityAIBase
 {
     private final EntityGtwNpc entity;
     private double moveSpeedAmp;
-    private int attackCooldown;
     private final float maxAttackDistance;
     private int attackTime = -1;
     private int seeTime;
@@ -22,18 +21,12 @@ public class GEntityAIAttackRanged extends EntityAIBase
     private boolean strafingBackwards;
     private int strafingTime = -1;
 
-    public GEntityAIAttackRanged(EntityGtwNpc mob, double moveSpeedAmpIn, int attackCooldownIn, float maxAttackDistanceIn)
+    public GEntityAIAttackRanged(EntityGtwNpc mob, double moveSpeedAmpIn, float maxAttackDistanceIn)
     {
         this.entity = mob;
         this.moveSpeedAmp = moveSpeedAmpIn;
-        this.attackCooldown = attackCooldownIn;
         this.maxAttackDistance = maxAttackDistanceIn * maxAttackDistanceIn;
         this.setMutexBits(3);
-    }
-
-    public void setAttackCooldown(int p_189428_1_)
-    {
-        this.attackCooldown = p_189428_1_;
     }
 
     public boolean shouldExecute()
@@ -150,7 +143,7 @@ public class GEntityAIAttackRanged extends EntityAIBase
                     {
                         this.entity.resetActiveHand();
                         ((IRangedAttackMob)this.entity).attackEntityWithRangedAttack(entitylivingbase, ItemBow.getArrowVelocity(i));
-                        this.attackTime = this.attackCooldown;
+                        this.attackTime = entity.getCooldownPeriod();
                     }
                 }
             }

@@ -1,85 +1,76 @@
 package fr.aym.gtwnpc.utils;
 
-import fr.aym.gtwnpc.entity.EntityGtwNpc;
-import fr.aym.gtwnpc.entity.EntityGtwPoliceNpc;
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.WrongUsageException;
-import net.minecraftforge.common.config.Configuration;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import fr.aym.gtwnpc.GtwNpcMod;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.io.File;
+import java.io.*;
 
-public class GtwNpcsConfig
-{
-    private static Configuration config;
-    public static int maxNpcs = 1000; //TODO integrate
-    public static SpawningConfig citizenSpawningConfig = new SpawningConfig(EntityGtwNpc.class, EntityGtwNpc::new,
-            60, 20, 1, 20);
-    public static SpawningConfig.PoliceSpawningConfig policeSpawningConfig = new SpawningConfig.PoliceSpawningConfig(EntityGtwPoliceNpc.class,
-            EntityGtwPoliceNpc::new, 60, 20, 4, new int[] {40, 50, 60, 70, 80});
-    public static int spawnClusterSize = 10; //TODO REMOVE
-    public static int spawnChance = 25; //TODO REMOVE
-    public static float minNpcMoveSpeed = 0.45f;
-    public static float maxNpcMoveSpeed = 0.60f;
-    public static float panicMoveSpeed = 0.8f;
-    public static int attackBackChance = 50;
-    public static float attackingMoveSpeed = 0.65f;
-    public static float attackDamage = 2;
-    public static float attackSpeed = 4;
-    public static float npcHealth = 20;
+public class GtwNpcsConfig {
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(SpawningConfig.CitizenSpawningConfig.class, SpawningConfig.CitizenSpawningConfig.adapter).registerTypeAdapter(SpawningConfig.PoliceSpawningConfig.class, SpawningConfig.PoliceSpawningConfig.adapter).create();
+    private static File configFile;
+
+    public static BaseConfig config;
+    public static SpawningConfig.CitizenSpawningConfig citizenSpawningConfig;
+    public static SpawningConfig.PoliceSpawningConfig policeSpawningConfig;
 
     public static void load(File configFile) {
-        config = new Configuration(configFile);
-        config.load();
-        spawnClusterSize = 20;//config.getInt("SpawnClusterSize", "Spawning", 10, 1, 100, "The maximum number of npcs around you");
-        spawnChance = config.getInt("SpawnChance", "Spawning", 25, 0, 100, "The npcs spawn chance");
-        minNpcMoveSpeed = config.getFloat("MinNpcMoveSpeed", "Npc", 0.45f, 0.1f, 1f, "The min npc move speed");
-        maxNpcMoveSpeed = config.getFloat("MaxNpcMoveSpeed", "Npc", 0.65f, 0.1f, 1f, "The max npc move speed");
-        panicMoveSpeed = config.getFloat("PanicMoveSpeed", "Npc", 0.8f, 0.1f, 1f, "The npc move speed when panicking");
-        attackBackChance = config.getInt("AttackBackChance", "Npc", 50, 0, 100, "The probability of attacking back when attacked");
-        attackingMoveSpeed = config.getFloat("AttackingMoveSpeed", "Npc", 0.65f, 0.1f, 1f, "The npc move speed when attacking a player");
-        attackDamage = config.getFloat("AttackDamage", "Npc", 2, 0, 100, "The npc attack damage");
-        attackSpeed = config.getFloat("AttackSpeed", "Npc", 4, 0, 100, "The npc attack speed");
-        npcHealth = config.getFloat("NpcHealth", "Npc", 20, 1, 100, "The npc health");
-        config.save();
+        GtwNpcsConfig.configFile = configFile;
+        if (configFile.exists()) {
+            try {
+                config = gson.fromJson(new FileReader(configFile), BaseConfig.class);
+                citizenSpawningConfig = config.getCitizenSpawningConfig();
+                policeSpawningConfig = config.getPoliceSpawningConfig();
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        if (config == null) { //Error or not existing: create default
+            citizenSpawningConfig = new SpawningConfig.CitizenSpawningConfig(60, 20, 1, 20, 42, 128);
+            policeSpawningConfig = new SpawningConfig.PoliceSpawningConfig(80, 10, 1, new int[]{1, 40, 50, 60, 70, 80}, 40, 100, new int[]{4, 8, 14, 20, 30});
+            config = new BaseConfig(true, 1000, 0.45f, 0.60f, 0.8f, 50, 0.65f, 2, 4, 20, citizenSpawningConfig, policeSpawningConfig);
+            save();
+            GtwNpcMod.log.info("Config file created at " + configFile.getAbsolutePath());
+        }
     }
 
-    //TODO COMMAND
-    public static void setConfigOption(String option, String value) throws CommandException {
-        switch (option) {
-            case "SpawnClusterSize":
-                config.get("Spawning", "SpawnClusterSize", 10).set(CommandBase.parseInt(value));
-                break;
-            case "SpawnChance":
-                config.get("Spawning", "SpawnChance", 25).set(CommandBase.parseInt(value));
-                break;
-            case "MinNpcMoveSpeed":
-                config.get("Npc", "MinNpcMoveSpeed", 0.45f).set((float) CommandBase.parseDouble(value));
-                break;
-            case "MaxNpcMoveSpeed":
-                config.get("Npc", "MaxNpcMoveSpeed", 0.65f).set((float) CommandBase.parseDouble(value));
-                break;
-            case "PanicMoveSpeed":
-                config.get("Npc", "PanicMoveSpeed", 0.8f).set((float) CommandBase.parseDouble(value));
-                break;
-            case "PanicChance":
-                config.get("Npc", "PanicChance", 50).set(CommandBase.parseInt(value));
-                break;
-            case "AttackingMoveSpeed":
-                config.get("Npc", "AttackingMoveSpeed", 0.65f).set((float) CommandBase.parseDouble(value));
-                break;
-            case "AttackDamage":
-                config.get("Npc", "AttackDamage", 2f).set((float) CommandBase.parseDouble(value));
-                break;
-            case "AttackSpeed":
-                config.get("Npc", "AttackSpeed", 4f).set((float) CommandBase.parseDouble(value));
-                break;
-            case "NpcHealth":
-                config.get("Npc", "NpcHealth", 20f).set((float) CommandBase.parseDouble(value));
-                break;
-            default:
-                throw new WrongUsageException("Unknown parameter " + option);
+    public static void reload() {
+        load(configFile);
+    }
+
+    public static void save() {
+        try {
+            FileWriter wri = new FileWriter(configFile);
+            gson.toJson(config, wri);
+            wri.flush();
+            wri.close();
+            citizenSpawningConfig = config.getCitizenSpawningConfig();
+            policeSpawningConfig = config.getPoliceSpawningConfig();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write config", e);
         }
-        config.save();
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BaseConfig {
+        private boolean enableSpawning;
+        private int maxNpcs;
+        private float minNpcMoveSpeed;
+        private float maxNpcMoveSpeed;
+        private float panicMoveSpeed;
+        private int attackBackChance;
+        private float attackingMoveSpeed;
+        private float attackDamage;
+        private float attackSpeed;
+        private float npcHealth;
+        private SpawningConfig.CitizenSpawningConfig citizenSpawningConfig;
+        private SpawningConfig.PoliceSpawningConfig policeSpawningConfig;
     }
 }

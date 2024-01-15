@@ -13,8 +13,6 @@ import net.minecraft.entity.ai.EntityAIOpenDoor;
 import net.minecraft.entity.ai.EntityAISwimming;
 import net.minecraft.entity.ai.EntityAIWatchClosest2;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.projectile.EntityArrow;
-import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -26,7 +24,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.DifficultyInstance;
-import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
@@ -35,22 +32,18 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
     private static final DataParameter<String> STATE = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.STRING);
     private static final DataParameter<Boolean> IS_FRIENDLY = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.BOOLEAN);
     private static final DataParameter<String> SKIN = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.STRING);
+    private static final DataParameter<Boolean> SWINGING_ARMS = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.BOOLEAN);
 
-    @Getter
-    private EntityLivingBase entityToFollow;
-    private GEntityAIFollowPlayer followPlayerAI;
-    private GEntityAIPanic panicAI;
-    private final GEntityAIAttackMelee attackAI = new GEntityAIAttackMelee(this, GtwNpcsConfig.attackingMoveSpeed, false);
-    private final GEntityAIAttackRanged rangedAttackAI = new GEntityAIAttackRanged(this, GtwNpcsConfig.attackingMoveSpeed, 20, 15.0F);
+    protected EntityLivingBase entityToFollow;
+    protected GEntityAIFollowPlayer followPlayerAI; //TODO
+    protected GEntityAIPanic panicAI;
+    protected final GEntityAIAttackMelee attackAI = new GEntityAIAttackMelee(this, GtwNpcsConfig.config.getAttackingMoveSpeed(), false);
+    protected final GEntityAIAttackRanged rangedAttackAI = new GEntityAIAttackRanged(this, GtwNpcsConfig.config.getAttackingMoveSpeed(), 15.0F);
+    protected GEntityAIPoliceTarget policeTargetAI;
 
     @Getter
     @Setter
     private SkinRepository.NpcType npcType = SkinRepository.NpcType.NPC;
-
-    //todo
-    // déplacement
-    // réaction aux coups
-    // skin
 
     public EntityGtwNpc(World worldIn) {
         super(worldIn);
@@ -74,26 +67,27 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
     protected void entityInit() {
         super.entityInit();
         this.dataManager.register(STATE, "wandering");
-        this.dataManager.register(IS_FRIENDLY, rand.nextInt(100) < GtwNpcsConfig.attackBackChance);
+        this.dataManager.register(IS_FRIENDLY, rand.nextInt(100) < GtwNpcsConfig.config.getAttackBackChance());
         this.dataManager.register(SKIN, SkinRepository.getRandomSkin(SkinRepository.NpcType.NPC, world.rand).toString());
+        this.dataManager.register(SWINGING_ARMS, Boolean.valueOf(false));
     }
 
     @Override
     protected void initEntityAI() {
         this.tasks.addTask(0, new EntityAISwimming(this));
-        this.tasks.addTask(1, panicAI = new GEntityAIPanic(this, GtwNpcsConfig.panicMoveSpeed));
+        this.tasks.addTask(1, panicAI = new GEntityAIPanic(this, GtwNpcsConfig.config.getPanicMoveSpeed()));
         //this.tasks.addTask(2, new EntityAIMoveIndoors(this));
         //this.tasks.addTask(3, new EntityAIRestrictOpenDoor(this));
         this.tasks.addTask(3, new EntityAIOpenDoor(this, true));
+        this.tasks.addTask(4, followPlayerAI = new GEntityAIFollowPlayer(this, 1.0D, 10.0F, 2.0F));
         //this.tasks.addTask(5, attackAI);
         //this.tasks.addTask(5, new EntityAIMoveTowardsRestriction(this, 0.3D));
-        //this.tasks.addTask(6, followPlayerAI = new EntityAIFollowPlayer(this, 1.0D, 10.0F, 2.0F));
         this.tasks.addTask(9, new EntityAIWatchClosest2(this, EntityPlayer.class, 3.0F, 1.0F));
         this.tasks.addTask(9, new GEntityAIMoveToNodes(this));
         //this.tasks.addTask(10, new EntityAIWatchClosest(this, EntityLiving.class, 8.0F));
 
         this.targetTasks.addTask(1, new GEntityAIHurtByTarget(this, false));
-        this.targetTasks.addTask(2, new GEntityAIPoliceTarget(this));
+        this.targetTasks.addTask(2, policeTargetAI = new GEntityAIPoliceTarget(this));
     }
 
     public void setCombatTask() {
@@ -103,16 +97,11 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
             ItemStack itemstack = this.getHeldItemMainhand();
 
             if (itemstack.getItem() instanceof ItemGun) {
-                int i = 20;
-                if (this.world.getDifficulty() != EnumDifficulty.HARD) {
-                    i = 40;
-                }
-                this.rangedAttackAI.setAttackCooldown(i);
-                this.tasks.addTask(4, this.rangedAttackAI);
-                System.out.println("Added ranged attack task");
+                this.tasks.addTask(5, this.rangedAttackAI);
+                //System.out.println("Added ranged attack task");
             } else {
-                this.tasks.addTask(4, this.attackAI);
-                System.out.println("Added melee attack task");
+                this.tasks.addTask(5, this.attackAI);
+                //System.out.println("Added melee attack task");
             }
         }
     }
@@ -120,11 +109,18 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
     @Override
     protected void applyEntityAttributes() {
         super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((float) (GtwNpcsConfig.minNpcMoveSpeed + rand.nextDouble() * (GtwNpcsConfig.maxNpcMoveSpeed - GtwNpcsConfig.minNpcMoveSpeed)));
+        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((float) (GtwNpcsConfig.config.getMinNpcMoveSpeed() + rand.nextDouble() * (GtwNpcsConfig.config.getMaxNpcMoveSpeed() - GtwNpcsConfig.config.getMinNpcMoveSpeed())));
         this.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).setBaseValue(40);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(GtwNpcsConfig.attackDamage);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_SPEED).setBaseValue(GtwNpcsConfig.attackSpeed);
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(GtwNpcsConfig.npcHealth);
+        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(GtwNpcsConfig.config.getAttackDamage());
+        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_SPEED).setBaseValue(GtwNpcsConfig.config.getAttackSpeed());
+        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(GtwNpcsConfig.config.getNpcHealth());
+    }
+
+    @Override
+    public void setRevengeTarget(@Nullable EntityLivingBase livingBase) {
+        if (livingBase instanceof EntityGtwNpc)
+            return;
+        super.setRevengeTarget(livingBase);
     }
 
     @Override
@@ -141,7 +137,7 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
 
         if (flag) {
             if (i > 0 && entityIn instanceof EntityLivingBase) {
-                ((EntityLivingBase) entityIn).knockBack(this, (float) i * 0.5F, (double) MathHelper.sin(this.rotationYaw * 0.017453292F), (double) (-MathHelper.cos(this.rotationYaw * 0.017453292F)));
+                ((EntityLivingBase) entityIn).knockBack(this, (float) i * 0.5F, MathHelper.sin(this.rotationYaw * 0.017453292F), -MathHelper.cos(this.rotationYaw * 0.017453292F));
                 this.motionX *= 0.6D;
                 this.motionZ *= 0.6D;
             }
@@ -321,25 +317,35 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
 
     @Override
     public void attackEntityWithRangedAttack(EntityLivingBase target, float distanceFactor) {
-        System.out.println("SHOOOTING !!!");
         ItemStack held = getHeldItemMainhand();
-        if(!(held.getItem() instanceof ItemGun)) {
-            System.out.println("Not a gun");
+        if (!(held.getItem() instanceof ItemGun)) {
+            //System.out.println("Not a gun");
             return;
         }
         double d0 = target.posX - this.posX;
-        double d1 = target.getEntityBoundingBox().minY + (double) (target.height / 3.0F) - this.posY - (double)this.getEyeHeight() + 0.10000000149011612D;
+        double d1 = target.getEntityBoundingBox().minY + (double) (target.height / 3.0F) - this.posY - (double) this.getEyeHeight() + 0.10000000149011612D;
         double d2 = target.posZ - this.posZ;
-        double d3 = (double) MathHelper.sqrt(d0 * d0 + d2 * d2);
-       // entityarrow.shoot(d0, d1 + d3 * 0.20000000298023224D, d2, 1.6F, (float) (14 - this.world.getDifficulty().getId() * 4));
+        double d3 = MathHelper.sqrt(d0 * d0 + d2 * d2);
         float pitch = MathHelper.wrapDegrees((float) (MathHelper.atan2(-d1, d3) * (180D / Math.PI)));
         float yaw = MathHelper.wrapDegrees((float) (MathHelper.atan2(d2, d0) * (180D / Math.PI))) - 90.0F;
-        System.out.println("Pitch : " + pitch + ", yaw : " + yaw);
         ShotHelper.fireServer(this, pitch, yaw, world, held, (ItemGun) held.getItem());
     }
 
-    @Override
-    public void setSwingingArms(boolean swingingArms) {
+    public boolean isSwingingArms()
+    {
+        return this.dataManager.get(SWINGING_ARMS).booleanValue();
+    }
 
+    public void setSwingingArms(boolean swingingArms)
+    {
+        this.dataManager.set(SWINGING_ARMS, Boolean.valueOf(swingingArms));
+    }
+
+    public boolean isHoldingAGun() {
+        return getHeldItemMainhand().getItem() instanceof ItemGun;
+    }
+
+    public int getCooldownPeriod() {
+        return (int) (1.0D / this.getEntityAttribute(SharedMonsterAttributes.ATTACK_SPEED).getAttributeValue() * 20.0D);
     }
 }

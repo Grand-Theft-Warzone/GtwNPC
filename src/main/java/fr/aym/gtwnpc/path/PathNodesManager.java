@@ -4,6 +4,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
 
@@ -26,5 +27,7 @@ public interface PathNodesManager {
 
     PathNode selectRandomPathNode(Vec3d around, float radiusMin, float radiusMax);
 
-    Queue<PathNode> createPathToNode(Vec3d start, PathNode end);
+    PathNode findNearestNode(Vec3d around, List<PathNode> avoidNodes);
+
+    Queue<PathNode> createPathToNode(PathNode start, PathNode end);
 }

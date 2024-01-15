@@ -55,7 +55,7 @@ public class GtwNpcMod {
         EntityRegistry.registerModEntity(new ResourceLocation(ID, "entity_gtw_npc"), EntityGtwNpc.class, "entity_gtw_npc", 1, this, 80, 3, false, new Color(0, 255, 0).getRGB(), new Color(255, 0, 0).getRGB());
         EntityRegistry.registerModEntity(new ResourceLocation(ID, "entity_police_gtw_npc"), EntityGtwPoliceNpc.class, "entity_police_gtw_npc", 1, this, 80, 3, false, new Color(0, 255, 0).getRGB(), new Color(0, 0, 255).getRGB());
         proxy.preInit(event);
-        GtwNpcsConfig.load(event.getSuggestedConfigurationFile());
+        GtwNpcsConfig.load(new File(event.getModConfigurationDirectory(), "GtwNpcConfig.json"));
     }
 
     @Mod.EventHandler

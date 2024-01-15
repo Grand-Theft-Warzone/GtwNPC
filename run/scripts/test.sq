@@ -1,41 +1,47 @@
 on gtw entity init:
-    print "start"
+    #print "start"
     set "state" of npc entity to "wandering"
     #set "friendly" of npc entity to "true"
-    #set ${pzk} to "state" of npc entity
-    #print ${pzk}
-    set "move_speed" of npc entity to 0.6
+    #set {state} to "state" of npc entity
+    #print {state}
     if "type" of npc entity is "police":
         print "popopolice"
-        set "state" of npc entity to "tracking_wanted"
+        #set "state" of npc entity to "tracking_wanted"
         set "move_speed" of npc entity to 0.6
-        #set held item of npc entity to modularwarfare:prototype.fnx45
-        set held item of npc entity to modularwarfare:prototype.hk416
+        set held item of npc entity to modularwarfare:prototype.fnx45
+        set "attack_speed" of npc entity to 5
+        #set held item of npc entity to modularwarfare:prototype.hk416
         set head item of npc entity to minecraft:iron_helmet
         set chest item of npc entity to minecraft:iron_chestplate
         set legs item of npc entity to minecraft:iron_leggings
         set feet item of npc entity to minecraft:iron_boots
-
-    print "end"
-
-
-command /gtwnpc <"get_attribute|set_attribute"> <"attribute"> <"value">:
-    usage: /gtwnpc <get_attribute|set_attribute> <attribute> [value]
-    description: get or set an attribute of the target npc entity
-    #permission: gtw.command.gtwnpc
-    if {arg 1} is "get_attribute":
-        set {entity_target} to sender's entity target
-        if {entity_target} is not set:
-            send "&cYou must be looking at an entity to use this command" to sender
-        else:
-            set {ans} to {arg 2} of npc {entity_target}
-            send "&e%{arg 2}%&f: &e%{ans}%" to sender
-    else if {arg 1} is "set_attribute":
-        set {entity_target} to sender's entity target
-        if {entity_target} is not set:
-            send "&cYou must be looking at an entity to use this command" to sender
-        else:
-            set {arg 2} of npc {entity_target} to {arg 3}
-            send "&e%{arg 2}%&f: &e%{arg 3}%" to sender
     else:
-        send "&cUnknown command: &e%{arg 1}%" to sender
+        set "move_speed" of npc entity to random number between 0.48 and 0.62
+    #print "end"
+
+on block break:
+    set {wt_level} to wanted level of player
+    if {wt_level} < 2:
+        set wanted level of player to {wt_level} + 1
+    print "Wanted level: %wanted level of player%"
+    send "Your wanted level is now %wanted level of player%" to player
+
+#on player2 attacking minecraft:pig :
+ #   print "attackedPig"
+    #npcAttacked()
+
+on player2 attacking gtwnpcmod:entity_police_gtw_npc:
+    if side is "SERVER":
+        set {wt_level} to wanted level of player
+        if {wt_level} < 3:
+            set wanted level of player to {wt_level} + 1
+        print "Wanted level: %wanted level of player%"
+        send "Your wanted level is now %wanted level of player%" to player
+
+on player2 attacking gtwnpcmod:entity_gtw_npc:
+    if side is "SERVER":
+        set {wt_level} to wanted level of player
+        if {wt_level} < 2:
+            set wanted level of player to {wt_level} + 1
+        print "Wanted level: %wanted level of player%"
+        send "Your wanted level is now %wanted level of player%" to player

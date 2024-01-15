@@ -12,6 +12,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -101,9 +102,15 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
     }
 
     @Override
-    public Queue<PathNode> createPathToNode(Vec3d startPos, PathNode end) {
+    public PathNode findNearestNode(Vec3d around, List<PathNode> avoidNodes) {
+        return nodes.values().stream().filter(n -> !avoidNodes.contains(n)).min(Comparator.comparingDouble(pathNode -> {
+            return pathNode.getDistance(around);
+        })).orElse(null);
+    }
+
+    @Override
+    public Queue<PathNode> createPathToNode(PathNode startNode, PathNode end) {
         //TOO REWORK
-        PathNode startNode = nodes.values().stream().sorted(Comparator.comparingDouble(pathNode -> pathNode.getDistance(startPos))).findFirst().get();
         // System.out.println("Start node : " + startNode + " from " + startPos);
         Queue<RouteNode> openSet = new PriorityQueue<>();
         Map<PathNode, RouteNode> allNodes = new HashMap<>();
@@ -178,8 +185,7 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
     @SubscribeEvent
     public static void unload(WorldEvent.Unload event) {
         //System.out.println("Unloading nodes");
-        if (event.getWorld().provider.getDimensionType() == DimensionType.OVERWORLD && instance != null && !event.getWorld().isRemote) {
-            //TODO CLEAR SUR LES CLIENTS EN MULTIJOUEUR
+        if (event.getWorld().provider.getDimensionType() == DimensionType.OVERWORLD && instance != null && (!event.getWorld().isRemote || FMLCommonHandler.instance().getMinecraftServerInstance() == null)) {
             instance.nodes.clear();
             instance = null;
         }

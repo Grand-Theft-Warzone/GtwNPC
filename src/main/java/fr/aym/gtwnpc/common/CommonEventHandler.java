@@ -9,12 +9,16 @@ import fr.aym.gtwnpc.path.NodeType;
 import fr.aym.gtwnpc.path.PedestrianPathNodes;
 import fr.aym.gtwnpc.player.PlayerManager;
 import fr.aym.gtwnpc.sqript.EventGNpcInit;
+import fr.aym.gtwnpc.sqript.EvtOnPlayerAttack;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.nico.sqript.ScriptManager;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingSpawnEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -32,12 +36,6 @@ public class CommonEventHandler {
         //System.out.println("Sending nodes to " + event.player.getName());
         GtwNpcMod.network.sendTo(new BBMessagePathNodes(NodeType.PEDESTRIAN, PedestrianPathNodes.getInstance().getNodes()), (EntityPlayerMP) event.player);
     }
-
-    //TODO MAX NPC NUMBER DEPENDING ON PLAYER NUMBER AND STARS
-    //TODO "REGISTER" NPCS ON PLAYERS
-    //TODO DO THINGS WHEN PLAYER DIED
-    //TODO SPAWN CONTROL SQRIPT ACTIONS AND COMMANDS
-    //TODO RANGED
 
     /*@SubscribeEvent
     public static void onSpawnListing(WorldEvent.PotentialSpawns event) {
@@ -66,6 +64,13 @@ public class CommonEventHandler {
        // System.out.println("Brutal " + event.getEntity());
         if(!event.getWorld().isRemote && event.getEntity() instanceof EntityGtwNpc && ScriptManager.callEvent(new EventGNpcInit((EntityGtwNpc) event.getEntity()))) {
             System.out.println("Event cancelled the spawn");
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void livingHurt(LivingAttackEvent event) {
+        if(event.getSource().getTrueSource() instanceof EntityPlayer && ScriptManager.callEvent(new EvtOnPlayerAttack(event.getEntity(), (EntityPlayer) event.getSource().getTrueSource()))) {
             event.setCanceled(true);
         }
     }
