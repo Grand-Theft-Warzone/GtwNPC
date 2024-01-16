@@ -1,15 +1,14 @@
+# Fired when spawning a new npc
 on gtw entity init:
-    #print "start"
+    #print "spawning npc"
     set "state" of npc entity to "wandering"
     #set "friendly" of npc entity to "true"
     #set {state} to "state" of npc entity
     #print {state}
     if "type" of npc entity is "police":
-        print "popopolice"
-        #set "state" of npc entity to "tracking_wanted"
         set "move_speed" of npc entity to 0.6
         set held item of npc entity to modularwarfare:prototype.fnx45
-        set "attack_speed" of npc entity to 5
+        set "attack_speed" of npc entity to 0.6
         #set held item of npc entity to modularwarfare:prototype.hk416
         set head item of npc entity to minecraft:iron_helmet
         set chest item of npc entity to minecraft:iron_chestplate
@@ -17,8 +16,8 @@ on gtw entity init:
         set feet item of npc entity to minecraft:iron_boots
     else:
         set "move_speed" of npc entity to random number between 0.48 and 0.62
-    #print "end"
 
+# Fired when breaking a block
 on block break:
     set {wt_level} to wanted level of player
     if {wt_level} < 2:
@@ -30,6 +29,7 @@ on block break:
  #   print "attackedPig"
     #npcAttacked()
 
+# Fired when attacking a npc
 on player2 attacking gtwnpcmod:entity_police_gtw_npc:
     if side is "SERVER":
         set {wt_level} to wanted level of attacker

@@ -2,30 +2,20 @@ package fr.aym.gtwnpc.common;
 
 import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
-import fr.aym.gtwnpc.entity.EntityGtwPoliceNpc;
-import fr.aym.gtwnpc.entity.EntityNpcTypes;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
 import fr.aym.gtwnpc.path.NodeType;
 import fr.aym.gtwnpc.path.PedestrianPathNodes;
-import fr.aym.gtwnpc.player.PlayerManager;
 import fr.aym.gtwnpc.sqript.EventGNpcInit;
-import fr.aym.gtwnpc.sqript.EvtOnPlayerAttack;
+import fr.aym.gtwnpc.sqript.EventOnPlayerAttack2;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.nico.sqript.ScriptManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingSpawnEvent;
-import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-
-import java.util.List;
 
 @Mod.EventBusSubscriber(modid = GtwNpcConstants.ID)
 public class CommonEventHandler {
@@ -70,7 +60,7 @@ public class CommonEventHandler {
 
     @SubscribeEvent
     public static void livingHurt(LivingAttackEvent event) {
-        if(event.getSource().getTrueSource() instanceof EntityPlayer && ScriptManager.callEvent(new EvtOnPlayerAttack(event.getEntity(), (EntityPlayer) event.getSource().getTrueSource()))) {
+        if(event.getSource().getTrueSource() instanceof EntityPlayer && ScriptManager.callEvent(new EventOnPlayerAttack2(event.getEntity(), (EntityPlayer) event.getSource().getTrueSource()))) {
             event.setCanceled(true);
         }
     }

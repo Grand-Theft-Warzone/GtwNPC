@@ -6,15 +6,8 @@ import fr.nico.sqript.meta.Type;
 import fr.nico.sqript.structures.ScriptElement;
 import fr.nico.sqript.types.ScriptType;
 import fr.nico.sqript.types.TypeEntity;
-import fr.nico.sqript.types.TypeItem;
 import fr.nico.sqript.types.interfaces.ILocatable;
-import fr.nico.sqript.types.primitive.TypeResource;
-import net.minecraft.item.Item;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
-
-import java.util.Objects;
 
 @Type(name = "gnpc", parsableAs = {TypeEntity.class})
 public class TypeGNpc extends ScriptType<EntityGtwNpc> implements ILocatable {
