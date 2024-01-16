@@ -34,14 +34,15 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
                 type = "entity"
         )}
 )
-public class EvtOnPlayerAttack extends ScriptEvent {
-    Entity victim;
+public class EventOnPlayerAttack2 extends ScriptEvent {
+    protected final Entity victim;
 
-    public EvtOnPlayerAttack(Entity victim, EntityPlayer attacker) {
+    public EventOnPlayerAttack2(Entity victim, EntityPlayer attacker) {
         super(new ScriptTypeAccessor(new TypeEntity(victim), "victim"), new ScriptTypeAccessor(new TypePlayer(attacker), "attacker"));
         this.victim = victim;
     }
 
+    @Override
     public boolean check(ScriptType[] parameters, int marks) {
         if (parameters.length != 0 && parameters[0] != null) {
             if (parameters[0] instanceof TypeEntity) {

@@ -5,15 +5,10 @@ import fr.aym.gtwnpc.common.CommonProxy;
 import fr.aym.gtwnpc.common.GtwNpcsItems;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.entity.EntityGtwPoliceNpc;
-import fr.aym.gtwnpc.entity.EntityNpcTypes;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
 import fr.aym.gtwnpc.server.CommandGtwNpcConfig;
 import fr.aym.gtwnpc.utils.GtwNpcsConfig;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.biome.Biome;
-import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -28,13 +23,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import static fr.aym.gtwnpc.utils.GtwNpcConstants.*;
 
-@Mod(modid = ID, name = NAME, version = VERSION, dependencies = "required-after:sqript@1.0")
+@Mod(modid = ID, name = NAME, version = VERSION, dependencies = "required-before:sqript@1.0")
 public class GtwNpcMod {
     @Mod.Instance(value = ID)
     public static GtwNpcMod instance;

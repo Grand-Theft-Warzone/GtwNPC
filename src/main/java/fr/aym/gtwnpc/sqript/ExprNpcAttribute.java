@@ -15,7 +15,7 @@ import fr.nico.sqript.types.primitive.TypeString;
                 @Feature(
                         name = "Get/set npc attribute",
                         description = "Gets/sets an attribute of an npc",
-                        examples = {"get state of npc \"my_npc\"", "set state of npc \"my_npc\" to \"my_state\""},
+                        examples = {"get \"state\" of npc \"my_npc\"", "set \"state\" of npc \"my_npc\" to \"my_state\""},
                         pattern = "{string} of npc {gnpc}")
         }
 )
