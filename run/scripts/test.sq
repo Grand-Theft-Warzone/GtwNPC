@@ -32,16 +32,16 @@ on block break:
 
 on player2 attacking gtwnpcmod:entity_police_gtw_npc:
     if side is "SERVER":
-        set {wt_level} to wanted level of player
+        set {wt_level} to wanted level of attacker
         if {wt_level} < 3:
-            set wanted level of player to {wt_level} + 1
-        print "Wanted level: %wanted level of player%"
-        send "Your wanted level is now %wanted level of player%" to player
+            set wanted level of attacker to {wt_level} + 1
+        print "Wanted level: %wanted level of attacker%"
+        send "Your wanted level is now %wanted level of attacker%" to attacker
 
 on player2 attacking gtwnpcmod:entity_gtw_npc:
     if side is "SERVER":
-        set {wt_level} to wanted level of player
+        set {wt_level} to wanted level of attacker
         if {wt_level} < 2:
-            set wanted level of player to {wt_level} + 1
-        print "Wanted level: %wanted level of player%"
-        send "Your wanted level is now %wanted level of player%" to player
+            set wanted level of attacker to {wt_level} + 1
+        print "Wanted level: %wanted level of attacker%"
+        send "Your wanted level is now %wanted level of attacker%" to attacker

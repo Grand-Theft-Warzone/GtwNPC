@@ -63,9 +63,7 @@ public class NpcSpawningSystem {
         if (nears.size() > config.getNpcsLimit()) {
             return;
         }
-        int j = MathHelper.floor(node.getPosition().x / 16.0D);
-        int k = MathHelper.floor(node.getPosition().z / 16.0D);
-        BlockPos blockpos = getRandomChunkPosition(world, j, k, 4);
+        BlockPos blockpos = getRandomPosition(world, (int) node.getPosition().x, (int) node.getPosition().y, (int) node.getPosition().z, 4);
         IBlockState iblockstate = world.getBlockState(blockpos);
         if (!iblockstate.isNormalCube()) {
             int k1 = blockpos.getX();
@@ -112,12 +110,14 @@ public class NpcSpawningSystem {
         }
     }
 
-    private static BlockPos getRandomChunkPosition(World worldIn, int x, int z, int radius) {
-        Chunk chunk = worldIn.getChunk(x, z);
-        int i = x * 16 + worldIn.rand.nextInt(radius);
-        int j = z * 16 + worldIn.rand.nextInt(radius);
+    private static BlockPos getRandomPosition(World worldIn, int x, int y, int z, int radius) {
+        int i = x - 4 + worldIn.rand.nextInt(radius * 2 + 1);
+        int j = z - 4 + worldIn.rand.nextInt(radius * 2 + 1);
+        Chunk chunk = worldIn.getChunk(x / 16, z / 16);
         int k = MathHelper.roundUp(chunk.getHeight(new BlockPos(i, 0, j)) + 1, 16);
         int l = worldIn.rand.nextInt(k > 0 ? k : chunk.getTopFilledSegment() + 16 - 1);
+        if(Math.abs(l - y) > radius)
+            return new BlockPos(x, y, z);
         return new BlockPos(i, l, j);
     }
 }

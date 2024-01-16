@@ -145,7 +145,7 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
                 }
             });
         }
-        System.out.println("No path found from " + startNode + " to " + end);
+        //System.out.println("No path found from " + startNode + " to " + end);
         return null;
     }
 

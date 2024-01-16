@@ -25,6 +25,11 @@ public class GtwNpcsConfig {
                 config = gson.fromJson(new FileReader(configFile), BaseConfig.class);
                 citizenSpawningConfig = config.getCitizenSpawningConfig();
                 policeSpawningConfig = config.getPoliceSpawningConfig();
+                if(config.getVersion() !=1) {
+                    GtwNpcMod.log.warn("Updating config file to version 1");
+                    config.setVersion(1);
+                    save();
+                }
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
@@ -32,7 +37,7 @@ public class GtwNpcsConfig {
         if (config == null) { //Error or not existing: create default
             citizenSpawningConfig = new SpawningConfig.CitizenSpawningConfig(60, 20, 1, 20, 42, 128);
             policeSpawningConfig = new SpawningConfig.PoliceSpawningConfig(80, 10, 1, new int[]{1, 40, 50, 60, 70, 80}, 40, 100, new int[]{4, 8, 14, 20, 30});
-            config = new BaseConfig(true, 1000, 0.45f, 0.60f, 0.8f, 50, 0.65f, 2, 4, 20, citizenSpawningConfig, policeSpawningConfig);
+            config = new BaseConfig(1, true, 60000, 1000, 0.45f, 0.60f, 0.8f, 50, 0.65f, 2, 4, 20, citizenSpawningConfig, policeSpawningConfig);
             save();
             GtwNpcMod.log.info("Config file created at " + configFile.getAbsolutePath());
         }
@@ -60,7 +65,9 @@ public class GtwNpcsConfig {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class BaseConfig {
+        private int version;
         private boolean enableSpawning;
+        private int idleTimeDespawn = 60000;
         private int maxNpcs;
         private float minNpcMoveSpeed;
         private float maxNpcMoveSpeed;

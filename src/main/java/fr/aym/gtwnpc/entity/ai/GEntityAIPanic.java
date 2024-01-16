@@ -49,11 +49,11 @@ public class GEntityAIPanic extends EntityAIBase
                 exec = this.findRandomPosition();
         }
         if(exec && previousState == null) {
-            System.out.println("Panic");
+            //System.out.println("Panic");
             previousState = creature.getState();
             creature.setState("panic");
         } else if(!exec && previousState != null) {
-            System.out.println("Stop panic");
+            //System.out.println("Stop panic");
             creature.setState(previousState);
             previousState = null;
         }

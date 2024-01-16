@@ -124,6 +124,11 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
     }
 
     @Override
+    protected boolean canDespawn() {
+        return GtwNpcsConfig.config.getIdleTimeDespawn() != -1 && idleTime > GtwNpcsConfig.config.getIdleTimeDespawn();
+    }
+
+    @Override
     public boolean attackEntityAsMob(Entity entityIn) {
         float f = (float) this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
         int i = 0;
