@@ -196,7 +196,7 @@ public class ShotHelper {
         Vector3f rayVec = new Vector3f(endVec.x - startVec.x, endVec.y - startVec.y, endVec.z - startVec.z);
         float len = rayVec.length();
         Vector3f normlVec = rayVec.normalise(null);
-        OBBModelBox ray = new OBBModelBox();
+        //OBBModelBox ray = new OBBModelBox();
         float pitch = (float) Math.asin(normlVec.y);
         normlVec.y = 0.0F;
         normlVec = normlVec.normalise(null);
@@ -207,7 +207,7 @@ public class ShotHelper {
         Matrix4f matrix = new Matrix4f();
         matrix.rotate(yaw, new Vector3f(0.0F, 1.0F, 0.0F));
         matrix.rotate(pitch, new Vector3f(-1.0F, 0.0F, 0.0F));
-        ray.center = new Vector3f((startVec.x + endVec.x) / 2.0D, (startVec.y + endVec.y) / 2.0D, (startVec.z + endVec.z) / 2.0D);
+        /*ray.center = new Vector3f((startVec.x + endVec.x) / 2.0D, (startVec.y + endVec.y) / 2.0D, (startVec.z + endVec.z) / 2.0D);
         ray.axis.x = new Vector3f(0.0F, 0.0F, 0.0F);
         ray.axis.y = new Vector3f(0.0F, 0.0F, 0.0F);
         ray.axis.z = Matrix4f.transform(matrix, new Vector3f(0.0F, 0.0F, len / 2.0F), null);
@@ -215,7 +215,7 @@ public class ShotHelper {
         ray.axisNormal.y = Matrix4f.transform(matrix, new Vector3f(0.0F, 1.0F, 0.0F), null);
         ray.axisNormal.z = Matrix4f.transform(matrix, new Vector3f(0.0F, 0.0F, 1.0F), null);
 
-        OBBPlayerManager.lines.add(new OBBPlayerManager.Line(ray));
+        OBBPlayerManager.lines.add(new OBBPlayerManager.Line(ray));*/
         OBBPlayerManager.lines.add(new OBBPlayerManager.Line(new Vector3f(startVec), new Vector3f(endVec)));
 
         Entity closestHitEntity = null;
