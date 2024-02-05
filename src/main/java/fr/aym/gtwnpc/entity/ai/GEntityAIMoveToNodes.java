@@ -123,6 +123,7 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
         if (!entity.getState().equals("wandering") && !entity.getState().equals("lost")) {
             return false;
         }
+        //System.out.println("IA round");
         PathNode target = path.peek();
         ////System.out.println("Intermediate dist " + target.getDistance(entity.getPositionVector()));
         if (target.getDistance(entity.getPositionVector()) < 1) {
@@ -132,15 +133,17 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
                 nodeBlacklist.clear();
             }
             path.remove();
+            //System.out.println("Go next node");
             if (path.isEmpty()) {
                 //System.out.println("22 No path left");
+                target.onReached(entity.world, entity);
                 return false;
             }
             target = path.peek();
         }
         if (entity.getNavigator().noPath() || entity.getNavigator().getPath() != null && entity.getNavigator().getPath().isFinished()) {
             ////System.out.println("Indexes " + entity.getNavigator().getPath().getCurrentPathIndex() + " on " + entity.getNavigator().getPath());
-            if (path.size() > 0) {
+            if (!path.isEmpty()) {
                 ////System.out.println("Target " + entity.getNavigator().getPath().getTarget());
                 //if(true)
                 //  return true;
@@ -184,23 +187,40 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
                 //System.out.println("Continue to " + target + " at " + x + " " + y + " " + z);
                 this.entity.getNavigator().tryMoveToXYZ(this.x, this.y, this.z, entity.getMoveSpeed());
                 if (entity.getNavigator().noPath()) {
-                    //System.out.println("Move to " + x + " " + y + " " + z + " at speed " + speed +" : " + this.entity.getNavigator().getPath() +" ist " + target.getDistance(entity.getPositionVector()));
-                    //System.out.println("No path vanilla");
-                    entity.setState("lost");
-                    if (!hasReachedStartPoint) {
-                        nodeBlacklist.add(target);
-                        //System.out.println("Blacklisted1 " + target);
+                    if (target.getDistance(entity.getPositionVector()) < 3) {
+                        //System.out.println("Intermediate almost joined ! " + target.getDistance(entity.getPositionVector()) + " " + target);
+                        if (!hasReachedStartPoint) {
+                            hasReachedStartPoint = true;
+                            nodeBlacklist.clear();
+                        }
+                        path.remove();
+                        //System.out.println("Go next node");
+                        if (path.isEmpty()) {
+                            //System.out.println("22 No path left");
+                            target.onReached(entity.world, entity);
+                            return false;
+                        }
+                    } else {
+                        //System.out.println("Move to " + x + " " + y + " " + z + " at speed " + speed +" : " + this.entity.getNavigator().getPath() +" ist " + target.getDistance(entity.getPositionVector()));
+                        //System.out.println("No path vanilla " + target.getDistance(entity.getPositionVector()) + " " + target);
+                        entity.setState("lost");
+                        if (!hasReachedStartPoint) {
+                            nodeBlacklist.add(target);
+                            //System.out.println("Blacklisted1 " + target);
+                        }
+                        return false;
                     }
-                    return false;
                 }
                 ////System.out.println("Indexes " + entity.getNavigator().getPath().getCurrentPathIndex() + " on " + entity.getNavigator().getPath());
                 return true;
             }
             //System.out.println("No path left");
+            if (target != null)
+                target.onReached(entity.world, entity);
             return false;
         }
         if (entity.getNavigator().noPath()) {
-            System.out.println("00 No path vanilla");
+            //System.out.println("00 No path vanilla");
             entity.setState("lost");
             if (!hasReachedStartPoint && target != null) {
                 nodeBlacklist.add(target);

@@ -137,7 +137,7 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
                 RouteNode nextNode = allNodes.getOrDefault(connection, new RouteNode(connection));
                 allNodes.put(connection, nextNode);
                 double newScore = next.getRouteScore() + next.getCurrent().getDistance(connection);
-                if (newScore < nextNode.getRouteScore()) {
+                if (newScore < nextNode.getRouteScore() && (nextNode.getCurrent() == end || nextNode.getCurrent().isIntermediateNode())) {
                     nextNode.setPrevious(next.getCurrent());
                     nextNode.setRouteScore(newScore);
                     nextNode.setEstimatedScore(newScore + connection.getDistance(end));

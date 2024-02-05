@@ -3,10 +3,12 @@ package fr.aym.gtwnpc.path;
 import fr.aym.acslib.utils.nbtserializer.ISerializable;
 import fr.aym.acslib.utils.packetserializer.ISerializablePacket;
 import fr.aym.gtwnpc.GtwNpcMod;
+import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
 import lombok.Getter;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 
 import javax.vecmath.Vector3f;
 import java.util.*;
@@ -14,11 +16,11 @@ import java.util.stream.Collectors;
 
 public class PathNode implements ISerializable, ISerializablePacket {
     @Getter
-    private UUID id;
+    protected UUID id;
     @Getter
-    private Vector3f position;
-    private List<PathNode> neighbors;
-    private List<UUID> neighborsIds;
+    protected Vector3f position;
+    protected List<PathNode> neighbors;
+    protected List<UUID> neighborsIds;
 
     public PathNode() {
     }
@@ -152,5 +154,13 @@ public class PathNode implements ISerializable, ISerializablePacket {
 
     public double getDistance(Vector3f position) {
         return Math.sqrt(Math.pow(position.x - this.position.x, 2) + Math.pow(position.y - this.position.y, 2) + Math.pow(position.z - this.position.z, 2));
+    }
+
+    public boolean isIntermediateNode() {
+        return true;
+    }
+
+    public boolean onReached(World world, EntityGtwNpc npc) {
+        return true;
     }
 }

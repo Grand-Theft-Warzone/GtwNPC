@@ -4,6 +4,7 @@ import fr.aym.gtwnpc.common.GtwNpcsItems;
 import fr.aym.gtwnpc.entity.ai.GEntityAIMoveToNodes;
 import fr.aym.gtwnpc.path.PathNode;
 import fr.aym.gtwnpc.path.PedestrianPathNodes;
+import fr.aym.gtwnpc.path.SeatNode;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.aym.gtwnpc.utils.GtwNpcsUtils;
 import net.minecraft.client.Minecraft;
@@ -94,6 +95,8 @@ public class NodesRenderer {
                 } else if (node == pointedNode) {
                     color = state == 1 ? NodeColor.POINTED_LINKING : state == -1 ? NodeColor.POINTED_UNLINKING : NodeColor.POINTED;
                     color.apply();
+                } else if (node instanceof SeatNode) {
+                    NodeColor.IDLE_SEAT.apply();
                 } else {
                     NodeColor.IDLE.apply();
                 }
@@ -124,6 +127,7 @@ public class NodesRenderer {
 
     public enum NodeColor {
         IDLE(1, 1, 1, 0.5f),
+        IDLE_SEAT(1, 0.8f, 0.8f, 0.5f),
         POINTED(0f, 0.3f, 1, 0.7f),
         POINTED_LINKING(0, 1, 0, 0.7f),
         POINTED_UNLINKING(1, 0, 0, 0.7f),

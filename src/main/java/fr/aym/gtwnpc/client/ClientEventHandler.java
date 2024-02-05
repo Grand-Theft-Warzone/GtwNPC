@@ -1,12 +1,15 @@
 package fr.aym.gtwnpc.client;
 
+import com.mia.props.common.entities.TileMountable;
 import fr.aym.gtwnpc.client.render.NodesRenderer;
 import fr.aym.gtwnpc.common.GtwNpcsItems;
 import fr.aym.gtwnpc.path.PathNode;
 import fr.aym.gtwnpc.path.PedestrianPathNodes;
+import fr.aym.gtwnpc.path.SeatNode;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.aym.gtwnpc.utils.GtwNpcsUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -55,9 +58,15 @@ public class ClientEventHandler {
             } else if (MC.player.isSneaking() && event.getButton() == 1 && event.isButtonstate()) {
                 event.setCanceled(true);
                 RayTraceResult result = MC.objectMouseOver;
-                if (result == null)
+                if (result == null || result.typeOfHit != RayTraceResult.Type.BLOCK)
                     return;
-                PathNode node = new PathNode(new Vector3f((float) result.hitVec.x, (float) result.hitVec.y + 0.5f, (float) result.hitVec.z), new ArrayList<>());
+                PathNode node;
+                TileEntity te = MC.world.getTileEntity(result.getBlockPos());
+                if (te instanceof TileMountable) {
+                    node = new SeatNode(new Vector3f((float) result.hitVec.x, (float) result.hitVec.y + 0.5f, (float) result.hitVec.z), new ArrayList<>(), result.getBlockPos(), MC.player.rotationYaw);
+                } else {
+                    node = new PathNode(new Vector3f((float) result.hitVec.x, (float) result.hitVec.y + 0.5f, (float) result.hitVec.z), new ArrayList<>());
+                }
                 node.create(PedestrianPathNodes.getInstance(), true);
             }
         }

@@ -182,9 +182,21 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
             followPlayerAI.setOwner(null); //Reset entity to follow
     }
 
+    @Override
+    public void dismountEntity(Entity entityIn) {
+        super.dismountEntity(entityIn);
+        if(getState().equals("sitting"))
+            setState("wandering");
+    }
+
     public void setState(String state) {
         //System.out.println("Set state to " + state);
-        dataManager.set(STATE, state);
+        if (getState().equals("sitting") && !state.equals("sitting")) {
+            dataManager.set(STATE, state);
+            dismountRidingEntity();
+        } else {
+            dataManager.set(STATE, state);
+        }
         if (!state.equals("following"))
             setEntityToFollow(null);
     }
@@ -291,6 +303,15 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
     }
 
     @Override
+    protected void updateAITasks() {
+        super.updateAITasks();
+        if(getState().equals("sitting")) {
+            if(getRidingEntity() == null || getRidingEntity().isDead || (getRidingEntity().ticksExisted > 20*60*2 && rand.nextInt(100) == 1))
+                setState("wandering");
+        }
+    }
+
+    @Override
     public void writeEntityToNBT(NBTTagCompound compound) {
         super.writeEntityToNBT(compound);
         compound.setString("skin", getSkin());
@@ -336,13 +357,11 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
         ShotHelper.fireServer(this, pitch, yaw, world, held, (ItemGun) held.getItem());
     }
 
-    public boolean isSwingingArms()
-    {
+    public boolean isSwingingArms() {
         return this.dataManager.get(SWINGING_ARMS).booleanValue();
     }
 
-    public void setSwingingArms(boolean swingingArms)
-    {
+    public void setSwingingArms(boolean swingingArms) {
         this.dataManager.set(SWINGING_ARMS, Boolean.valueOf(swingingArms));
     }
 

@@ -23,7 +23,7 @@ public class GEntityAIPoliceTarget extends EntityAINearestAttackableTarget<Entit
         if (npc.getNpcType() != SkinRepository.NpcType.POLICE)
             return false;
         boolean b = super.shouldExecute();
-        if (b && npc.getState().equals("wandering")) {
+        if (b && (npc.getState().equals("wandering") || npc.getState().equals("sitting"))) {
             npc.setState("tracking_wanted");
         } else if (!b && npc.getState().equals("tracking_wanted")) {
             npc.setState("wandering");

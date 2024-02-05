@@ -7,13 +7,13 @@ on gtw entity init:
     #print {state}
     if "type" of npc entity is "police":
         set "move_speed" of npc entity to 0.6
-        set held item of npc entity to modularwarfare:prototype.fnx45
+        set held item of npc entity to "modularwarfare:prototype.fnx45"
         set "attack_speed" of npc entity to 0.6
-        #set held item of npc entity to modularwarfare:prototype.hk416
-        set head item of npc entity to minecraft:iron_helmet
-        set chest item of npc entity to minecraft:iron_chestplate
-        set legs item of npc entity to minecraft:iron_leggings
-        set feet item of npc entity to minecraft:iron_boots
+        #set held item of npc entity to "modularwarfare:prototype.hk416"
+        set head item of npc entity to "minecraft:iron_helmet"
+        set chest item of npc entity to "minecraft:iron_chestplate"
+        set legs item of npc entity to "minecraft:iron_leggings"
+        set feet item of npc entity to "minecraft:iron_boots"
     else:
         set "move_speed" of npc entity to random number between 0.48 and 0.62
 
