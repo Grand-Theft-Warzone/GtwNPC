@@ -1,23 +1,39 @@
 package fr.aym.gtwnpc.client;
 
 import com.mia.props.common.entities.TileMountable;
+import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.client.render.NodesRenderer;
 import fr.aym.gtwnpc.common.GtwNpcsItems;
-import fr.aym.gtwnpc.path.PathNode;
-import fr.aym.gtwnpc.path.PedestrianPathNodes;
-import fr.aym.gtwnpc.path.SeatNode;
+import fr.aym.gtwnpc.dynamx.AutopilotModule;
+import fr.aym.gtwnpc.dynamx.ObstacleDetection;
+import fr.aym.gtwnpc.item.ItemNodes;
+import fr.aym.gtwnpc.network.CSMessageSetNodeMode;
+import fr.aym.gtwnpc.path.*;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.aym.gtwnpc.utils.GtwNpcsUtils;
+import fr.dynamx.api.events.PhysicsEntityEvent;
+import fr.dynamx.client.renders.RenderPhysicsEntity;
+import fr.dynamx.client.renders.vehicle.RenderBaseVehicle;
+import fr.dynamx.common.entities.BaseVehicleEntity;
+import fr.dynamx.common.physics.entities.BaseVehiclePhysicsHandler;
+import fr.dynamx.utils.debug.renderer.DebugRenderer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.RenderGlobal;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
+import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.GL11;
 
 import javax.vecmath.Vector3f;
 import java.util.ArrayList;
+import java.util.List;
 
 @Mod.EventBusSubscriber(modid = GtwNpcConstants.ID, value = Side.CLIENT)
 public class ClientEventHandler {
@@ -26,16 +42,21 @@ public class ClientEventHandler {
     @SubscribeEvent
     public static void onMouseClick(MouseEvent event) {
         if (MC.player != null && MC.player.getHeldItemMainhand().getItem() == GtwNpcsItems.itemNodes) {
-            PathNode pointedNode = GtwNpcsUtils.rayTracePathNode(MC.player, 0);
+            ItemStack stack = MC.player.getHeldItemMainhand();
+            PathNodesManager manager = PedestrianPathNodes.getInstance();
+            if (stack.hasTagCompound() && stack.getTagCompound().getInteger("mode") == 1) {
+                manager = CarPathNodes.getInstance();
+            }
+            PathNode pointedNode = GtwNpcsUtils.rayTracePathNode(manager, MC.player, 0);
             if (pointedNode != null) {
                 event.setCanceled(true);
                 if (event.getButton() == 0) {
                     if (event.isButtonstate()) {
                         if (NodesRenderer.selectedNode != null && NodesRenderer.selectedNode != pointedNode && !MC.player.isSneaking()) {
-                            if (NodesRenderer.selectedNode.getNeighbors(PedestrianPathNodes.getInstance()).contains(pointedNode))
-                                NodesRenderer.selectedNode.removeNeighbor(PedestrianPathNodes.getInstance(), pointedNode, true);
+                            if (NodesRenderer.selectedNode.getNeighbors(manager).contains(pointedNode))
+                                NodesRenderer.selectedNode.removeNeighbor(manager, pointedNode, true);
                         } else if (MC.player.isSneaking()) {
-                            pointedNode.delete(PedestrianPathNodes.getInstance(), true);
+                            pointedNode.delete(manager, true);
                             if (NodesRenderer.selectedNode == pointedNode)
                                 NodesRenderer.selectedNode = null;
                         }
@@ -43,8 +64,8 @@ public class ClientEventHandler {
                 } else if (event.getButton() == 1) {
                     if (event.isButtonstate()) {
                         if (NodesRenderer.selectedNode != null && NodesRenderer.selectedNode != pointedNode && !MC.player.isSneaking()) {
-                            if (!NodesRenderer.selectedNode.getNeighbors(PedestrianPathNodes.getInstance()).contains(pointedNode)) {
-                                NodesRenderer.selectedNode.addNeighbor(PedestrianPathNodes.getInstance(), pointedNode, true);
+                            if (!NodesRenderer.selectedNode.getNeighbors(manager).contains(pointedNode)) {
+                                NodesRenderer.selectedNode.addNeighbor(manager, pointedNode, true);
                                 NodesRenderer.selectedNode = pointedNode; //chaining
                             }
                         } else if (MC.player.isSneaking()) {
@@ -67,8 +88,124 @@ public class ClientEventHandler {
                 } else {
                     node = new PathNode(new Vector3f((float) result.hitVec.x, (float) result.hitVec.y + 0.5f, (float) result.hitVec.z), new ArrayList<>());
                 }
-                node.create(PedestrianPathNodes.getInstance(), true);
+                node.create(manager, true);
             }
         }
     }
+
+    @SubscribeEvent
+    public static void onMouseEvent(MouseEvent event) {
+        if (MC.player != null && MC.player.isSneaking() && MC.player.getHeldItemMainhand().getItem() instanceof ItemNodes && Mouse.getEventDWheel() != 0) {
+            GtwNpcMod.network.sendToServer(new CSMessageSetNodeMode(-15815));
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void initRenderer(PhysicsEntityEvent.InitRenderer event) {
+        if (event.getRenderer() instanceof RenderBaseVehicle) {
+            System.out.println("Adding debug renderers");
+            event.addDebugRenderers(new DebugRenderer<BaseVehicleEntity<?>>() {
+                @Override
+                public boolean shouldRender(BaseVehicleEntity<?> physicsEntity) {
+                    return physicsEntity.hasModuleOfType(AutopilotModule.class);
+                }
+
+                @Override
+                public void render(BaseVehicleEntity<?> entity, RenderPhysicsEntity<BaseVehicleEntity<?>> renderPhysicsEntity, double x, double y, double z, float partialTicks) {
+                    GlStateManager.pushMatrix();
+                    x = entity.prevPosX + (entity.posX - entity.prevPosX) * partialTicks;
+                    y = entity.prevPosY + (entity.posY - entity.prevPosY) * partialTicks;
+                    z = entity.prevPosZ + (entity.posZ - entity.prevPosZ) * partialTicks;
+                    GlStateManager.translate(-x, -y, -z);
+
+                    ObstacleDetection detection = entity.getModuleByType(AutopilotModule.class).getObstacleDetection();
+                    float mySpeed = entity.getPhysicsHandler() != null && entity.ticksExisted > 10 ? entity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
+                    int rayDistance = mySpeed > 35 ? 14 : mySpeed > 20 ? 9 : mySpeed > 5 ? 7 : 5;
+
+                    AxisAlignedBB front = detection.getDetectionAABB(rayDistance);
+                    RenderGlobal.drawSelectionBoundingBox(front, 0, 1, 0, 1);
+
+                    List<com.jme3.math.Vector3f> rayVecs = detection.createRayVectors(rayDistance);
+                    for (com.jme3.math.Vector3f vec : rayVecs) {
+                        GlStateManager.glBegin(GL11.GL_LINES);
+                        GlStateManager.color(1, 0, 0, 1);
+                        GlStateManager.glVertex3f((float) entity.posX, (float) entity.posY, (float) entity.posZ);
+                        GlStateManager.glVertex3f(vec.x, vec.y, vec.z);
+                        GlStateManager.glEnd();
+                    }
+
+                    if(detection.lastVehicleHit != null) {
+                        RenderGlobal.drawBoundingBox(detection.lastVehicleHit.x - 0.05f, detection.lastVehicleHit.y - 0.05f, detection.lastVehicleHit.z - 0.05f,
+                                detection.lastVehicleHit.x + 0.05f, detection.lastVehicleHit.y + 0.05f, detection.lastVehicleHit.z + 0.05f,
+                                1, 1, 0, 1);
+                    }
+
+                    if(detection.lastEntityHit != null) {
+                        RenderGlobal.drawBoundingBox(detection.lastEntityHit.x - 0.05f, detection.lastEntityHit.y - 0.05f, detection.lastEntityHit.z - 0.05f,
+                                detection.lastEntityHit.x + 0.05f, detection.lastEntityHit.y + 0.05f, detection.lastEntityHit.z + 0.05f,
+                                1, 0, 1, 1);
+                    }
+
+                    GlStateManager.popMatrix();
+                }
+
+                @Override
+                public boolean hasEntityRotation(BaseVehicleEntity<?> entity) {
+                    return false;
+                }
+            });
+        }
+    }
+
+
+    /*@SubscribeEvent
+    public static void sceneBuilding(DynamXEntityRenderEvents.BuildSceneGraph event) {
+        System.out.println("Building scene graph " + event.getPackInfo());
+        ((SceneBuilder) event.getSceneBuilder()).addNode(event.getPackInfo(), new IDrawablePart<BaseVehicleEntity<?>, IModelPackObject>() {
+            @Override
+            public SceneGraph<BaseVehicleEntity<?>, IModelPackObject> createSceneGraph(com.jme3.math.Vector3f vector3f, List<SceneGraph<BaseVehicleEntity<?>, IModelPackObject>> list) {
+                return new SceneGraph.Node<BaseVehicleEntity<?>, IModelPackObject>(null, null, event.getModelScale(), null) {
+                    @Override
+                    public void render(@Nullable BaseVehicleEntity<?> baseVehicleEntity, EntityRenderContext entityRenderContext, IModelPackObject iModelPackObject) {
+                        System.out.println("Rendering the noode " + baseVehicleEntity);
+                    }
+
+                    @Override
+                    public void renderDebug(@Nullable BaseVehicleEntity<?> entity, EntityRenderContext context, IModelPackObject packInfo) {
+                        GlStateManager.pushMatrix();
+                        double x = entity.prevPosX + (entity.posX - entity.prevPosX) * context.getPartialTicks();
+                        double y = entity.prevPosY + (entity.posY - entity.prevPosY) * context.getPartialTicks();
+                        double z = entity.prevPosZ + (entity.posZ - entity.prevPosZ) * context.getPartialTicks();
+                        GlStateManager.translate(-x, -y, -z);
+
+                        float mySpeed = entity.getPhysicsHandler() != null && entity.ticksExisted > 10 ? entity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
+                        boolean checkFar = mySpeed > 30;
+                        AxisAlignedBB front = new AxisAlignedBB(entity.getPositionVector().add(entity.getLookVec().scale(4)), entity.getPositionVector().add(entity.getLookVec().scale(checkFar ? 15 : 7))).grow(4);
+                        com.jme3.math.Vector3f right = entity.physicsRotation.mult(com.jme3.math.Vector3f.UNIT_X, Vector3fPool.get()).multLocal(-4);
+                        front = front.expand((float) right.x, (float) right.y, (float) right.z);
+                        Vec3d center = front.getCenter();
+                        Matrix3f rot = entity.physicsRotation.toRotationMatrix();
+                        org.joml.Matrix3f jomlRot = new org.joml.Matrix3f(rot.get(0, 0), rot.get(0, 1), rot.get(0, 2), rot.get(1, 0), rot.get(1, 1), rot.get(1, 2), rot.get(2, 0), rot.get(2, 1), rot.get(2, 2));
+                        OOBB oobb = new OOBB(new org.joml.Vector3f((float) center.x, (float) center.y, (float) center.z + 1 + (checkFar ? 5 : 0)), new org.joml.Vector3f(4, 1, checkFar ? 10 : 4), jomlRot);
+
+                        RenderGlobal.drawSelectionBoundingBox(front, 1, 0, 0, 1);
+                        RenderGlobal.drawSelectionBoundingBox(oobb.toAABB(), 0, 0, 1, 1);
+
+                        GlStateManager.popMatrix();
+                    }
+                };
+            }
+
+            @Override
+            public String getNodeName() {
+                return "obstacle_debug";
+            }
+
+            @Override
+            public String getObjectName() {
+                return null;
+            }
+        });
+    }*/
 }

@@ -1,8 +1,8 @@
 package fr.aym.gtwnpc.entity.ai;
 
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
+import fr.aym.gtwnpc.path.CarPathNodes;
 import fr.aym.gtwnpc.path.PathNode;
-import fr.aym.gtwnpc.path.PedestrianPathNodes;
 import net.minecraft.entity.ai.EntityAIBase;
 
 import javax.vecmath.Vector3f;
@@ -46,20 +46,20 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
 
         this.path.clear();
         //TODO MIN MAX VALUES TO SET
-        PathNode target = PedestrianPathNodes.getInstance().selectRandomPathNode(entity.getPositionVector(), 20, 3000);
+        PathNode target = CarPathNodes.getInstance().selectRandomPathNode(entity.getPositionVector(), 20, 3000);
         BIG_TARGET = target;
         if (target == null) {
             //System.out.println("No target");
             entity.setState("lost_no_target");
             return false;
         }
-        PathNode start = PedestrianPathNodes.getInstance().findNearestNode(entity.getPositionVector(), nodeBlacklist);
+        PathNode start = CarPathNodes.getInstance().findNearestNode(entity.getPositionVector(), nodeBlacklist);
         if (start == null) {
             //System.out.println("No start");
             entity.setState("lost_no_start");
             return false;
         }
-        Queue<PathNode> path = PedestrianPathNodes.getInstance().createPathToNode(start, target);
+        Queue<PathNode> path = CarPathNodes.getInstance().createPathToNode(start, target);
         if (path == null) {
             //System.out.println("No path to " + target);
             return false;

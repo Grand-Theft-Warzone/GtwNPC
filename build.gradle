@@ -59,13 +59,17 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
     implementation ("net.minecraftforge:mergetool:0.2.3.3") { force = true }
 
-    implementation "fr.aym:ACsLib:1.2.12"
+    //implementation "fr.aym:ACsLib:1.2.12"
     implementation ":Sqript+v1.3.2:deobf"
     implementation ":modularwarfare-2.4.2f:deobf"
     implementation ":Decocraft-2.6.3.7_1.12.2:deobf"
     implementation ":PTRLib-1.0.5:deobf"
     implementation ":Furenikus_Roads-1.2.5:deobf"
     compileOnly 'org.projectlombok:lombok:1.18.24'
+    implementation ":ACsGuis:1.2.12-all"
+    implementation ":DynamX:4.1.0-dev16-bt-all"
+
+    implementation 'org.joml:joml:1.10.5'
 
     //shadow fileTree(dir: 'libs', include: '*.jar')
     //c dans DynamX donc c bon shadow "fr.aym:ACsLib:1.2.12"

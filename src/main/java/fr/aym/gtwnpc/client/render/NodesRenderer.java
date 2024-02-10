@@ -2,14 +2,14 @@ package fr.aym.gtwnpc.client.render;
 
 import fr.aym.gtwnpc.common.GtwNpcsItems;
 import fr.aym.gtwnpc.entity.ai.GEntityAIMoveToNodes;
-import fr.aym.gtwnpc.path.PathNode;
-import fr.aym.gtwnpc.path.PedestrianPathNodes;
-import fr.aym.gtwnpc.path.SeatNode;
+import fr.aym.gtwnpc.path.*;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.aym.gtwnpc.utils.GtwNpcsUtils;
+import fr.dynamx.client.renders.mesh.shapes.ArrowMesh;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -28,14 +28,21 @@ import java.util.UUID;
 public class NodesRenderer {
     public static final Minecraft MC = Minecraft.getMinecraft();
 
+    public static ArrowMesh arrowMesh;
+
     public static PathNode selectedNode;
 
     @SubscribeEvent
     public static void renderWorldLast(RenderWorldLastEvent event) {
         if (MC.player != null && MC.player.getHeldItemMainhand().getItem() == GtwNpcsItems.itemNodes) {
             Entity e = MC.getRenderViewEntity();
-            Collection<PathNode> nodes = PedestrianPathNodes.getInstance().getNodes();
-            PathNode pointedNode = GtwNpcsUtils.rayTracePathNode(MC.player, event.getPartialTicks());
+            ItemStack stack = MC.player.getHeldItemMainhand();
+            PathNodesManager manager = PedestrianPathNodes.getInstance();
+            if (stack.hasTagCompound() && stack.getTagCompound().getInteger("mode") == 1) {
+                manager = CarPathNodes.getInstance();
+            }
+            Collection<PathNode> nodes = manager.getNodes();
+            PathNode pointedNode = GtwNpcsUtils.rayTracePathNode(manager, MC.player, event.getPartialTicks());
             //GlStateManager.disableDepth();
             GlStateManager.pushMatrix();
             GlStateManager.disableTexture2D();
@@ -47,7 +54,7 @@ public class NodesRenderer {
             NodeColor color;
             byte state = 0;
             if (selectedNode != null && pointedNode != null) {
-                if (selectedNode.getNeighbors(PedestrianPathNodes.getInstance()).contains(pointedNode))
+                if (selectedNode.getNeighbors(manager).contains(pointedNode))
                     state = -1;
                 else
                     state = 1;
@@ -58,8 +65,8 @@ public class NodesRenderer {
                     continue;
                 GlStateManager.pushMatrix();
                 // render lines to next nodes
-                for (PathNode neighbor : node.getNeighbors(PedestrianPathNodes.getInstance())) {
-                    if (!renderedNodes.contains(neighbor.getId())) {
+                for (PathNode neighbor : node.getNeighbors(manager)) {
+                    if (!renderedNodes.contains(neighbor.getId()) || manager.getNodeType().areOneWayNodes()) {
                         Vector3f neighborCenter = neighbor.getPosition();
                         if ((node == selectedNode && neighbor == pointedNode) || (node == pointedNode && neighbor == selectedNode)) {
                             color = state == 1 ? NodeColor.LINK_LINKING : NodeColor.LINK_POINTED;
@@ -73,6 +80,33 @@ public class NodesRenderer {
                         GlStateManager.glVertex3f(center.x, center.y, center.z);
                         GlStateManager.glVertex3f(neighborCenter.x, neighborCenter.y, neighborCenter.z);
                         GlStateManager.glEnd();
+                        if(manager.getNodeType().areOneWayNodes()) {
+                            //if(arrowMesh == null)
+                                arrowMesh = new ArrowMesh(0.6F, 0.46F, 0.11F);
+                            GlStateManager.pushMatrix();
+                            GlStateManager.glLineWidth(14);
+                            GlStateManager.translate(center.x, center.y, center.z);
+                            // horizontal rotation
+                            GlStateManager.rotate((float) -Math.toDegrees(Math.atan2(neighborCenter.z - center.z, neighborCenter.x - center.x)) + 90, 0, 1, 0);
+                            // vertical rotation
+                            GlStateManager.rotate((float) -Math.toDegrees(Math.atan2(neighborCenter.y - center.y, Math.sqrt((neighborCenter.x - center.x) * (neighborCenter.x - center.x) + (neighborCenter.z - center.z) * (neighborCenter.z - center.z)))), 1, 0, 0);
+                            GlStateManager.translate(0, 0, 1);
+                            GlStateManager.scale(2, 2, 2);
+                            GlStateManager.color(0, 1, 0, 1);
+                            arrowMesh.render();
+                            GlStateManager.scale(0.5, 0.5, 0.5);
+                            double dist = node.getDistance(neighbor) - 2;
+                            if(dist > 0) {
+                                //System.out.println(System.currentTimeMillis() +" " + System.currentTimeMillis() % 1000f);
+                                float anim = (float) (((System.currentTimeMillis() % 10000d) / 10000d) * dist);
+                                GlStateManager.translate(0, 0, anim);
+                                GlStateManager.scale(2, 2, 2);
+                                GlStateManager.color(0.5f, 0, 0.5f, 1);
+                                arrowMesh.render();
+                            }
+                            GlStateManager.popMatrix();
+                            GlStateManager.glLineWidth(1.0F);
+                        }
                     }
                 }
                 if (node == selectedNode) {

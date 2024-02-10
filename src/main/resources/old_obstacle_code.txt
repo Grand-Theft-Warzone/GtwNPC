@@ -1,0 +1,204 @@
+protected void avoidOtherVehicle(BaseVehicleEntity<?> other, OOBB oobb) {
+        //com.jme3.math.Vector3f myVel = entity.getPhysicsHandler().getLinearVelocity();
+        //com.jme3.math.Vector3f otherVel = other.getPhysicsHandler().getLinearVelocity();
+        Quaternion myRot = entity.physicsRotation;
+        Quaternion otherRot = other.physicsRotation;
+        // check if the vehicles are going in the same direction
+        com.jme3.math.Vector3f myDir = myRot.mult(com.jme3.math.Vector3f.UNIT_Z, Vector3fPool.get());
+        com.jme3.math.Vector3f otherDir = otherRot.mult(com.jme3.math.Vector3f.UNIT_Z, Vector3fPool.get());
+
+        float otherSpeed = other.getPhysicsHandler() != null && other.ticksExisted > 10 ? other.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
+        int checkFar1 = otherSpeed > 35 ? 10 : otherSpeed > 20 ? 8 : otherSpeed > 5 ? 6 : 4;
+        int checkFar2 = otherSpeed > 35 ? 14 : otherSpeed > 20 ? 9 : otherSpeed > 5 ? 7 : 5;
+        AxisAlignedBB otherFront = new AxisAlignedBB(other.getPositionVector().add(other.getLookVec().scale(4)), other.getPositionVector().add(other.getLookVec().scale(checkFar2))).grow(5);
+        com.jme3.math.Vector3f right = other.physicsRotation.mult(com.jme3.math.Vector3f.UNIT_X, Vector3fPool.get()).multLocal(-3.5f);
+        otherFront = otherFront.expand(right.x, right.y, right.z);
+        Vec3d center = otherFront.getCenter();
+        Matrix3f rot = other.physicsRotation.toRotationMatrix();
+        org.joml.Matrix3f jomlRot = new org.joml.Matrix3f(rot.get(0, 0), rot.get(0, 1), rot.get(0, 2), rot.get(1, 0), rot.get(1, 1), rot.get(1, 2), rot.get(2, 0), rot.get(2, 1), rot.get(2, 2));
+
+        com.jme3.math.Vector3f voucher = other.physicsPosition.subtract((float) center.x, (float) center.y, (float) center.z).multLocal(-1);
+        float steerAngle = other.getPhysicsHandler() != null ? other.getPhysicsHandler().getWheels().getWheel(0).getSteeringAngle() / 2.5f : 0;
+        com.jme3.math.Quaternion quat = new com.jme3.math.Quaternion().fromAngles(0, steerAngle, 0);
+        voucher = quat.mult(voucher, Vector3fPool.get());
+        com.jme3.math.Vector3f adj = other.physicsRotation.mult(com.jme3.math.Vector3f.UNIT_Z, Vector3fPool.get()).multLocal(2);
+        adj.addLocal(voucher);
+        OOBB otherOobb = new OOBB(new org.joml.Vector3f(other.physicsPosition.x + adj.x, other.physicsPosition.y + adj.y, other.physicsPosition.z + adj.z), new org.joml.Vector3f(3.5f, 1, checkFar1), jomlRot);
+
+        System.out.println("Has collision: " + oobb.collidesWithOOBB(otherOobb) + " " + oobb.collidesWithAABB(other.getEntityBoundingBox()));
+
+        float mySpeed = entity.getPhysicsHandler() != null && entity.ticksExisted > 10 ? entity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
+        if (oobb.collidesWithOOBB(otherOobb)) {
+            if (otherOobb.collidesWithAABB(entity.getEntityBoundingBox()) && otherSpeed < 0.1f) {
+                System.out.println("Other is blocked... solving issue " + getControls() + " " + navigationTarget + " " + cooldown);
+                return;
+            }
+            System.out.println("Collision detected in route");
+            // brake
+           /* int controls = getControls();
+            if (mySpeed > 0.5f)
+                controls |= 4; // braking
+            else
+                controls |= 32; // handbrake
+            controls &= ~2; // no acceleration
+            setControls(controls);
+            return;*/
+            if (otherSpeed < 30 && mySpeed < 30 && (otherSpeed < 1f || (!otherOobb.collidesWithAABB(entity.getEntityBoundingBox()) && !oobb.collidesWithAABB(other.getEntityBoundingBox())))) {
+                System.out.println("Other is stopped... solving issue " + getControls() + " " + navigationTarget + " " + cooldown);
+                //Determine who is at the right
+                float yawDiff = entity.rotationYaw - other.rotationYaw;
+                if (yawDiff < 0) {
+                    //I'm at the right
+                    return;
+                }
+            }
+        } else if (!oobb.collidesWithAABB(other.getEntityBoundingBox())) {
+            System.out.println("No collision detected");
+            return;
+        }
+
+        float dot = myDir.dot(otherDir);
+        if (dot > 0.5f && entity.physicsPosition.subtract(other.physicsPosition).length() > 8) { // 60 degrees
+            // check if the vehicles are too close
+            /*com.jme3.math.Vector3f myPos = entity.physicsPosition;
+            com.jme3.math.Vector3f otherPos = other.physicsPosition;
+            com.jme3.math.Vector3f diff = otherPos.subtract(myPos);
+            float dist = diff.length();
+            if (dist < 10) {
+                // check if the vehicles are going to collide
+                com.jme3.math.Vector3f relVel = otherVel.subtract(myVel);
+                float relSpeed = relVel.length();
+                System.out.println("Vehicles too close at " + relSpeed);
+                if (relSpeed > 10) {
+                    // brake
+                    int controls = getControls();
+                    controls |= 4; // braking
+                    controls &= ~2; // no acceleration
+                    setControls(controls);
+                }
+            }*/
+            System.out.println("Vehicles going in the same direction");
+            if (entity.getPhysicsHandler() != null && other.getPhysicsHandler() != null && other.isAddedToWorld() && entity.isAddedToWorld() && other.ticksExisted > 10 && entity.ticksExisted > 10) {
+                //float mySpeed = entity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH);
+                //float otherSpeed = other.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH);
+                if (mySpeed < 0.5f) {
+                    System.out.println("Stopped " + getControls() + " " + getSpeedLimit() + " " + state + " " + navigationTarget + " " + cooldown);
+                    return;
+                }
+                if (mySpeed >= otherSpeed + 4) {
+                    System.out.println("Braking");
+                    // brake
+                    int controls = getControls();
+                    if (mySpeed > 0.5f)
+                        controls |= 4; // braking
+                    else
+                        controls |= 32; // handbrake
+                    controls &= ~2; // no acceleration
+                    setControls(controls);
+                }
+                if (mySpeed >= (otherSpeed - 1)) {
+                    System.out.println("Slowing down");
+                    setSpeedLimit(otherSpeed - 1);
+                }
+            }
+        } else {
+            if (otherSpeed < 0.1f&& entity.physicsPosition.subtract(other.physicsPosition).length() > 6 && mySpeed < 5) {
+                System.out.println("Other is stopped... solving issue " + getControls() + " " + navigationTarget + " " + cooldown);
+                //Determine who is at the right
+                float yawDiff = entity.rotationYaw - other.rotationYaw;
+                if (yawDiff < 0) {
+                    //I'm at the right
+                    return;
+                }
+            }
+            System.out.println("Vehicles not going in the same direction");
+            // brake
+            int controls = getControls();
+            if (mySpeed > 0.5f)
+                controls |= 4; // braking
+            else
+                controls |= 32; // handbrake
+            controls &= ~2; // no acceleration
+            setControls(controls);
+        }
+    }
+
+    protected void detectObstacles() {
+        float mySpeed = entity.getPhysicsHandler() != null && entity.ticksExisted > 10 ? entity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
+        int checkFar1 = mySpeed > 35 ? 10 : mySpeed > 20 ? 8 : mySpeed > 5 ? 6 : 4;
+        int checkFar2 = mySpeed > 35 ? 14 : mySpeed > 20 ? 9 : mySpeed > 5 ? 7 : 5;
+        AxisAlignedBB front = new AxisAlignedBB(entity.getPositionVector().add(entity.getLookVec().scale(4)), entity.getPositionVector().add(entity.getLookVec().scale(checkFar2))).grow(5);
+        com.jme3.math.Vector3f right = entity.physicsRotation.mult(com.jme3.math.Vector3f.UNIT_X, Vector3fPool.get()).multLocal(-3.5f);
+        front = front.expand(right.x, right.y, right.z);
+        Vec3d center = front.getCenter();
+        Matrix3f rot = entity.physicsRotation.toRotationMatrix();
+        org.joml.Matrix3f jomlRot = new org.joml.Matrix3f(rot.get(0, 0), rot.get(0, 1), rot.get(0, 2), rot.get(1, 0), rot.get(1, 1), rot.get(1, 2), rot.get(2, 0), rot.get(2, 1), rot.get(2, 2));
+
+        com.jme3.math.Vector3f voucher = entity.physicsPosition.subtract((float) center.x, (float) center.y, (float) center.z).multLocal(-1);
+        float steerAngle = entity.getPhysicsHandler() != null ? ((BaseVehiclePhysicsHandler<?>) entity.getPhysicsHandler()).getWheels().getWheel(0).getSteeringAngle() / 3f : 0;
+        com.jme3.math.Quaternion quat = new com.jme3.math.Quaternion().fromAngles(0, steerAngle, 0);
+        voucher = quat.mult(voucher, Vector3fPool.get());
+        com.jme3.math.Vector3f adj = entity.physicsRotation.mult(com.jme3.math.Vector3f.UNIT_Z, Vector3fPool.get()).multLocal(2);
+        adj.addLocal(voucher);
+        OOBB oobb = new OOBB(new org.joml.Vector3f(entity.physicsPosition.x + adj.x, entity.physicsPosition.y + adj.y, entity.physicsPosition.z + adj.z), new org.joml.Vector3f(3.5f, 1, checkFar1), jomlRot);
+        // Create OOBB for the front of the vehicle
+        //front = new AxisAlignedBB(entity.getPositionVector().add(entity.getLookVec().scale(4)), entity.getPositionVector().add(entity.getLookVec().scale(7))).grow(5);
+        List<Entity> entities = entity.world.getEntitiesWithinAABBExcludingEntity(entity, front);
+        if (!entities.isEmpty()) {
+            for (Entity e : entities) {
+                if (e instanceof BaseVehicleEntity<?>) {
+                    avoidOtherVehicle((BaseVehicleEntity<?>) e, oobb);
+                } else if (e.canBeCollidedWith()) {
+                    boolean oobbCollide = oobb.collidesWithAABB(e.getEntityBoundingBox());
+                    boolean oobbPointCollide = oobb.containsPoint(new org.joml.Vector3f((float) e.posX, (float) e.posY, (float) e.posZ));
+                    System.out.println("Obstacle detected: " + e + " " + oobbCollide + " " + oobbPointCollide);
+                    if (oobbCollide) {
+                        System.out.println("Player is collided");
+                        int controls = getControls();
+                        //float mySpeed = entity.getPhysicsHandler() != null && entity.ticksExisted > 10 ? entity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
+                        if (mySpeed > 0.5f)
+                            controls |= 4; // braking
+                        else
+                            controls |= 32; // handbrake
+                        controls &= ~2; // no acceleration
+                        setControls(controls);
+                    }
+                }
+            }
+        }
+    }
+
+
+    // Render:
+
+                        float mySpeed = entity.getPhysicsHandler() != null && entity.ticksExisted > 10 ? entity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
+                    int checkFar1 = mySpeed > 35 ? 10 : mySpeed > 20 ? 8 : mySpeed > 5 ? 6 : 4;
+                    int checkFar2 = mySpeed > 35 ? 14 : mySpeed > 20 ? 9 : mySpeed > 5 ? 7 : 5;
+                    AxisAlignedBB front = new AxisAlignedBB(entity.getPositionVector().add(entity.getLookVec().scale(4)), entity.getPositionVector().add(entity.getLookVec().scale(checkFar2))).grow(5);
+                    com.jme3.math.Vector3f right = entity.physicsRotation.mult(com.jme3.math.Vector3f.UNIT_X, Vector3fPool.get()).multLocal(-3.5f);
+                    front = front.expand(right.x, right.y, right.z);
+                    Vec3d center = front.getCenter();
+                    Matrix3f rot = entity.physicsRotation.toRotationMatrix();
+                    org.joml.Matrix3f jomlRot = new org.joml.Matrix3f(rot.get(0, 0), rot.get(0, 1), rot.get(0, 2), rot.get(1, 0), rot.get(1, 1), rot.get(1, 2), rot.get(2, 0), rot.get(2, 1), rot.get(2, 2));
+
+                    com.jme3.math.Vector3f voucher = entity.physicsPosition.subtract((float) center.x, (float) center.y, (float) center.z).multLocal(-1);
+                    float steerAngle = entity.getPhysicsHandler() != null ? ((BaseVehiclePhysicsHandler<?>) entity.getPhysicsHandler()).getWheels().getWheel(0).getSteeringAngle() / 3f : 0;
+                    com.jme3.math.Quaternion quat = new com.jme3.math.Quaternion().fromAngles(0, steerAngle, 0);
+                    voucher = quat.mult(voucher, Vector3fPool.get());
+                    com.jme3.math.Vector3f adj = entity.physicsRotation.mult(com.jme3.math.Vector3f.UNIT_Z, Vector3fPool.get()).multLocal(2);
+                    adj.addLocal(voucher);
+                    OOBB oobb = new OOBB(new org.joml.Vector3f(entity.physicsPosition.x + adj.x, entity.physicsPosition.y + adj.y, entity.physicsPosition.z + adj.z), new org.joml.Vector3f(3.5f, 1, checkFar1), jomlRot);
+
+                    //System.out.println("Some box is " + oobb.getCenter() + " " + oobb.getHalfExtents() +" "+ new org.joml.Vector3f(oobb.getCenter()).sub((float) entity.posX, (float) entity.posY, (float) entity.posZ));
+
+                    RenderGlobal.drawSelectionBoundingBox(front, 1, 0, 0, 1);
+                    //RenderGlobal.drawSelectionBoundingBox(oobb.toAABB(), 0, 0, 1, 1);
+                    oobb.drawOOBB(0, 0, 1, 1);
+
+                    RenderGlobal.drawBoundingBox(center.x - 0.02f, center.y - 0.02f, center.z - 0.02f, center.x + 0.02f, center.y + 0.02f, center.z + 0.02f, 0, 1, 0, 1);
+
+                    GlStateManager.glBegin(GL11.GL_LINES);
+                    GlStateManager.color(1, 0, 0, 1);
+                    GlStateManager.glVertex3f((float) entity.posX, (float) entity.posY, (float) entity.posZ);
+                    GlStateManager.glVertex3f((float) center.x, (float) center.y, (float) center.z);
+                    GlStateManager.glEnd();

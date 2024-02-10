@@ -75,10 +75,15 @@ public class PathNode implements ISerializable, ISerializablePacket {
         if (isRemote)
             GtwNpcMod.network.sendToServer(new BBMessagePathNodes(manager.getNodeType(), this));
         else {
-            if (manager.getNodeType() == NodeType.PEDESTRIAN) {
-                PedestrianPathNodes.getInstance().addNode(this);
-            } else {
-                throw new UnsupportedOperationException("Unsupported node type: " + manager.getNodeType());
+            switch (manager.getNodeType()) {
+                case PEDESTRIAN:
+                    PedestrianPathNodes.getInstance().addNode(this);
+                    break;
+                case CAR:
+                    CarPathNodes.getInstance().addNode(this);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported node type: " + manager.getNodeType());
             }
         }
     }
@@ -87,12 +92,17 @@ public class PathNode implements ISerializable, ISerializablePacket {
         if (isRemote)
             GtwNpcMod.network.sendToServer(new BBMessagePathNodes(BBMessagePathNodes.Action.REMOVE, manager.getNodeType(), Collections.singletonList(getId())));
         else {
-            if (manager.getNodeType() == NodeType.PEDESTRIAN) {
-                for (PathNode neighbor : getNeighbors(manager))
-                    neighbor.getNeighbors(manager).remove(this);
-                PedestrianPathNodes.getInstance().removeNode(this);
-            } else {
-                throw new UnsupportedOperationException("Unsupported node type: " + manager.getNodeType());
+            for (PathNode neighbor : getNeighbors(manager))
+                neighbor.getNeighbors(manager).remove(this);
+            switch (manager.getNodeType()) {
+                case PEDESTRIAN:
+                    PedestrianPathNodes.getInstance().removeNode(this);
+                    break;
+                case CAR:
+                    CarPathNodes.getInstance().removeNode(this);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported node type: " + manager.getNodeType());
             }
         }
     }
@@ -102,7 +112,8 @@ public class PathNode implements ISerializable, ISerializablePacket {
             GtwNpcMod.network.sendToServer(new BBMessagePathNodes(BBMessagePathNodes.Action.LINK_NODES, manager.getNodeType(), Arrays.asList(this.getId(), pointedNode.getId())));
         else {
             getNeighbors(manager).add(pointedNode);
-            pointedNode.getNeighbors(manager).add(this);
+            if(!manager.getNodeType().areOneWayNodes())
+                pointedNode.getNeighbors(manager).add(this);
             manager.markDirty2();
         }
     }
@@ -112,7 +123,8 @@ public class PathNode implements ISerializable, ISerializablePacket {
             GtwNpcMod.network.sendToServer(new BBMessagePathNodes(BBMessagePathNodes.Action.UNLINK_NODES, manager.getNodeType(), Arrays.asList(this.getId(), pointedNode.getId())));
         else {
             getNeighbors(manager).remove(pointedNode);
-            pointedNode.getNeighbors(manager).remove(this);
+            if(!manager.getNodeType().areOneWayNodes())
+                pointedNode.getNeighbors(manager).remove(this);
             manager.markDirty2();
         }
     }

@@ -2,6 +2,7 @@ package fr.aym.gtwnpc.utils;
 
 import fr.aym.gtwnpc.client.render.NodesRenderer;
 import fr.aym.gtwnpc.path.PathNode;
+import fr.aym.gtwnpc.path.PathNodesManager;
 import fr.aym.gtwnpc.path.PedestrianPathNodes;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -11,7 +12,7 @@ import net.minecraft.util.math.Vec3d;
 import java.util.Collection;
 
 public class GtwNpcsUtils {
-    public static PathNode rayTracePathNode(Entity entity, float partialTicks) {
+    public static PathNode rayTracePathNode(PathNodesManager manager, Entity entity, float partialTicks) {
         Vec3d vec3d = entity.getPositionEyes(partialTicks);
         double d0 = NodesRenderer.MC.playerController.getBlockReachDistance();
         Vec3d vec3d1 = entity.getLook(1.0F);
@@ -21,7 +22,7 @@ public class GtwNpcsUtils {
         if (NodesRenderer.MC.objectMouseOver != null) {
             d2 = NodesRenderer.MC.objectMouseOver.hitVec.distanceTo(vec3d);
         }
-        Collection<PathNode> nodes = PedestrianPathNodes.getInstance().getNodesWithinAABB(entity.getEntityBoundingBox().expand(vec3d1.x * d0, vec3d1.y * d0, vec3d1.z * d0).grow(1.0D, 1.0D, 1.0D));
+        Collection<PathNode> nodes = manager.getNodesWithinAABB(entity.getEntityBoundingBox().expand(vec3d1.x * d0, vec3d1.y * d0, vec3d1.z * d0).grow(1.0D, 1.0D, 1.0D));
         PathNode pointedNode = null;
         for (PathNode node : nodes) {
             AxisAlignedBB axisalignedbb = node.getBoundingBox();

@@ -37,13 +37,11 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
 
     @Override
     public Object[] getObjectsToSave() {
-        System.out.println("Saving nodes : " + nodes);
         return new Object[]{nodes};
     }
 
     @Override
     public void populateWithSavedObjects(Object[] objects) {
-        System.out.println("Loading nodes : " + objects[0]);
         nodes.clear();
         nodes.putAll((Map<UUID, PathNode>) objects[0]);
     }
@@ -96,7 +94,7 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
         Collection<PathNode> nodes = getNodesWithinAABB(new AxisAlignedBB(around.x - radiusMax, around.y - radiusMax, around.z - radiusMax, around.x + radiusMax, around.y + radiusMax, around.z + radiusMax));
         // System.out.println("Selecting random node from " + nodes.size() + " nodes " + nodes.stream().map(n -> n.getDistance(around )).collect(java.util.stream.Collectors.toList()));
         nodes = nodes.stream().filter(pathNode -> pathNode.getDistance(around) >= radiusMin).collect(java.util.stream.Collectors.toList());
-        if (nodes.size() > 0)
+        if (!nodes.isEmpty())
             return nodes.stream().skip(new Random().nextInt(nodes.size())).findFirst().get();
         return null;
     }
@@ -157,7 +155,6 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound) {
         NBTBase base = NBTSerializer.serialize(this);
-        //System.out.println("Saving nodes : " + base);
         compound.setTag("nodes", base);
         return compound;
     }
@@ -170,7 +167,7 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
                     instance = (PedestrianPathNodes) event.getWorld().getPerWorldStorage().getOrLoadData(PedestrianPathNodes.class, "GtwNpcPedestrianPathNodes");
                 } catch (Exception e) {
                     instance = null;
-                    GtwNpcMod.log.fatal("Cannot load saved garages !", e);
+                    GtwNpcMod.log.fatal("Cannot load saved pedestrian path nodes !", e);
                 }
                 if (instance == null) {
                     instance = new PedestrianPathNodes("GtwNpcPedestrianPathNodes");
@@ -184,7 +181,6 @@ public class PedestrianPathNodes extends WorldSavedData implements PathNodesMana
 
     @SubscribeEvent
     public static void unload(WorldEvent.Unload event) {
-        //System.out.println("Unloading nodes");
         if (event.getWorld().provider.getDimensionType() == DimensionType.OVERWORLD && instance != null && (!event.getWorld().isRemote || FMLCommonHandler.instance().getMinecraftServerInstance() == null)) {
             instance.nodes.clear();
             instance = null;

@@ -1,14 +1,22 @@
 package fr.aym.gtwnpc.client.render;
 
+import com.jme3.math.Matrix3f;
 import com.modularwarfare.client.model.layers.RenderLayerHeldGun;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
+import fr.aym.gtwnpc.utils.OOBB;
+import fr.dynamx.common.physics.entities.BaseVehiclePhysicsHandler;
+import fr.dynamx.utils.optimization.Vector3fPool;
 import net.minecraft.client.model.ModelBiped;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.RenderBiped;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.entity.layers.LayerBipedArmor;
+import net.minecraft.client.renderer.entity.layers.LayerRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.Vec3d;
 
 import javax.annotation.Nullable;
 
@@ -50,6 +58,11 @@ public class RenderGtwNpc extends RenderBiped<EntityGtwNpc> {
         this.addLayer(new LayerBipedArmor(this));
         RenderLayerHeldGun layer = new RenderLayerHeldGun(this);
         this.addLayer(layer);
+    }
+
+    @Override
+    public void doRender(EntityGtwNpc entity, double x, double y, double z, float entityYaw, float partialTicks) {
+        super.doRender(entity, x, y, z, entityYaw, partialTicks);
     }
 
     @Nullable
