@@ -1,0 +1,58 @@
+package fr.aym.gtwnpc.block;
+
+import com.jme3.math.Vector3f;
+import fr.aym.gtwnpc.GtwNpcMod;
+import fr.aym.gtwnpc.utils.GtwNpcConstants;
+import fr.dynamx.common.blocks.DynamXBlock;
+import fr.dynamx.common.contentpack.type.objects.BlockObject;
+import fr.dynamx.common.items.DynamXItemRegistry;
+import net.minecraft.block.material.Material;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.World;
+
+import javax.annotation.Nullable;
+
+public class BlockTrafficLight extends DynamXBlock<BlockObject<?>> {
+    public BlockTrafficLight() {
+        super(Material.IRON, GtwNpcConstants.ID, "trafficlight", new ResourceLocation(GtwNpcConstants.ID, "models/obj/trafficlight/trafficlight.obj"));
+        blockObjectInfo.setItemScale(0.8f);
+        blockObjectInfo.setTranslation(new Vector3f(0, -1.5f, 0));
+        setCreativeTab(DynamXItemRegistry.objectTab);
+        setLightLevel(0.5f);
+    }
+
+    @Nullable
+    @Override
+    public TileEntity createTileEntity(World world, IBlockState state) {
+        return new TETrafficLight(this.blockObjectInfo);
+    }
+
+    @Override
+    public void onBlockPlacedBy(World worldIn, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
+        super.onBlockPlacedBy(worldIn, pos, state, placer, stack);
+        if (stack.getItemDamage() == 0) {
+            if (worldIn.isRemote)
+                placer.sendMessage(new TextComponentString("Tip: right click on my foot with another traffic light to change mode !"));
+        }
+    }
+
+    @Override
+    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+        if (!worldIn.isRemote && playerIn.getHeldItemMainhand().getItem() == Item.getItemFromBlock(GtwNpcMod.trafficLight)) {
+            byte mode = ((TETrafficLight) worldIn.getTileEntity(pos)).switchMode();
+            playerIn.sendMessage(new TextComponentString("Active mode: " + (mode == 0 ? "Short1" : mode == 2 ? "Short2" : mode == 1 ? "Long1" : mode == 3 ? "Long2" : mode == 4 ? "Off" : "Unknown (" + mode + ")")));
+            return true;
+        }
+        return true;
+    }
+}

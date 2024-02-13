@@ -6,6 +6,7 @@ import com.jme3.math.Quaternion;
 import fr.aym.gtwnpc.entity.ai.GEntityAIMoveToNodes;
 import fr.aym.gtwnpc.path.CarPathNodes;
 import fr.aym.gtwnpc.path.PathNode;
+import fr.aym.gtwnpc.path.TrafficLightNode;
 import fr.dynamx.api.network.sync.SimulationHolder;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import fr.dynamx.common.entities.modules.engines.CarEngineModule;
@@ -66,7 +67,7 @@ public class AutopilotModule extends CarEngineModule {
     }
 
     public void setState(String state) {
-        System.out.println("State: " + state);
+       // System.out.println("State: " + state);
         this.state = state;
     }
 
@@ -91,11 +92,16 @@ public class AutopilotModule extends CarEngineModule {
         }
         Queue<PathNode> path = CarPathNodes.getInstance().createPathToNode(start, target);
         if (path == null) {
-            System.out.println("No path to " + target + " " + start + " " + nodeBlacklist);
+            //System.out.println("No path to " + target + " " + start + " " + nodeBlacklist);
             setState("lost_no_path");
             stopNavigation();
             return;
         }
+        //TODO
+        /*
+        sync
+        creative tab
+         */
         this.path.addAll(path);
 
         target = this.path.peek();
@@ -113,7 +119,7 @@ public class AutopilotModule extends CarEngineModule {
         if (tare == null) {
             setState("reached_target_0");
             stopNavigation();
-            cooldown = 40;
+            cooldown = 1;
             return;
         }
         navigationTarget = tare;
@@ -172,7 +178,7 @@ public class AutopilotModule extends CarEngineModule {
         }
         PathNode target = path.peek();
         ////System.out.println("Intermediate dist " + target.getDistance(entity.getPositionVector()));
-        if (target.getDistance(entity.getPositionVector()) < 6) {
+        if (target.getDistance(entity.getPositionVector()) < 4.5f) {
             //System.out.println("Intermediate joined !");
             if (!hasReachedStartPoint) {
                 hasReachedStartPoint = true;
@@ -185,7 +191,7 @@ public class AutopilotModule extends CarEngineModule {
                 //target.onReached(entity.world, entity);
                 setState("reached_target_1");
                 stopNavigation();
-                cooldown = 40;
+                cooldown = 1;
                 return;
             }
             target = path.peek();
@@ -234,7 +240,7 @@ public class AutopilotModule extends CarEngineModule {
             steerForce = 0;
         }
 
-        float speed = 50;
+        float speed = 40;
         if (Math.abs(steerForce) > 0.5f) {
             speed = 12;
         } else if (Math.abs(steerForce) > 0.25f) {
@@ -286,6 +292,25 @@ public class AutopilotModule extends CarEngineModule {
                 }
             }
         }
+
+      //  System.out.println("Target " + target);
+        if(target instanceof TrafficLightNode) {
+            if(!target.canPassThrough(entity)) {
+                float dist = target.getDistance(entity.getPositionVector());
+             //   System.out.println("Light IS RED ! " + dist);
+                if(dist < 7.2f) {
+                    speed = 0;
+                } else if(dist < 10) {
+                    speed = 2;
+                } else if(dist < 16) {
+                    speed = 10;
+                } else if(dist < 25) {
+                    speed = 20;
+                } else {
+                    speed = 30;
+                }
+            }
+        }
         // System.out.println("Steer: " + Math.abs(steerForce));
         //System.out.println("Speed: " + speed + " for " + target.getDistance(entity.getPositionVector()) + " meters to target and angle " + nextAngle);
         setSpeedLimit(speed);
@@ -298,14 +323,18 @@ public class AutopilotModule extends CarEngineModule {
         }
         if (phycites != null) {
             //System.out.println("Cur speed: " + phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) + " km/h");
-            if (phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) > speed + 10) {
+            float mySpeed = entity.ticksExisted > 10 ?phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
+            if (mySpeed > speed + 10 || speed == 0) {
                 // System.out.println("Ma braker");
-                controls |= 4; // braking
-            } else if (phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) < 60) {
+                if (mySpeed > 0.5f)
+                    controls |= 4; // braking
+                else
+                    controls |= 32; // handbrake
+            } else if (mySpeed < 50) {
                 controls |= 2; // forward
             }
         } else {
-            System.out.println("No physics handler");
+            System.out.println("ERROR - No physics handler");
         }
         //System.out.println("Controls: " + controls + " for " + diff + " current: " + yaw + " target: " + angle +" accel? " + (controls & 2));
         setControls(controls);
@@ -329,7 +358,7 @@ public class AutopilotModule extends CarEngineModule {
     protected void stopNavigation() {
         navigating = false;
         path.clear();
-        cooldown = 30 * 20;
+        cooldown = 15 * 20;
         navigationTarget = null;
         setControls(32); // handbrake
     }
@@ -346,8 +375,7 @@ public class AutopilotModule extends CarEngineModule {
 
     @Override
     public void updateEntity() {
-        if (entity.world.isRemote) {
-            entity.getPassengers();
+        if (entity.getSynchronizer().getSimulationHolder().ownsControls(entity.world.isRemote ? Side.CLIENT : Side.SERVER)) {
             if (true) {
                 updateNavigation();
                 //stopNavigation();
@@ -356,14 +384,16 @@ public class AutopilotModule extends CarEngineModule {
                 // stopNavigation();
             }
         }
-        if (entity.world.isRemote)
+        if (entity.world.isRemote) {
             super.updateEntity();
+      //      System.out.println("Entity steer: " + steerForce + " " + forcedSteeringTime + " " + forcedSteering + " " + entity + " " + entity.getPassengers() + " " + navigationTarget + " " + state +" "+cooldown);
+        }
     }
 
     @Override
     public void onSetSimulationHolder(SimulationHolder simulationHolder, EntityPlayer simulationPlayerHolder, SimulationHolder.UpdateContext changeContext) {
         super.onSetSimulationHolder(simulationHolder, simulationPlayerHolder, changeContext);
-        if (changeContext == SimulationHolder.UpdateContext.NORMAL) {
+        if (changeContext == SimulationHolder.UpdateContext.NORMAL && entity.getSynchronizer() instanceof SPPhysicsEntitySynchronizer) {
             //  System.out.println("Set simulation holder: " + simulationHolder);
             if (simulationHolder != SimulationHolder.DRIVER_SP) {
                 entity.getSynchronizer().setSimulationHolder(SimulationHolder.DRIVER_SP, null);

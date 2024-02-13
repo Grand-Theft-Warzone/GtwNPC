@@ -17,6 +17,7 @@ import net.minecraft.world.World;
 import javax.vecmath.Vector3f;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Getter
@@ -27,7 +28,7 @@ public class SeatNode extends PathNode {
     public SeatNode() {
     }
 
-    public SeatNode(Vector3f position, List<PathNode> neighbors, BlockPos seatPos, float seatRotation) {
+    public SeatNode(Vector3f position, Set<PathNode> neighbors, BlockPos seatPos, float seatRotation) {
         super(position, neighbors);
         this.seatPos = seatPos;
         this.seatRotation = seatRotation;

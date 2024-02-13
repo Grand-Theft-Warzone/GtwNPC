@@ -10,6 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -34,9 +35,11 @@ public class NodesRenderer {
 
     @SubscribeEvent
     public static void renderWorldLast(RenderWorldLastEvent event) {
-        if (MC.player != null && MC.player.getHeldItemMainhand().getItem() == GtwNpcsItems.itemNodes) {
+        if (MC.player != null && (MC.player.getHeldItemMainhand().getItem() == GtwNpcsItems.itemNodes || MC.player.getHeldItemOffhand().getItem() == GtwNpcsItems.itemNodes)) {
             Entity e = MC.getRenderViewEntity();
             ItemStack stack = MC.player.getHeldItemMainhand();
+            if(stack.getItem() != GtwNpcsItems.itemNodes)
+                stack = MC.player.getHeldItemOffhand();
             PathNodesManager manager = PedestrianPathNodes.getInstance();
             if (stack.hasTagCompound() && stack.getTagCompound().getInteger("mode") == 1) {
                 manager = CarPathNodes.getInstance();
@@ -80,9 +83,9 @@ public class NodesRenderer {
                         GlStateManager.glVertex3f(center.x, center.y, center.z);
                         GlStateManager.glVertex3f(neighborCenter.x, neighborCenter.y, neighborCenter.z);
                         GlStateManager.glEnd();
-                        if(manager.getNodeType().areOneWayNodes()) {
+                        if (manager.getNodeType().areOneWayNodes()) {
                             //if(arrowMesh == null)
-                                arrowMesh = new ArrowMesh(0.6F, 0.46F, 0.11F);
+                            arrowMesh = new ArrowMesh(0.6F, 0.46F, 0.11F);
                             GlStateManager.pushMatrix();
                             GlStateManager.glLineWidth(14);
                             GlStateManager.translate(center.x, center.y, center.z);
@@ -96,7 +99,7 @@ public class NodesRenderer {
                             arrowMesh.render();
                             GlStateManager.scale(0.5, 0.5, 0.5);
                             double dist = node.getDistance(neighbor) - 2;
-                            if(dist > 0) {
+                            if (dist > 0) {
                                 //System.out.println(System.currentTimeMillis() +" " + System.currentTimeMillis() % 1000f);
                                 float anim = (float) (((System.currentTimeMillis() % 10000d) / 10000d) * dist);
                                 GlStateManager.translate(0, 0, anim);
@@ -118,7 +121,7 @@ public class NodesRenderer {
                         Vec3d eyes = e.getPositionEyes(event.getPartialTicks());
                         GlStateManager.glVertex3f((float) eyes.x, (float) eyes.y - 0.1f, (float) eyes.z);
                         GlStateManager.glEnd();
-                    } else if(state == 1) {
+                    } else if (state == 1) {
                         NodeColor.LINK_LINKING.apply();
                         GlStateManager.glBegin(GL11.GL_LINES);
                         GlStateManager.glVertex3f(center.x, center.y, center.z);
@@ -129,22 +132,49 @@ public class NodesRenderer {
                 } else if (node == pointedNode) {
                     color = state == 1 ? NodeColor.POINTED_LINKING : state == -1 ? NodeColor.POINTED_UNLINKING : NodeColor.POINTED;
                     color.apply();
+                } else if (node instanceof TrafficLightNode) {
+                    switch (((TrafficLightNode) node).getTrafficLightState(MC.world)) {
+                        case 0:
+                            NodeColor.TR_LIGHT_ORANGE.apply();
+                            break;
+                        case 1:
+                            NodeColor.TR_LIGHT_GREEN.apply();
+                            break;
+                        case 2:
+                            NodeColor.TR_LIGHT_RED.apply();
+                            break;
+                        default:
+                            NodeColor.TR_LIGHT_ERRORED.apply();
+                            break;
+                    }
+                    BlockPos pos = ((TrafficLightNode) node).getTrafficLightPos();
+                    if (pos.getY() != 1080) {
+                        GlStateManager.pushMatrix();
+                        GlStateManager.translate(pos.getX() + 0.5f, pos.getY() + 0.5f, pos.getZ() + 0.5f);
+                        sphere.draw(0.4f, 30, 30);
+                        GlStateManager.popMatrix();
+
+                        GlStateManager.glBegin(GL11.GL_LINES);
+                        GlStateManager.glVertex3f(center.x, center.y, center.z);
+                        GlStateManager.glVertex3f(pos.getX(), pos.getY(), pos.getZ());
+                        GlStateManager.glEnd();
+                    }
                 } else if (node instanceof SeatNode) {
                     NodeColor.IDLE_SEAT.apply();
                 } else {
                     NodeColor.IDLE.apply();
                 }
                 GlStateManager.translate(center.x, center.y, center.z);
-                if(GEntityAIMoveToNodes.BIG_TARGET != null && node.getId().equals(GEntityAIMoveToNodes.BIG_TARGET.getId())) {
+               /* if (GEntityAIMoveToNodes.BIG_TARGET != null && node.getId().equals(GEntityAIMoveToNodes.BIG_TARGET.getId())) {
                     NodeColor.POINTED_LINKING.apply();
-                } else if(GEntityAIMoveToNodes.INTERMEDIATE_TARGET != null && node.getId().equals(GEntityAIMoveToNodes.INTERMEDIATE_TARGET.getId())) {
+                } else if (GEntityAIMoveToNodes.INTERMEDIATE_TARGET != null && node.getId().equals(GEntityAIMoveToNodes.INTERMEDIATE_TARGET.getId())) {
                     NodeColor.POINTED_UNLINKING.apply();
-                }
+                }*/
                 sphere.draw(0.9f, 30, 30);
                 GlStateManager.popMatrix();
                 renderedNodes.add(node.getId());
             }
-            if(pointedNode == null && MC.player.isSneaking() && MC.objectMouseOver != null) {
+            if (pointedNode == null && MC.player.isSneaking() && MC.objectMouseOver != null) {
                 //draw pointed node
                 NodeColor.POINTED_LINKING.apply();
                 Vec3d hit = MC.objectMouseOver.hitVec;
@@ -162,6 +192,10 @@ public class NodesRenderer {
     public enum NodeColor {
         IDLE(1, 1, 1, 0.5f),
         IDLE_SEAT(1, 0.8f, 0.8f, 0.5f),
+        TR_LIGHT_ERRORED(1, 0.5f, 1, 0.5f),
+        TR_LIGHT_RED(1, 0, 0, 0.5f),
+        TR_LIGHT_ORANGE(1, 0.5f, 0, 0.5f),
+        TR_LIGHT_GREEN(0, 1, 0, 0.5f),
         POINTED(0f, 0.3f, 1, 0.7f),
         POINTED_LINKING(0, 1, 0, 0.7f),
         POINTED_UNLINKING(1, 0, 0, 0.7f),

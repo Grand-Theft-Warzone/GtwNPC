@@ -1,7 +1,9 @@
 package fr.aym.gtwnpc.client;
 
+import com.jme3.math.Quaternion;
 import com.mia.props.common.entities.TileMountable;
 import fr.aym.gtwnpc.GtwNpcMod;
+import fr.aym.gtwnpc.block.TETrafficLight;
 import fr.aym.gtwnpc.client.render.NodesRenderer;
 import fr.aym.gtwnpc.common.GtwNpcsItems;
 import fr.aym.gtwnpc.dynamx.AutopilotModule;
@@ -17,6 +19,8 @@ import fr.dynamx.client.renders.vehicle.RenderBaseVehicle;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import fr.dynamx.common.physics.entities.BaseVehiclePhysicsHandler;
 import fr.dynamx.utils.debug.renderer.DebugRenderer;
+import fr.dynamx.utils.maths.DynamXGeometry;
+import fr.dynamx.utils.optimization.QuaternionPool;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
@@ -33,6 +37,7 @@ import org.lwjgl.opengl.GL11;
 
 import javax.vecmath.Vector3f;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 @Mod.EventBusSubscriber(modid = GtwNpcConstants.ID, value = Side.CLIENT)
@@ -83,10 +88,14 @@ public class ClientEventHandler {
                     return;
                 PathNode node;
                 TileEntity te = MC.world.getTileEntity(result.getBlockPos());
-                if (te instanceof TileMountable) {
-                    node = new SeatNode(new Vector3f((float) result.hitVec.x, (float) result.hitVec.y + 0.5f, (float) result.hitVec.z), new ArrayList<>(), result.getBlockPos(), MC.player.rotationYaw);
+                if(te instanceof TETrafficLight) {
+                    if(NodesRenderer.selectedNode == null)
+                        return;
+                    node = new TrafficLightNode(result.getBlockPos(), NodesRenderer.selectedNode);
+                } else if (te instanceof TileMountable) {
+                    node = new SeatNode(new Vector3f((float) result.hitVec.x, (float) result.hitVec.y + 0.5f, (float) result.hitVec.z), new HashSet<>(), result.getBlockPos(), MC.player.rotationYaw);
                 } else {
-                    node = new PathNode(new Vector3f((float) result.hitVec.x, (float) result.hitVec.y + 0.5f, (float) result.hitVec.z), new ArrayList<>());
+                    node = new PathNode(new Vector3f((float) result.hitVec.x, (float) result.hitVec.y + 0.5f, (float) result.hitVec.z), new HashSet<>());
                 }
                 node.create(manager, true);
             }
@@ -121,31 +130,48 @@ public class ClientEventHandler {
 
                     ObstacleDetection detection = entity.getModuleByType(AutopilotModule.class).getObstacleDetection();
                     float mySpeed = entity.getPhysicsHandler() != null && entity.ticksExisted > 10 ? entity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
-                    int rayDistance = mySpeed > 35 ? 14 : mySpeed > 20 ? 9 : mySpeed > 5 ? 7 : 5;
+                    int rayDistance = mySpeed > 35 ? 16 : mySpeed > 20 ? 9 : mySpeed > 5 ? 7 : mySpeed > 2 ? 4 : 3;
 
                     AxisAlignedBB front = detection.getDetectionAABB(rayDistance);
                     RenderGlobal.drawSelectionBoundingBox(front, 0, 1, 0, 1);
 
-                    List<com.jme3.math.Vector3f> rayVecs = detection.createRayVectors(rayDistance);
+                    AutopilotModule mod = entity.getModuleByType(AutopilotModule.class);
+                    com.jme3.math.Vector3f rayOrigin = new com.jme3.math.Vector3f((float) entity.posX, (float) entity.posY, (float) entity.posZ);
+                    List<com.jme3.math.Vector3f> rayVecs = detection.createRayVectors(rayDistance*2);
                     for (com.jme3.math.Vector3f vec : rayVecs) {
                         GlStateManager.glBegin(GL11.GL_LINES);
                         GlStateManager.color(1, 0, 0, 1);
                         GlStateManager.glVertex3f((float) entity.posX, (float) entity.posY, (float) entity.posZ);
                         GlStateManager.glVertex3f(vec.x, vec.y, vec.z);
                         GlStateManager.glEnd();
+
+                        if (mod.getForcedSteeringTime() > 0) {
+                            vec = vec.subtract(rayOrigin);
+                            Quaternion q = QuaternionPool.get();
+                            q.fromAngles(0, -(mod.getForcedSteering() - mod.getSteerForce()) * 0.3f, 0);
+                            vec = DynamXGeometry.rotateVectorByQuaternion(vec, q);
+                            vec.addLocal(rayOrigin);
+                            GlStateManager.glBegin(GL11.GL_LINES);
+                            GlStateManager.color(0, 0, 1, 1);
+                            GlStateManager.glVertex3f((float) entity.posX, (float) entity.posY, (float) entity.posZ);
+                            GlStateManager.glVertex3f(vec.x, vec.y, vec.z);
+                            GlStateManager.glEnd();
+                        }
                     }
 
-                    if(detection.lastVehicleHit != null) {
+                    if (detection.lastVehicleHit != null) {
                         RenderGlobal.drawBoundingBox(detection.lastVehicleHit.x - 0.05f, detection.lastVehicleHit.y - 0.05f, detection.lastVehicleHit.z - 0.05f,
                                 detection.lastVehicleHit.x + 0.05f, detection.lastVehicleHit.y + 0.05f, detection.lastVehicleHit.z + 0.05f,
                                 1, 1, 0, 1);
                     }
 
-                    if(detection.lastEntityHit != null) {
+                    if (detection.lastEntityHit != null) {
                         RenderGlobal.drawBoundingBox(detection.lastEntityHit.x - 0.05f, detection.lastEntityHit.y - 0.05f, detection.lastEntityHit.z - 0.05f,
                                 detection.lastEntityHit.x + 0.05f, detection.lastEntityHit.y + 0.05f, detection.lastEntityHit.z + 0.05f,
                                 1, 0, 1, 1);
                     }
+
+                    detection.getEntityOOBB(entity).drawOOBB(0, 0, 1, 1);
 
                     GlStateManager.popMatrix();
                 }

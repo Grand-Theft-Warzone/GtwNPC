@@ -5,6 +5,7 @@ import fr.aym.acslib.utils.packetserializer.ISerializablePacket;
 import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
+import fr.dynamx.common.entities.BaseVehicleEntity;
 import lombok.Getter;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.Vec3d;
@@ -19,26 +20,27 @@ public class PathNode implements ISerializable, ISerializablePacket {
     protected UUID id;
     @Getter
     protected Vector3f position;
-    protected List<PathNode> neighbors;
-    protected List<UUID> neighborsIds;
+    protected Set<PathNode> neighbors;
+    protected Set<UUID> neighborsIds;
 
     public PathNode() {
     }
 
-    public PathNode(Vector3f position, List<PathNode> neighbors) {
+    public PathNode(Vector3f position, Set<PathNode> neighbors) {
         this.position = position;
         this.neighbors = neighbors;
         this.id = UUID.randomUUID();
     }
 
-    public List<PathNode> getNeighbors(PathNodesManager manager) {
+    public Set<PathNode> getNeighbors(PathNodesManager manager) {
         if (neighbors == null)
             resolveNeighbors(manager);
         return neighbors;
     }
 
     protected void resolveNeighbors(PathNodesManager manager) {
-        neighbors = neighborsIds.stream().map(manager::getNode).collect(Collectors.toList());
+        neighbors = neighborsIds.stream().map(manager::getNode).collect(Collectors.toSet());
+        neighbors.removeIf(Objects::isNull);
         neighborsIds.clear();
         neighborsIds = null;
     }
@@ -59,7 +61,7 @@ public class PathNode implements ISerializable, ISerializablePacket {
     public void populateWithSavedObjects(Object[] objects) {
         id = (UUID) objects[0];
         position = new Vector3f((float) objects[1], (float) objects[2], (float) objects[3]);
-        neighborsIds = (List<UUID>) objects[4];
+        neighborsIds = new HashSet<>((List<UUID>) objects[4]);
         if (neighbors != null) {
             neighbors.clear();
             neighbors = null;
@@ -75,16 +77,7 @@ public class PathNode implements ISerializable, ISerializablePacket {
         if (isRemote)
             GtwNpcMod.network.sendToServer(new BBMessagePathNodes(manager.getNodeType(), this));
         else {
-            switch (manager.getNodeType()) {
-                case PEDESTRIAN:
-                    PedestrianPathNodes.getInstance().addNode(this);
-                    break;
-                case CAR:
-                    CarPathNodes.getInstance().addNode(this);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported node type: " + manager.getNodeType());
-            }
+            manager.addNode(this);
         }
     }
 
@@ -92,18 +85,14 @@ public class PathNode implements ISerializable, ISerializablePacket {
         if (isRemote)
             GtwNpcMod.network.sendToServer(new BBMessagePathNodes(BBMessagePathNodes.Action.REMOVE, manager.getNodeType(), Collections.singletonList(getId())));
         else {
-            for (PathNode neighbor : getNeighbors(manager))
-                neighbor.getNeighbors(manager).remove(this);
-            switch (manager.getNodeType()) {
-                case PEDESTRIAN:
-                    PedestrianPathNodes.getInstance().removeNode(this);
-                    break;
-                case CAR:
-                    CarPathNodes.getInstance().removeNode(this);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported node type: " + manager.getNodeType());
+            // TODO ASYNC JOB
+            for (PathNode node : manager.getNodes()) {
+                if (node.neighbors == null)
+                    node.neighborsIds.remove(id);
+                else
+                    node.neighbors.remove(this);
             }
+            manager.removeNode(this);
         }
     }
 
@@ -112,7 +101,7 @@ public class PathNode implements ISerializable, ISerializablePacket {
             GtwNpcMod.network.sendToServer(new BBMessagePathNodes(BBMessagePathNodes.Action.LINK_NODES, manager.getNodeType(), Arrays.asList(this.getId(), pointedNode.getId())));
         else {
             getNeighbors(manager).add(pointedNode);
-            if(!manager.getNodeType().areOneWayNodes())
+            if (!manager.getNodeType().areOneWayNodes())
                 pointedNode.getNeighbors(manager).add(this);
             manager.markDirty2();
         }
@@ -123,7 +112,7 @@ public class PathNode implements ISerializable, ISerializablePacket {
             GtwNpcMod.network.sendToServer(new BBMessagePathNodes(BBMessagePathNodes.Action.UNLINK_NODES, manager.getNodeType(), Arrays.asList(this.getId(), pointedNode.getId())));
         else {
             getNeighbors(manager).remove(pointedNode);
-            if(!manager.getNodeType().areOneWayNodes())
+            if (!manager.getNodeType().areOneWayNodes())
                 pointedNode.getNeighbors(manager).remove(this);
             manager.markDirty2();
         }
@@ -173,6 +162,10 @@ public class PathNode implements ISerializable, ISerializablePacket {
     }
 
     public boolean onReached(World world, EntityGtwNpc npc) {
+        return true;
+    }
+
+    public boolean canPassThrough(BaseVehicleEntity<?> entity) {
         return true;
     }
 }

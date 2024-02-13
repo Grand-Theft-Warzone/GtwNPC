@@ -24,7 +24,7 @@ public class CollisionSimplex {
         if (obstacleDetectionB == detection) {
             isCollidingB = true;
         }
-        System.out.println("Incrementing collision " + detection + " " + this);
+        //System.out.println("Incrementing collision " + detection + " " + this);
         collisionTime++;
     }
 

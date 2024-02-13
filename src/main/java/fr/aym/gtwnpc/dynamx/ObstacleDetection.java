@@ -78,16 +78,19 @@ public class ObstacleDetection {
     }
 
     public AxisAlignedBB getDetectionAABB(int rayDistance) {
-        AxisAlignedBB front = new AxisAlignedBB(entity.getPositionVector().add(entity.getLookVec().scale(4)), entity.getPositionVector().add(entity.getLookVec().scale(rayDistance))).grow(5);
+        Vec3d min = entity.getPositionVector().add(entity.getLookVec().scale(4));
+        Vec3d max = entity.getPositionVector().add(entity.getLookVec().scale(rayDistance));
+        AxisAlignedBB front = new AxisAlignedBB(min.x, min.y, min.z, max.x, max.y, max.z).grow(5);
         com.jme3.math.Vector3f right = entity.physicsRotation.mult(com.jme3.math.Vector3f.UNIT_X, Vector3fPool.get()).multLocal(-3.5f);
         front = front.expand(right.x, right.y, right.z);
         return front;
     }
 
     public void detectObstacles() {
+       // System.out.println("======== Updating " + entity + " =========");
         updateOOBB();
         float mySpeed = entity.getPhysicsHandler() != null && entity.ticksExisted > 10 ? entity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
-        int checkFar2 = mySpeed > 35 ? 14 : mySpeed > 20 ? 9 : mySpeed > 5 ? 7 : 5;
+        int checkFar2 = mySpeed > 35 ? 16 : mySpeed > 20 ? 9 : mySpeed > 5 ? 7 : mySpeed > 2 ? 4 : 3;
         AxisAlignedBB front = getDetectionAABB(checkFar2);
         List<Entity> entities = entity.world.getEntitiesInAABBexcluding(entity, front, Predicates.and(EntitySelectors.NOT_SPECTATING, entity -> entity != null && entity.canBeCollidedWith() && entity.getRidingEntity() == null));
         List<BaseVehicleEntity<?>> vehicles = entities.stream().filter(e -> e instanceof BaseVehicleEntity).map(e -> (BaseVehicleEntity<?>) e).collect(Collectors.toList());
@@ -96,25 +99,25 @@ public class ObstacleDetection {
         checkFar2 *= 2;
         List<com.jme3.math.Vector3f> rayVectors = createRayVectors(checkFar2);
         if (!entities.isEmpty()) {
-            ObstacleAction action = avoidCollisionWithEntities(entities, rayVectors, checkFar2, 3);
+            ObstacleAction action = avoidCollisionWithEntities(entities, rayVectors, checkFar2, 4);
             if (retainedAction.ordinal() < action.ordinal()) {
                 retainedAction = action;
             }
             //System.out.println("Retained action after entities: " + retainedAction);
         }
         if (!vehicles.isEmpty()) {
-            ObstacleAction action = avoidCollisionWithVehicles(vehicles, rayVectors, checkFar2, 3);
+            ObstacleAction action = avoidCollisionWithVehicles(vehicles, rayVectors, checkFar2, 4);
             if (retainedAction.ordinal() < action.ordinal()) {
                 retainedAction = action;
             }
-            System.out.println("Retained action after vehicles: " + retainedAction);
+            //System.out.println("Retained action after vehicles: " + retainedAction);
         }
         switch (retainedAction) {
             case IGNORE:
                 break;
             case SLOW_DOWN:
                 autopilotModule.setSpeedLimit(10);
-                System.out.println("SLOW DOWN " + mySpeed + " " + autopilotModule.getSpeedLimit() + " " + retainedAction);
+              //  System.out.println("SLOW DOWN " + mySpeed + " " + autopilotModule.getSpeedLimit() + " " + retainedAction);
                 if (mySpeed > 15) {
                     int controls = autopilotModule.getControls();
                     controls |= 4; // braking
@@ -123,7 +126,7 @@ public class ObstacleDetection {
                 }
                 break;
             case STOP:
-                System.out.println("STOP " + mySpeed + " " + retainedAction);
+              //  System.out.println("STOP " + mySpeed + " " + retainedAction);
                 int controls = autopilotModule.getControls();
                 if (mySpeed > 0.5f)
                     controls |= 4; // braking
@@ -140,9 +143,9 @@ public class ObstacleDetection {
         float increment = (float) (Math.PI / 2 / 14);
         float angle = (float) (Math.PI / 4) - increment;
         float steering = autopilotModule.getForcedSteeringTime() > 0 ? autopilotModule.getForcedSteering() : autopilotModule.getSteerForce();
-        angle += steering * 0.4f;
+        angle += steering * 0.35f;
         com.jme3.math.Vector3f rayVecBase = com.jme3.math.Vector3f.UNIT_Z;
-        float[] rayDistanceFactors = new float[]{0.23f, 0.26f, 0.3f, 0.5f, 0.6f, 0.75f, 0.925f, 1f, 0.975f, 0.925f, 0.85f, 0.8f, 0.7f, 0.6f, 0.5f, 0.4f};
+        float[] rayDistanceFactors = new float[]{0.23f, 0.26f, 0.3f, 0.5f, 0.6f, 0.75f, 0.925f, 1f, 0.975f, 0.925f, 0.85f, 0.75f, 0.6f, 0.5f, 0.3f, 0.26f};
         for (float rayDistanceFactor : rayDistanceFactors) {
             com.jme3.math.Vector3f rayVec = Vector3fPool.get(rayVecBase).multLocal(rayDistance * rayDistanceFactor);
             Quaternion q = QuaternionPool.get();
@@ -160,9 +163,10 @@ public class ObstacleDetection {
         ObstacleAction retainedAction = ObstacleAction.IGNORE;
         for (int i = 0; i < rayVectors.size(); i++) {
             com.jme3.math.Vector3f rayVec = rayVectors.get(i);
-            ObstacleAction action = rayTraceLineOnVehicles(vehicles, entity.physicsPosition, new com.jme3.math.Vector3f(rayVec.x, rayVec.y, rayVec.z), rayDistance, frontSize, i > 3 && i < 12);
+            ObstacleAction action = rayTraceLineOnVehicles(vehicles, entity.physicsPosition, new com.jme3.math.Vector3f(rayVec.x, rayVec.y, rayVec.z), rayDistance, frontSize, i > 4d && i < 10);
             if (retainedAction.ordinal() < action.ordinal()) {
                 retainedAction = action;
+                //System.out.println("Collision with " + i);
                 //if (retainedAction == ObstacleAction.STOP)
                 //  return retainedAction;
             }
@@ -171,14 +175,17 @@ public class ObstacleDetection {
     }
 
     public float editRayVec(com.jme3.math.Vector3f rayOrigin, com.jme3.math.Vector3f rayVec, float hitDist, OOBB otherOOBB, float steerDelta) {
+        com.jme3.math.Vector3f basic = rayVec;
         rayVec = rayVec.subtract(rayOrigin);
+        rayVec.multLocal(1.2f);
         Quaternion q = QuaternionPool.get();
-        q.fromAngles(0, -steerDelta, 0);
+        q.fromAngles(0, steerDelta * 0.35f, 0);
         rayVec = DynamXGeometry.rotateVectorByQuaternion(rayVec, q);
         rayVec.addLocal(rayOrigin);
         Vector3f intersection = otherOOBB.calculateIntercept(new Vector3f(rayOrigin.x, rayOrigin.y, rayOrigin.z), new Vector3f(rayVec.x, rayVec.y, rayVec.z));
         if (intersection != null) {
             float d3 = rayOrigin.distance(new com.jme3.math.Vector3f(intersection.x, intersection.y, intersection.z));
+            //System.out.println("Vec from " + basic + " to " + rayVec + " " + intersection + " " + hitDist + " " + steerDelta + " " + d3);
             if (d3 > hitDist) {
                 return d3; // intersection but farther
             }
@@ -190,26 +197,31 @@ public class ObstacleDetection {
     public float searchBetterSteering(com.jme3.math.Vector3f rayOrigin, com.jme3.math.Vector3f rayVec, float hitDist, OOBB otherOOBB, float currentSteer, float forcedSteering) {
         float lessWorst = currentSteer;
         float lessWorstDist = hitDist;
-        if (currentSteer >= 0) {
+        boolean forcedLeft = forcedSteering != -10 && forcedSteering < currentSteer;
+        boolean forcedRight = forcedSteering != -10 && forcedSteering > currentSteer;
+       // System.out.println("Forced " + forcedSteering + " " + currentSteer + " " + forcedLeft + " " + forcedRight);
+        if (forcedRight || (!forcedLeft && entity.world.rand.nextBoolean())) {
             for (float steerDelta = 1 - currentSteer; currentSteer + steerDelta > -1; steerDelta -= 0.1f) {
+              //  System.out.println("1-Test Better: " + currentSteer + " " + steerDelta + " " + lessWorst + " " + lessWorstDist + " " + forcedSteering);
                 if (forcedSteering != -10 && ((forcedSteering > currentSteer && currentSteer + steerDelta < forcedSteering) || (forcedSteering < currentSteer && currentSteer + steerDelta > forcedSteering)))
                     continue;
                 float result = editRayVec(rayOrigin, rayVec, lessWorstDist, otherOOBB, steerDelta);
                 if (result == -1) {
-                    System.out.println("1-Better steering found " + currentSteer + " " + steerDelta + " " + lessWorst + " " + lessWorstDist + " " + result);
+                //    System.out.println("1-Better steering found " + currentSteer + " " + steerDelta + " " + lessWorst + " " + lessWorstDist + " " + result);
                     return currentSteer + steerDelta;
                 } else if (result != 0) {
                     lessWorst = currentSteer + steerDelta;
                     lessWorstDist = result;
                 }
             }
-        } else if (currentSteer < 0) {
+        } else {
             for (float steerDelta = -1 - currentSteer; currentSteer + steerDelta < 1; steerDelta += 0.1f) {
+            //    System.out.println("2-Test Better: " + currentSteer + " " + steerDelta + " " + lessWorst + " " + lessWorstDist + " " + forcedSteering);
                 if (forcedSteering != -10 && ((forcedSteering > currentSteer && currentSteer + steerDelta < forcedSteering) || (forcedSteering < currentSteer && currentSteer + steerDelta > forcedSteering)))
                     continue;
                 float result = editRayVec(rayOrigin, rayVec, lessWorstDist, otherOOBB, steerDelta);
                 if (result == -1) {
-                    System.out.println("2-Better steering found " + currentSteer + " " + steerDelta + " " + lessWorst + " " + lessWorstDist + " " + result);
+              //      System.out.println("2-Better steering found " + currentSteer + " " + steerDelta + " " + lessWorst + " " + lessWorstDist + " " + result);
                     return currentSteer + steerDelta;
                 } else if (result != 0) {
                     lessWorst = currentSteer + steerDelta;
@@ -226,15 +238,17 @@ public class ObstacleDetection {
         ObstacleDetection oth = entity.getModuleByType(AutopilotModule.class) != null ? entity.getModuleByType(AutopilotModule.class).getObstacleDetection() : null;
         if (oth == null)
             return true;
+        float otherSpeed = entity.getPhysicsHandler() != null && entity.ticksExisted > 10 ? entity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
         CollisionCluster collisionCluster = collisionClusters.stream().filter(c -> c.isCollidingWith(entity)).findFirst().orElse(null);
         if (collisionCluster != null) {
+            float stea = autopilotModule.getForcedSteeringTime() > 0 ? autopilotModule.getForcedSteering() : autopilotModule.getSteerForce();
             if (collisionCluster.getObstacleDetectionA() == this && collisionCluster.isCollidingA()) {
                 if (collisionCluster.isATurningAround()) {
                     float steer = searchBetterSteering(rayOrigin, rayVec, rayDistance, otherOOBB, this.autopilotModule.getSteerForce(), autopilotModule.getForcedSteeringTime() > 0 ? autopilotModule.getForcedSteering() : -10);
-                    if (steer != this.autopilotModule.getSteerForce()) {
+                    if (steer != stea) {
                         this.autopilotModule.setForcedSteering(steer);
                         this.autopilotModule.setForcedSteeringTime(20);
-                        System.out.println("A-Steering changed to " + steer);
+                        //System.out.println("A-Steering changed to " + steer);
                     }
                 }
                 return false;
@@ -242,28 +256,34 @@ public class ObstacleDetection {
             if (collisionCluster.getObstacleDetectionB() == this && collisionCluster.isCollidingB()) {
                 if (collisionCluster.isBTurningAround()) {
                     float steer = searchBetterSteering(rayOrigin, rayVec, rayDistance, otherOOBB, this.autopilotModule.getSteerForce(), autopilotModule.getForcedSteeringTime() > 0 ? autopilotModule.getForcedSteering() : -10);
-                    if (steer != this.autopilotModule.getSteerForce()) {
+                    if (steer != stea) {
                         this.autopilotModule.setForcedSteering(steer);
                         this.autopilotModule.setForcedSteeringTime(20);
-                        System.out.println("B-Steering changed to " + steer);
+                        //System.out.println("B-Steering changed to " + steer);
                     }
                 }
                 return false;
             }
             collisionCluster.incrementCollision(this);
+            boolean imTurningAround = collisionCluster.getObstacleDetectionA() == this ? collisionCluster.isATurningAround() : collisionCluster.isBTurningAround();
             if (collisionCluster.getCollisionTime() > 20) {
-                System.out.println("Collision cluster too long " + collisionCluster);
+                //System.out.println("Collision cluster too long " + collisionCluster);
                 //Determine who is at the right
                 float yawDiff = this.entity.rotationYaw - entity.rotationYaw;
-                if (yawDiff < 0 || collisionCluster.getCollisionTime() > 200) {
-                    if(!searchPathOut) {
-                        return false;
+                if (yawDiff < 0 || collisionCluster.getCollisionTime() > 200 || imTurningAround || otherSpeed < 0.1f) {
+                    if (!searchPathOut || true) {
+                        if (collisionCluster.getCollisionTime() > 200 * 3 && entity.world.rand.nextInt(100) == 0) {
+                            System.out.println("Dead " + entity + " " + this.entity + " " + collisionCluster);
+                            entity.setDead();
+                        }
+                        return true;
                     }
+                  //  System.out.println("Avoiding " + this.entity + " " + entity + " " + collisionCluster + " " + autopilotModule.getForcedSteering()+ " " + autopilotModule.getForcedSteeringTime() +" "+autopilotModule.getSteerForce());
                     float steer = searchBetterSteering(rayOrigin, rayVec, rayDistance, otherOOBB, this.autopilotModule.getSteerForce(), autopilotModule.getForcedSteeringTime() > 0 ? autopilotModule.getForcedSteering() : -10);
                     if (steer != this.autopilotModule.getSteerForce()) {
                         this.autopilotModule.setForcedSteering(steer);
                         this.autopilotModule.setForcedSteeringTime(20);
-                        System.out.println("Steering changed to " + steer);
+                        //System.out.println("Steering changed to " + steer);
                         if (collisionCluster.getObstacleDetectionA() == this) {
                             collisionCluster.setATurningAround(true);
                         } else {
@@ -272,15 +292,16 @@ public class ObstacleDetection {
                         //I'm at the right and can avoid
                         return false;
                     } else {
-                        System.out.println("Avoid failed");
+                        //System.out.println("Avoid failed");
                         if (collisionCluster.getObstacleDetectionA() == this) {
                             collisionCluster.setATurningAround(false);
                         } else {
                             collisionCluster.setBTurningAround(false);
                         }
-                        /*if(collisionCluster.getCollisionTime() > 200 * 6 && entity.world.rand.nextInt(10) == 0) {
+                        if (collisionCluster.getCollisionTime() > 200 * 5 && entity.world.rand.nextInt(10) == 0) {
+                            System.out.println("Dead " + entity + " " + this.entity + " " + collisionCluster);
                             entity.setDead();
-                        }*/
+                        }
                         return true;
                     }
                 }
@@ -301,33 +322,38 @@ public class ObstacleDetection {
                     if (steer != this.autopilotModule.getSteerForce()) {
                         this.autopilotModule.setForcedSteering(steer);
                         this.autopilotModule.setForcedSteeringTime(20);
-                        System.out.println("SIMPLEX-Steering changed to " + steer);
+                        //System.out.println("SIMPLEX-Steering changed to " + steer);
                     }
                 }
                 return false;
             }
             collisionSimplex.incrementCollision(oth);
-            if (collisionSimplex.getCollisionTime() > 200) {
-                System.out.println("SIMPLEX-Collision cluster too long " + collisionCluster);
+            if (collisionSimplex.getCollisionTime() > 200 || collisionSimplex.isATurningAround() || otherSpeed < 0.1f) {
+                //System.out.println("SIMPLEX-Collision cluster too long " + collisionCluster);
                 //Determine who is at the right
                 float yawDiff = this.entity.rotationYaw - entity.rotationYaw;
-                if (yawDiff < 0 || collisionCluster.getCollisionTime() > 600) {
-                    if(!searchPathOut) {
-                        return false;
+                if (yawDiff < 0 || collisionCluster.getCollisionTime() > 200) {
+                    if (!searchPathOut || true) {
+                        if (collisionSimplex.getCollisionTime() > 200 * 5 && entity.world.rand.nextInt(100) == 0) {
+                            System.out.println("SIMPLEX-Dead " + entity + " " + this.entity + " " + collisionSimplex);
+                            entity.setDead();
+                        }
+                        return true;
                     }
+                //    System.out.println("Avoiding " + this.entity + " " + entity + " " + collisionCluster + " " + autopilotModule.getForcedSteering()+ " " + autopilotModule.getForcedSteeringTime() +" "+autopilotModule.getSteerForce());
                     float steer = searchBetterSteering(rayOrigin, rayVec, rayDistance, otherOOBB, this.autopilotModule.getSteerForce(), autopilotModule.getForcedSteeringTime() > 0 ? autopilotModule.getForcedSteering() : -10);
                     if (steer != this.autopilotModule.getSteerForce()) {
                         this.autopilotModule.setForcedSteering(steer);
                         this.autopilotModule.setForcedSteeringTime(20);
-                        System.out.println("SIMPLEX-Steering changed to " + steer);
+                        //System.out.println("SIMPLEX-Steering changed to " + steer);
                         collisionSimplex.setATurningAround(true);
                         //I'm at the right and can avoid
                         return false;
                     } else {
-                        System.out.println("SIMPLEX-Avoid failed");
+                        //System.out.println("SIMPLEX-Avoid failed");
                         collisionSimplex.setATurningAround(false);
-                        if(collisionSimplex.getCollisionTime() > 200 * 6 && entity.world.rand.nextInt(10) == 0) {
-                            System.out.println("SIMPLEX-Dead");
+                        if (collisionSimplex.getCollisionTime() > 200 * 8 && entity.world.rand.nextInt(10) == 0) {
+                            System.out.println("SIMPLEX-Dead " + entity + " " + this.entity + " " + collisionSimplex);
                             entity.setDead();
                         }
                         return true;
@@ -357,9 +383,25 @@ public class ObstacleDetection {
             BaseVehicleEntity<?> other = vehicles.get(j);
             OOBB otherOOBB = getEntityOOBB(other);
             Vector3f intersection = otherOOBB.calculateIntercept(new Vector3f(origin.x, origin.y, origin.z), new Vector3f(rayVec.x, rayVec.y, rayVec.z));
-            if (myOOBB.collidesWithOOBB(otherOOBB)) {
-                System.out.println("8Direct collides with vehicle: " + other);
-                if (!updateCollisionWith(other, origin, rayVec, rayDistance, otherOOBB, searchPathOut)) {
+            double d3 = intersection == null ? 0 : origin.subtract(new com.jme3.math.Vector3f(intersection.x, intersection.y, intersection.z)).length();
+            if(intersection != null) {
+                //check intersection is between the origin and the rayVec
+                /*float dot = rayVec.subtract(origin).dot(new com.jme3.math.Vector3f(intersection.x, intersection.y, intersection.z).subtract(origin));
+                if(dot < 0) {
+                    intersection = null;
+                    System.out.println("Enculé de GPT");
+                }*/
+                double di = origin.distance(new com.jme3.math.Vector3f(intersection.x, intersection.y, intersection.z));
+                double dr = origin.distance(rayVec);
+                if(di > dr) {
+                    intersection = null;
+                    //System.out.println("Enculé de GPT");
+                }
+               // System.out.println("From " + origin + " to " + rayVec + " " + intersection + " " + di + " " + dr + " " + searchPathOut);
+            }
+            if (myOOBB.collidesWithOOBB(otherOOBB) && false) {
+                //System.out.println("8Direct collides with vehicle: " + other);
+                if (!updateCollisionWith(other, origin, rayVec, rayDistance, otherOOBB, !searchPathOut)) {
                     //System.out.println("Already collided with vehicle: " + other);
                     needsSlow = true;
                     continue;
@@ -373,12 +415,11 @@ public class ObstacleDetection {
                     System.out.println("Already collided with vehicle: " + other);
                     continue;
                 }*/
-                if (!updateCollisionWith(other, origin, rayVec, rayDistance, otherOOBB, searchPathOut)) {
+                if (!updateCollisionWith(other, origin, rayVec, rayDistance, otherOOBB, !searchPathOut)) {
                     //System.out.println("Already collided with vehicle: " + other);
                     needsSlow = true;
                     continue;
                 }
-                double d3 = origin.subtract(new com.jme3.math.Vector3f(intersection.x, intersection.y, intersection.z)).length();
                 if ((d3 < hitDistance || hitDistance == 0.0D)) {
                     hitEntity = other;
                     hitVec = intersection;
@@ -386,7 +427,8 @@ public class ObstacleDetection {
                 }
             }
         }
-        lastVehicleHit = hitVec;
+        if (hitVec != null)
+            lastVehicleHit = hitVec != null ? new Vector3f(hitVec.x, hitVec.y, hitVec.z) : null;
         if (hitEntity != null && false)
             System.out.println("Hit entity: " + hitEntity + " at " + hitVec + " " + rayDistance + " " + hitDistance);
         return hitEntity != null ? ((hitDistance - frontSize) > 4 ? ObstacleAction.SLOW_DOWN : ObstacleAction.STOP) : needsSlow ? ObstacleAction.SLOW_DOWN : ObstacleAction.IGNORE;

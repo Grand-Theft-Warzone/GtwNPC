@@ -73,11 +73,11 @@ public class CommonEventHandler {
 
     @SubscribeEvent
     public static void spawnCar(PhysicsEntityEvent.CreateModules<BaseVehicleEntity> event) {
-        if(event.getEntity().hasModuleOfType(CarEngineModule.class)) {
+        if(event.getEntity().hasModuleOfType(CarEngineModule.class) && event.getEntity().getPackInfo().getName().contains("trophy")) {
             CarEngineModule module = (CarEngineModule) event.getEntity().getModuleByType(CarEngineModule.class);
             event.getModuleList().removeIf(m -> m instanceof CarEngineModule);
             event.getModuleList().add(new AutopilotModule((BaseVehicleEntity<?>) event.getEntity(), module));
-            System.out.println("Modules: " + event.getModuleList());
+           // System.out.println("Modules: " + event.getModuleList());
         }
     }
 }

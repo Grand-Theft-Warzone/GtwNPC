@@ -143,7 +143,7 @@ public class CarPathNodes extends WorldSavedData implements PathNodesManager, IS
                 }
             });
         }
-        System.out.println("No path found from " + startNode + " to " + end);
+        //System.out.println("No path found from " + startNode + " to " + end);
         return null;
     }
 
