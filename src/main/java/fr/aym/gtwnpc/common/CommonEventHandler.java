@@ -30,7 +30,7 @@ public class CommonEventHandler {
     public static void onConnected(net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent event) {
         //System.out.println("Sending nodes to " + event.player.getName());
         GtwNpcMod.network.sendTo(new BBMessagePathNodes(NodeType.PEDESTRIAN, PedestrianPathNodes.getInstance().getNodes()), (EntityPlayerMP) event.player);
-        GtwNpcMod.network.sendTo(new BBMessagePathNodes(NodeType.CAR, CarPathNodes.getInstance().getNodes()), (EntityPlayerMP) event.player);
+        GtwNpcMod.network.sendTo(new BBMessagePathNodes(NodeType.CAR_CITY, CarPathNodes.getInstance().getNodes()), (EntityPlayerMP) event.player);
     }
 
     /*@SubscribeEvent

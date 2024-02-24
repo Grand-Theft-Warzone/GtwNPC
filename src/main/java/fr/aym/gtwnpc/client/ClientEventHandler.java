@@ -5,6 +5,7 @@ import com.mia.props.common.entities.TileMountable;
 import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.block.TETrafficLight;
 import fr.aym.gtwnpc.client.render.NodesRenderer;
+import fr.aym.gtwnpc.client.render.NpcSeatNode;
 import fr.aym.gtwnpc.common.GtwNpcsItems;
 import fr.aym.gtwnpc.dynamx.AutopilotModule;
 import fr.aym.gtwnpc.dynamx.ObstacleDetection;
@@ -13,9 +14,17 @@ import fr.aym.gtwnpc.network.CSMessageSetNodeMode;
 import fr.aym.gtwnpc.path.*;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.aym.gtwnpc.utils.GtwNpcsUtils;
+import fr.dynamx.api.contentpack.object.part.IDrawablePart;
+import fr.dynamx.api.contentpack.object.render.IModelPackObject;
+import fr.dynamx.api.events.DynamXEntityRenderEvents;
 import fr.dynamx.api.events.PhysicsEntityEvent;
 import fr.dynamx.client.renders.RenderPhysicsEntity;
+import fr.dynamx.client.renders.scene.IRenderContext;
+import fr.dynamx.client.renders.scene.SceneBuilder;
+import fr.dynamx.client.renders.scene.node.SceneNode;
 import fr.dynamx.client.renders.vehicle.RenderBaseVehicle;
+import fr.dynamx.common.contentpack.parts.PartEntitySeat;
+import fr.dynamx.common.contentpack.type.vehicle.ModularVehicleInfo;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import fr.dynamx.common.physics.entities.BaseVehiclePhysicsHandler;
 import fr.dynamx.utils.debug.renderer.DebugRenderer;
@@ -36,7 +45,6 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import javax.vecmath.Vector3f;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -49,7 +57,7 @@ public class ClientEventHandler {
         if (MC.player != null && MC.player.getHeldItemMainhand().getItem() == GtwNpcsItems.itemNodes) {
             ItemStack stack = MC.player.getHeldItemMainhand();
             PathNodesManager manager = PedestrianPathNodes.getInstance();
-            if (stack.hasTagCompound() && stack.getTagCompound().getInteger("mode") == 1) {
+            if (stack.hasTagCompound() && stack.getTagCompound().getInteger("mode") != 0) {
                 manager = CarPathNodes.getInstance();
             }
             PathNode pointedNode = GtwNpcsUtils.rayTracePathNode(manager, MC.player, 0);
@@ -88,14 +96,15 @@ public class ClientEventHandler {
                     return;
                 PathNode node;
                 TileEntity te = MC.world.getTileEntity(result.getBlockPos());
-                if(te instanceof TETrafficLight) {
+                NodeType type = NodeType.values()[(stack.hasTagCompound() ? 0 : stack.getTagCompound().getInteger("mode"))+1];
+                if(te instanceof TETrafficLight && type != NodeType.PEDESTRIAN) {
                     if(NodesRenderer.selectedNode == null)
                         return;
-                    node = new TrafficLightNode(result.getBlockPos(), NodesRenderer.selectedNode);
-                } else if (te instanceof TileMountable) {
+                    node = new TrafficLightNode(result.getBlockPos(), NodesRenderer.selectedNode, type);
+                } else if (te instanceof TileMountable && type == NodeType.PEDESTRIAN) {
                     node = new SeatNode(new Vector3f((float) result.hitVec.x, (float) result.hitVec.y + 0.5f, (float) result.hitVec.z), new HashSet<>(), result.getBlockPos(), MC.player.rotationYaw);
                 } else {
-                    node = new PathNode(new Vector3f((float) result.hitVec.x, (float) result.hitVec.y + 0.5f, (float) result.hitVec.z), new HashSet<>());
+                    node = new PathNode(new Vector3f((float) result.hitVec.x, (float) result.hitVec.y + 0.5f, (float) result.hitVec.z), new HashSet<>(), type);
                 }
                 node.create(manager, true);
             }
@@ -184,7 +193,32 @@ public class ClientEventHandler {
         }
     }
 
+    @SubscribeEvent
+    public static void sceneBuild(DynamXEntityRenderEvents.BuildSceneGraph event) {
+        System.out.println("EVVENT");
+        if(!(event.getPackInfo() instanceof ModularVehicleInfo))
+            return;
+        PartEntitySeat seat = ((ModularVehicleInfo)event.getPackInfo()).getPartByTypeAndId(PartEntitySeat.class, (byte) 0);
+        if(seat == null)
+            return;
+        ((SceneBuilder) event.getSceneBuilder()).addNode(event.getPackInfo(), new IDrawablePart<BaseVehicleEntity<?>, IModelPackObject>() {
+            @Override
+            public SceneNode<IRenderContext, IModelPackObject> createSceneGraph(com.jme3.math.Vector3f vector3f, List<SceneNode<IRenderContext, IModelPackObject>> list) {
+                return (SceneNode) new NpcSeatNode(seat, event.getModelScale());
+            }
 
+            @Override
+            public String getNodeName() {
+                return "seats.npc";
+            }
+
+            @Override
+            public String getObjectName() {
+                return null;
+            }
+        });
+    }
+    
     /*@SubscribeEvent
     public static void sceneBuilding(DynamXEntityRenderEvents.BuildSceneGraph event) {
         System.out.println("Building scene graph " + event.getPackInfo());

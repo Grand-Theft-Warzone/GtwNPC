@@ -3,11 +3,14 @@ package fr.aym.gtwnpc.dynamx;
 import com.jme3.math.FastMath;
 import com.jme3.math.Matrix3f;
 import com.jme3.math.Quaternion;
+import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.entity.ai.GEntityAIMoveToNodes;
 import fr.aym.gtwnpc.path.CarPathNodes;
 import fr.aym.gtwnpc.path.PathNode;
 import fr.aym.gtwnpc.path.TrafficLightNode;
+import fr.dynamx.api.network.sync.EntityVariable;
 import fr.dynamx.api.network.sync.SimulationHolder;
+import fr.dynamx.api.network.sync.SynchronizationRules;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import fr.dynamx.common.entities.modules.engines.CarEngineModule;
 import fr.dynamx.common.network.sync.SPPhysicsEntitySynchronizer;
@@ -30,8 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
-public class AutopilotModule extends CarEngineModule {
-
+public class AutopilotModule extends CarEngineModule
+{
     //TODO CLEAN
     //TODO DIMS OF VEHICLE
     //TODO SAVE STATE (TARGET...) + ensure path still exists on load
@@ -59,16 +62,23 @@ public class AutopilotModule extends CarEngineModule {
     @Setter
     private float forcedSteering;
 
+    private EntityVariable<String> npcSkin = new EntityVariable<String>(SynchronizationRules.SERVER_TO_CLIENTS, "");
+
     public AutopilotModule(BaseVehicleEntity<?> vehicleEntity, CarEngineModule engineModule) {
         super(vehicleEntity, engineModule.getEngineInfo());
         this.entity = vehicleEntity;
-        obstacleDetection = new ObstacleDetection(entity, this);
+        this.obstacleDetection = new ObstacleDetection(entity, this);
         //System.out.println("Autopilot module ignited !");
+        this.npcSkin.set(SkinRepository.getRandomSkin(SkinRepository.NpcType.NPC, vehicleEntity.world.rand).toString());
     }
 
     public void setState(String state) {
        // System.out.println("State: " + state);
         this.state = state;
+    }
+
+    public String getNpcSkin() {
+        return npcSkin.get();
     }
 
     protected void startNavigation() {
@@ -240,7 +250,7 @@ public class AutopilotModule extends CarEngineModule {
             steerForce = 0;
         }
 
-        float speed = 40;
+        float speed = target.getNodeType().getMaxSpeed();
         if (Math.abs(steerForce) > 0.5f) {
             speed = 12;
         } else if (Math.abs(steerForce) > 0.25f) {
@@ -330,7 +340,7 @@ public class AutopilotModule extends CarEngineModule {
                     controls |= 4; // braking
                 else
                     controls |= 32; // handbrake
-            } else if (mySpeed < 50) {
+            } else if (mySpeed < speed + 10) {
                 controls |= 2; // forward
             }
         } else {

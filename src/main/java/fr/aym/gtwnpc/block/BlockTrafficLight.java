@@ -3,7 +3,10 @@ package fr.aym.gtwnpc.block;
 import com.jme3.math.Vector3f;
 import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
+import fr.dynamx.api.contentpack.object.subinfo.ISubInfoTypeOwner;
 import fr.dynamx.common.blocks.DynamXBlock;
+import fr.dynamx.common.contentpack.parts.ILightOwner;
+import fr.dynamx.common.contentpack.parts.SimplePartLightSource;
 import fr.dynamx.common.contentpack.type.objects.BlockObject;
 import fr.dynamx.common.items.DynamXItemRegistry;
 import net.minecraft.block.material.Material;
@@ -25,10 +28,20 @@ import javax.annotation.Nullable;
 public class BlockTrafficLight extends DynamXBlock<BlockObject<?>> {
     public BlockTrafficLight() {
         super(Material.IRON, GtwNpcConstants.ID, "trafficlight", new ResourceLocation(GtwNpcConstants.ID, "models/obj/trafficlight/trafficlight.obj"));
-        blockObjectInfo.setItemScale(0.8f);
+        //FIXME blockObjectInfo.setItemScale(0.8f);
         blockObjectInfo.setTranslation(new Vector3f(0, -1.5f, 0));
         setCreativeTab(DynamXItemRegistry.objectTab);
         setLightLevel(0.5f);
+        SimplePartLightSource redSource = new SimplePartLightSource((ISubInfoTypeOwner<ILightOwner<?>>) blockObjectInfo, "Light_Red");
+        //TODO SET ID WITH NEW DYNAMX VERSION
+        redSource.setObjectName("red");
+        redSource.appendTo(blockObjectInfo);
+        SimplePartLightSource orangeSource = new SimplePartLightSource((ISubInfoTypeOwner<ILightOwner<?>>) blockObjectInfo, "Light_Orange");
+        redSource.setObjectName("orange");
+        redSource.appendTo(blockObjectInfo);
+        SimplePartLightSource greenSource = new SimplePartLightSource((ISubInfoTypeOwner<ILightOwner<?>>) blockObjectInfo, "Light_Green");
+        redSource.setObjectName("green");
+        redSource.appendTo(blockObjectInfo);
     }
 
     @Nullable

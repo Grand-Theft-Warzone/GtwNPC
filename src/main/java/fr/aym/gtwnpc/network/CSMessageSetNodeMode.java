@@ -1,6 +1,7 @@
 package fr.aym.gtwnpc.network;
 
 import fr.aym.gtwnpc.item.ItemNodes;
+import fr.aym.gtwnpc.path.NodeType;
 import fr.dynamx.common.items.tools.ItemSlopes;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.item.ItemStack;
@@ -39,12 +40,13 @@ public class CSMessageSetNodeMode implements IMessage {
                 ItemStack s = ctx.getServerHandler().player.getHeldItemMainhand();
                 if (s.getItem() instanceof ItemNodes) {
                     if (!s.hasTagCompound()) s.setTagCompound(new NBTTagCompound());
-                    if (s.getTagCompound().getInteger("mode") == 1) {
+                    if (s.getTagCompound().getInteger("mode") == 5) {
                         s.getTagCompound().setInteger("mode", 0);
                         ctx.getServerHandler().player.sendMessage(new TextComponentString("Set node mode to pedestrian"));
                     } else {
-                        s.getTagCompound().setInteger("mode", 1);
-                        ctx.getServerHandler().player.sendMessage(new TextComponentString("Set node mode to car"));
+                        s.getTagCompound().setInteger("mode", s.getTagCompound().getInteger("mode") + 1);
+                        ctx.getServerHandler().player.sendMessage(new TextComponentString("Set node mode to " +
+                                NodeType.values()[s.getTagCompound().getInteger("mode")+1].name().toLowerCase()));
                     }
                 }
             }

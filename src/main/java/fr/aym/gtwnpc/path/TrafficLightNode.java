@@ -18,8 +18,8 @@ public class TrafficLightNode extends PathNode {
     public TrafficLightNode() {
     }
 
-    public TrafficLightNode(BlockPos pos, PathNode fromNode) {
-        super(fromNode.position, fromNode.neighbors);
+    public TrafficLightNode(BlockPos pos, PathNode fromNode, NodeType type) {
+        super(fromNode.position, fromNode.neighbors, type);
         this.id = fromNode.id;
         this.neighbors = fromNode.neighbors != null ? new HashSet<>(fromNode.neighbors) : null;
         this.neighborsIds = fromNode.neighborsIds != null ? new HashSet<>(fromNode.neighborsIds) : null;

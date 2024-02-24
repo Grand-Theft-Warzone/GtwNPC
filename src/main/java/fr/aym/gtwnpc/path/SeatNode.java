@@ -29,7 +29,7 @@ public class SeatNode extends PathNode {
     }
 
     public SeatNode(Vector3f position, Set<PathNode> neighbors, BlockPos seatPos, float seatRotation) {
-        super(position, neighbors);
+        super(position, neighbors, NodeType.PEDESTRIAN);
         this.seatPos = seatPos;
         this.seatRotation = seatRotation;
     }

@@ -3,6 +3,7 @@ package fr.aym.gtwnpc.block;
 import fr.aym.gtwnpc.server.ServerEventHandler;
 import fr.dynamx.common.blocks.TEDynamXBlock;
 import fr.dynamx.common.contentpack.type.objects.BlockObject;
+import fr.dynamx.common.entities.modules.AbstractLightsModule;
 import lombok.Getter;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.nbt.NBTTagCompound;
@@ -26,7 +27,7 @@ public class TETrafficLight extends TEDynamXBlock implements ITickable {
 
     @Override
     public void update() {
-        super.update();
+        //FIXME super.update();
         /*
          * Timings :
          * Red : 170 ticks
@@ -67,6 +68,29 @@ public class TETrafficLight extends TEDynamXBlock implements ITickable {
         if (this.lightState != old) {
             IBlockState st = world.getBlockState(getPos());
             this.world.notifyBlockUpdate(getPos(), st, st, 3);
+        }
+        AbstractLightsModule lights = getLightsModule();
+        switch (getLightState()) {
+            case 0:
+                lights.setLightOn("red", true);
+                lights.setLightOn("orange", false);
+                lights.setLightOn("green", false);
+                break;
+            case 1:
+                lights.setLightOn("red", false);
+                lights.setLightOn("orange", true);
+                lights.setLightOn("green", false);
+                break;
+            case 2:
+                lights.setLightOn("red", false);
+                lights.setLightOn("orange", false);
+                lights.setLightOn("green", true);
+                break;
+            default:
+                lights.setLightOn("red", false);
+                lights.setLightOn("orange", false);
+                lights.setLightOn("green", false);
+                break;
         }
     }
 

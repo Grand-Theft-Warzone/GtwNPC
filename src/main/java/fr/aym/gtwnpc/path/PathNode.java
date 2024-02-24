@@ -11,7 +11,9 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
+import javax.annotation.Nullable;
 import javax.vecmath.Vector3f;
+import javax.xml.soap.Node;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,13 +24,15 @@ public class PathNode implements ISerializable, ISerializablePacket {
     protected Vector3f position;
     protected Set<PathNode> neighbors;
     protected Set<UUID> neighborsIds;
+    protected NodeType nodeType = NodeType.UNDEFINED;
 
     public PathNode() {
     }
 
-    public PathNode(Vector3f position, Set<PathNode> neighbors) {
+    public PathNode(Vector3f position, Set<PathNode> neighbors, NodeType type) {
         this.position = position;
         this.neighbors = neighbors;
+        this.nodeType = type;
         this.id = UUID.randomUUID();
     }
 
@@ -53,8 +57,8 @@ public class PathNode implements ISerializable, ISerializablePacket {
     @Override
     public Object[] getObjectsToSave() {
         if (neighborsIds != null) // Nodes not resolved yet
-            return new Object[]{id, position.x, position.y, position.z, neighborsIds};
-        return new Object[]{id, position.x, position.y, position.z, neighbors.stream().map(PathNode::getId).collect(Collectors.toList())};
+            return new Object[]{id, position.x, position.y, position.z, neighborsIds, nodeType};
+        return new Object[]{id, position.x, position.y, position.z, neighbors.stream().map(PathNode::getId).collect(Collectors.toList()), nodeType};
     }
 
     @Override
@@ -66,6 +70,8 @@ public class PathNode implements ISerializable, ISerializablePacket {
             neighbors.clear();
             neighbors = null;
         }
+        if(objects.length >= 6)
+            nodeType = (NodeType) objects[5];
     }
 
     public AxisAlignedBB getBoundingBox() {
@@ -150,6 +156,7 @@ public class PathNode implements ISerializable, ISerializablePacket {
                 ", position=" + position +
                 ", neighbors=" + (neighbors == null ? null : neighbors.stream().map(n -> "N{id=" + n.getId() + ", pos=" + n.getPosition()).collect(Collectors.toList())) +
                 ", neighborsIds=" + neighborsIds +
+                ", type=" + nodeType +
                 '}';
     }
 
@@ -167,5 +174,9 @@ public class PathNode implements ISerializable, ISerializablePacket {
 
     public boolean canPassThrough(BaseVehicleEntity<?> entity) {
         return true;
+    }
+
+    public NodeType getNodeType() {
+        return nodeType;
     }
 }

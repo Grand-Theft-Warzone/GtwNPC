@@ -53,7 +53,7 @@ public class CarPathNodes extends WorldSavedData implements PathNodesManager, IS
 
     @Override
     public NodeType getNodeType() {
-        return NodeType.CAR;
+        return NodeType.CAR_CITY;
     }
 
     @Override

@@ -45,6 +45,8 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
     @Setter
     private SkinRepository.NpcType npcType = SkinRepository.NpcType.NPC;
 
+    private Entity ridingHack;
+
     public EntityGtwNpc(World worldIn) {
         super(worldIn);
         this.setSize(0.6F, 1.95F);
@@ -371,5 +373,21 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
 
     public int getCooldownPeriod() {
         return (int) (1.0D / this.getEntityAttribute(SharedMonsterAttributes.ATTACK_SPEED).getAttributeValue() * 20.0D);
+    }
+
+    public void setRidingHack(Entity ridingHack) {
+        this.ridingHack = ridingHack;
+    }
+
+    @Override
+    public boolean isRiding() {
+        return super.isRiding() || ridingHack != null;
+    }
+
+    @Nullable
+    @Override
+    public Entity getRidingEntity() {
+        Entity e = super.getRidingEntity();
+        return e == null ? ridingHack : e;
     }
 }

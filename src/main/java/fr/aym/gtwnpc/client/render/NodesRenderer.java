@@ -41,7 +41,7 @@ public class NodesRenderer {
             if(stack.getItem() != GtwNpcsItems.itemNodes)
                 stack = MC.player.getHeldItemOffhand();
             PathNodesManager manager = PedestrianPathNodes.getInstance();
-            if (stack.hasTagCompound() && stack.getTagCompound().getInteger("mode") == 1) {
+            if (stack.hasTagCompound() && stack.getTagCompound().getInteger("mode") != 0) {
                 manager = CarPathNodes.getInstance();
             }
             Collection<PathNode> nodes = manager.getNodes();
@@ -162,7 +162,20 @@ public class NodesRenderer {
                 } else if (node instanceof SeatNode) {
                     NodeColor.IDLE_SEAT.apply();
                 } else {
-                    NodeColor.IDLE.apply();
+                    switch (node.getNodeType()) {
+                        case CAR_CITY_LOW_SPED:
+                            NodeColor.IDLE_30.apply();
+                            break;
+                        case CAR_HIGHWAY:
+                            NodeColor.IDLE_90.apply();
+                            break;
+                        case CAR_OFFROAD:
+                            NodeColor.IDLE_70.apply();
+                            break;
+                        default:
+                            NodeColor.IDLE.apply();
+                            break;
+                    }
                 }
                 GlStateManager.translate(center.x, center.y, center.z);
                /* if (GEntityAIMoveToNodes.BIG_TARGET != null && node.getId().equals(GEntityAIMoveToNodes.BIG_TARGET.getId())) {
@@ -191,6 +204,9 @@ public class NodesRenderer {
 
     public enum NodeColor {
         IDLE(1, 1, 1, 0.5f),
+        IDLE_30(0.5f, 1f, 1f, 0.5f),
+        IDLE_70(1f, 1f, 0.5f, 0.5f),
+        IDLE_90(1f, 0.5f, 1f, 0.5f),
         IDLE_SEAT(1, 0.8f, 0.8f, 0.5f),
         TR_LIGHT_ERRORED(1, 0.5f, 1, 0.5f),
         TR_LIGHT_RED(1, 0, 0, 0.5f),
