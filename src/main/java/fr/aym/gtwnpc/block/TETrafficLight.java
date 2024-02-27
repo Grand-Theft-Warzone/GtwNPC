@@ -34,7 +34,7 @@ public class TETrafficLight extends TEDynamXBlock implements ITickable {
          * Orange : 30 ticks
          * Green : 100 ticks
          */
-        if (!world.isRemote) {
+        if (!world.isRemote || true) {
             setLightState(ServerEventHandler.getTFStateByMode(mode));
         }
     }
@@ -71,17 +71,17 @@ public class TETrafficLight extends TEDynamXBlock implements ITickable {
         }
         AbstractLightsModule lights = getLightsModule();
         switch (getLightState()) {
-            case 0:
+            case 2:
                 lights.setLightOn("red", true);
                 lights.setLightOn("orange", false);
                 lights.setLightOn("green", false);
                 break;
-            case 1:
+            case 0:
                 lights.setLightOn("red", false);
                 lights.setLightOn("orange", true);
                 lights.setLightOn("green", false);
                 break;
-            case 2:
+            case 1:
                 lights.setLightOn("red", false);
                 lights.setLightOn("orange", false);
                 lights.setLightOn("green", true);

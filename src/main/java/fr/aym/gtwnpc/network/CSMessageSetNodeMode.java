@@ -40,7 +40,7 @@ public class CSMessageSetNodeMode implements IMessage {
                 ItemStack s = ctx.getServerHandler().player.getHeldItemMainhand();
                 if (s.getItem() instanceof ItemNodes) {
                     if (!s.hasTagCompound()) s.setTagCompound(new NBTTagCompound());
-                    if (s.getTagCompound().getInteger("mode") == 5) {
+                    if (s.getTagCompound().getInteger("mode") >= 4) {
                         s.getTagCompound().setInteger("mode", 0);
                         ctx.getServerHandler().player.sendMessage(new TextComponentString("Set node mode to pedestrian"));
                     } else {

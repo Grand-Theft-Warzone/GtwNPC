@@ -34,14 +34,17 @@ public class BlockTrafficLight extends DynamXBlock<BlockObject<?>> {
         setLightLevel(0.5f);
         SimplePartLightSource redSource = new SimplePartLightSource((ISubInfoTypeOwner<ILightOwner<?>>) blockObjectInfo, "Light_Red");
         //TODO SET ID WITH NEW DYNAMX VERSION
+        redSource.setLightId("red");
         redSource.setObjectName("red");
         redSource.appendTo(blockObjectInfo);
         SimplePartLightSource orangeSource = new SimplePartLightSource((ISubInfoTypeOwner<ILightOwner<?>>) blockObjectInfo, "Light_Orange");
-        redSource.setObjectName("orange");
-        redSource.appendTo(blockObjectInfo);
+        orangeSource.setLightId("orange");
+        orangeSource.setObjectName("orange");
+        orangeSource.appendTo(blockObjectInfo);
         SimplePartLightSource greenSource = new SimplePartLightSource((ISubInfoTypeOwner<ILightOwner<?>>) blockObjectInfo, "Light_Green");
-        redSource.setObjectName("green");
-        redSource.appendTo(blockObjectInfo);
+        greenSource.setLightId("green");
+        greenSource.setObjectName("green");
+        greenSource.appendTo(blockObjectInfo);
     }
 
     @Nullable

@@ -46,14 +46,17 @@ public class TrafficLightNode extends PathNode {
     @Override
     public Object[] getObjectsToSave() {
         if (neighborsIds != null) // Nodes not resolved yet
-            return new Object[]{id, position.x, position.y, position.z, neighborsIds, trafficLightPos};
-        return new Object[]{id, position.x, position.y, position.z, neighbors.stream().map(PathNode::getId).collect(Collectors.toList()), trafficLightPos};
+            return new Object[]{id, position.x, position.y, position.z, neighborsIds, nodeType, trafficLightPos};
+        return new Object[]{id, position.x, position.y, position.z, neighbors.stream().map(PathNode::getId).collect(Collectors.toList()), nodeType, trafficLightPos};
     }
 
     @Override
     public void populateWithSavedObjects(Object[] objects) {
         super.populateWithSavedObjects(objects);
-        trafficLightPos = (BlockPos) objects[5];
+        if(objects[5] instanceof BlockPos)
+            trafficLightPos = (BlockPos) objects[5];
+        else if(objects.length > 6 && objects[6] instanceof BlockPos)
+            trafficLightPos = (BlockPos) objects[6];
     }
 
     @Override

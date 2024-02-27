@@ -1,6 +1,5 @@
 package fr.aym.gtwnpc.client;
 
-import com.jme3.math.Quaternion;
 import com.mia.props.common.entities.TileMountable;
 import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.block.TETrafficLight;
@@ -12,15 +11,12 @@ import fr.aym.gtwnpc.dynamx.ObstacleDetection;
 import fr.aym.gtwnpc.item.ItemNodes;
 import fr.aym.gtwnpc.network.CSMessageSetNodeMode;
 import fr.aym.gtwnpc.path.*;
+import fr.aym.gtwnpc.utils.AIRaycast;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.aym.gtwnpc.utils.GtwNpcsUtils;
-import fr.dynamx.api.contentpack.object.part.IDrawablePart;
-import fr.dynamx.api.contentpack.object.render.IModelPackObject;
-import fr.dynamx.api.events.DynamXEntityRenderEvents;
 import fr.dynamx.api.events.PhysicsEntityEvent;
+import fr.dynamx.api.events.client.BuildSceneGraphEvent;
 import fr.dynamx.client.renders.RenderPhysicsEntity;
-import fr.dynamx.client.renders.scene.IRenderContext;
-import fr.dynamx.client.renders.scene.SceneBuilder;
 import fr.dynamx.client.renders.scene.node.SceneNode;
 import fr.dynamx.client.renders.vehicle.RenderBaseVehicle;
 import fr.dynamx.common.contentpack.parts.PartEntitySeat;
@@ -28,8 +24,6 @@ import fr.dynamx.common.contentpack.type.vehicle.ModularVehicleInfo;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import fr.dynamx.common.physics.entities.BaseVehiclePhysicsHandler;
 import fr.dynamx.utils.debug.renderer.DebugRenderer;
-import fr.dynamx.utils.maths.DynamXGeometry;
-import fr.dynamx.utils.optimization.QuaternionPool;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
@@ -96,9 +90,10 @@ public class ClientEventHandler {
                     return;
                 PathNode node;
                 TileEntity te = MC.world.getTileEntity(result.getBlockPos());
-                NodeType type = NodeType.values()[(stack.hasTagCompound() ? 0 : stack.getTagCompound().getInteger("mode"))+1];
-                if(te instanceof TETrafficLight && type != NodeType.PEDESTRIAN) {
-                    if(NodesRenderer.selectedNode == null)
+                NodeType type = NodeType.values()[(!stack.hasTagCompound() ? 0 : stack.getTagCompound().getInteger("mode")) + 1];
+                System.out.println("Type is ENCULE " + type + " " + stack.getTagCompound().getInteger("mode"));
+                if (te instanceof TETrafficLight && type != NodeType.PEDESTRIAN) {
+                    if (NodesRenderer.selectedNode == null)
                         return;
                     node = new TrafficLightNode(result.getBlockPos(), NodesRenderer.selectedNode, type);
                 } else if (te instanceof TileMountable && type == NodeType.PEDESTRIAN) {
@@ -145,16 +140,20 @@ public class ClientEventHandler {
                     RenderGlobal.drawSelectionBoundingBox(front, 0, 1, 0, 1);
 
                     AutopilotModule mod = entity.getModuleByType(AutopilotModule.class);
-                    com.jme3.math.Vector3f rayOrigin = new com.jme3.math.Vector3f((float) entity.posX, (float) entity.posY, (float) entity.posZ);
-                    List<com.jme3.math.Vector3f> rayVecs = detection.createRayVectors(rayDistance*2);
-                    for (com.jme3.math.Vector3f vec : rayVecs) {
-                        GlStateManager.glBegin(GL11.GL_LINES);
-                        GlStateManager.color(1, 0, 0, 1);
-                        GlStateManager.glVertex3f((float) entity.posX, (float) entity.posY, (float) entity.posZ);
-                        GlStateManager.glVertex3f(vec.x, vec.y, vec.z);
-                        GlStateManager.glEnd();
+                    //com.jme3.math.Vector3f rayOrigin = new com.jme3.math.Vector3f((float) entity.posX, (float) entity.posY, (float) entity.posZ);
+                    //List<AIRaycast> rayVecs = detection.createRayVectors(rayDistance * 2);
+                    List<AIRaycast> rayVecs = detection.lastVectors;
+                    if (rayVecs != null) {
+                        for (AIRaycast raycast : rayVecs) {
+                            //System.out.println("Raycast " + raycast.getRayVec() + " " + raycast.getOrigin() + " " + raycast.lastVehicleHit + " " + raycast.lastEntityHit);
+                            com.jme3.math.Vector3f vec = raycast.getRayVec();
+                            GlStateManager.glBegin(GL11.GL_LINES);
+                            GlStateManager.color(1, 0, 0, 1);
+                            GlStateManager.glVertex3f(raycast.getOrigin().x, raycast.getOrigin().y, raycast.getOrigin().z);
+                            GlStateManager.glVertex3f(vec.x, vec.y, vec.z);
+                            GlStateManager.glEnd();
 
-                        if (mod.getForcedSteeringTime() > 0) {
+                        /*if (mod.getForcedSteeringTime() > 0) {
                             vec = vec.subtract(rayOrigin);
                             Quaternion q = QuaternionPool.get();
                             q.fromAngles(0, -(mod.getForcedSteering() - mod.getSteerForce()) * 0.3f, 0);
@@ -162,25 +161,39 @@ public class ClientEventHandler {
                             vec.addLocal(rayOrigin);
                             GlStateManager.glBegin(GL11.GL_LINES);
                             GlStateManager.color(0, 0, 1, 1);
-                            GlStateManager.glVertex3f((float) entity.posX, (float) entity.posY, (float) entity.posZ);
+                            GlStateManager.glVertex3f(raycast.getOrigin().x, raycast.getOrigin().y, raycast.getOrigin().z);
                             GlStateManager.glVertex3f(vec.x, vec.y, vec.z);
                             GlStateManager.glEnd();
+                        }*/
+
+                            if (raycast.lastVehicleHit != null) {
+                                RenderGlobal.drawBoundingBox(raycast.lastVehicleHit.x - 0.05f, raycast.lastVehicleHit.y - 0.05f, raycast.lastVehicleHit.z - 0.05f,
+                                        raycast.lastVehicleHit.x + 0.05f, raycast.lastVehicleHit.y + 0.05f, raycast.lastVehicleHit.z + 0.05f,
+                                        1, 1, 0, 1);
+                            }
+
+                            if (raycast.lastEntityHit != null) {
+                                RenderGlobal.drawBoundingBox(raycast.lastEntityHit.x - 0.05f, raycast.lastEntityHit.y - 0.05f, raycast.lastEntityHit.z - 0.05f,
+                                        raycast.lastEntityHit.x + 0.05f, raycast.lastEntityHit.y + 0.05f, raycast.lastEntityHit.z + 0.05f,
+                                        1, 0, 1, 1);
+                            }
                         }
                     }
 
-                    if (detection.lastVehicleHit != null) {
-                        RenderGlobal.drawBoundingBox(detection.lastVehicleHit.x - 0.05f, detection.lastVehicleHit.y - 0.05f, detection.lastVehicleHit.z - 0.05f,
-                                detection.lastVehicleHit.x + 0.05f, detection.lastVehicleHit.y + 0.05f, detection.lastVehicleHit.z + 0.05f,
-                                1, 1, 0, 1);
-                    }
-
-                    if (detection.lastEntityHit != null) {
-                        RenderGlobal.drawBoundingBox(detection.lastEntityHit.x - 0.05f, detection.lastEntityHit.y - 0.05f, detection.lastEntityHit.z - 0.05f,
-                                detection.lastEntityHit.x + 0.05f, detection.lastEntityHit.y + 0.05f, detection.lastEntityHit.z + 0.05f,
-                                1, 0, 1, 1);
-                    }
-
                     detection.getEntityOOBB(entity).drawOOBB(0, 0, 1, 1);
+
+                    Vector3f c1 = new Vector3f(-86.05212f, 4.89501f, -1261.2246f);
+                    RenderGlobal.drawBoundingBox(c1.x - 0.05f, c1.y - 0.05f, c1.z - 0.05f,
+                            c1.x + 0.05f, c1.y + 0.05f, c1.z + 0.05f,
+                            1, 1, 1, 1);
+                    c1 = new Vector3f(-88.2944f, 4.881034f, -1264.537f);
+                    RenderGlobal.drawBoundingBox(c1.x - 0.05f, c1.y - 0.05f, c1.z - 0.05f,
+                            c1.x + 0.05f, c1.y + 0.05f, c1.z + 0.05f,
+                            1, 1, 1, 1);
+                    c1 = new Vector3f(-8.637E+1f,  4.893E+0f, -1.262E+3f);
+                    RenderGlobal.drawBoundingBox(c1.x - 0.05f, c1.y - 0.05f, c1.z - 0.05f,
+                            c1.x + 0.05f, c1.y + 0.05f, c1.z + 0.05f,
+                            1, 0, 0, 1);
 
                     GlStateManager.popMatrix();
                 }
@@ -194,31 +207,16 @@ public class ClientEventHandler {
     }
 
     @SubscribeEvent
-    public static void sceneBuild(DynamXEntityRenderEvents.BuildSceneGraph event) {
+    public static void sceneBuild(BuildSceneGraphEvent.BuildEntityScene event) {
         System.out.println("EVVENT");
-        if(!(event.getPackInfo() instanceof ModularVehicleInfo))
+        if (!(event.getPackInfo() instanceof ModularVehicleInfo))
             return;
-        PartEntitySeat seat = ((ModularVehicleInfo)event.getPackInfo()).getPartByTypeAndId(PartEntitySeat.class, (byte) 0);
-        if(seat == null)
+        PartEntitySeat seat = ((ModularVehicleInfo) event.getPackInfo()).getPartByTypeAndId(PartEntitySeat.class, (byte) 0);
+        if (seat == null)
             return;
-        ((SceneBuilder) event.getSceneBuilder()).addNode(event.getPackInfo(), new IDrawablePart<BaseVehicleEntity<?>, IModelPackObject>() {
-            @Override
-            public SceneNode<IRenderContext, IModelPackObject> createSceneGraph(com.jme3.math.Vector3f vector3f, List<SceneNode<IRenderContext, IModelPackObject>> list) {
-                return (SceneNode) new NpcSeatNode(seat, event.getModelScale());
-            }
-
-            @Override
-            public String getNodeName() {
-                return "seats.npc";
-            }
-
-            @Override
-            public String getObjectName() {
-                return null;
-            }
-        });
+        event.addSceneNode("seat.npc", (scale, list) -> (SceneNode) new NpcSeatNode(seat, scale));
     }
-    
+
     /*@SubscribeEvent
     public static void sceneBuilding(DynamXEntityRenderEvents.BuildSceneGraph event) {
         System.out.println("Building scene graph " + event.getPackInfo());

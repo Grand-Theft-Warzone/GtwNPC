@@ -11,9 +11,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
-import javax.annotation.Nullable;
 import javax.vecmath.Vector3f;
-import javax.xml.soap.Node;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -70,7 +68,7 @@ public class PathNode implements ISerializable, ISerializablePacket {
             neighbors.clear();
             neighbors = null;
         }
-        if(objects.length >= 6)
+        if (objects.length >= 6 && objects[5] instanceof NodeType)
             nodeType = (NodeType) objects[5];
     }
 

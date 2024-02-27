@@ -174,6 +174,9 @@ public class OOBB {
     }
 
     public Vector3f calculateIntercept(Vector3f start, Vector3f end) {
+        // Ajouter 90° de rotation pour que les axes de la boîte soient alignés avec les axes du monde
+        //Matrix3f rotation = new Matrix3f().rotateY((float) Math.toRadians(90));
+        //Matrix3f orientation = new Matrix3f(this.orientation).mul(rotation);
         // Inverser l'orientation par transposition (pour une matrice de rotation pure)
         Matrix3f inverseOrientation = new Matrix3f(orientation).transpose();
         // Appliquer l'inverse de la transformation pour ramener le rayon dans l'espace local de l'OOBB
@@ -199,4 +202,43 @@ public class OOBB {
         // Si pas d'intersection, retourner null
         return null;
     }
+
+    /*
+        public Vector3f calculateIntercept(Vector3f start, Vector3f end) {
+        // Transform ray to local space
+        Matrix3f inverseOrientation = new Matrix3f(orientation).transpose();
+        Vector3f localStart = inverseOrientation.transform(new Vector3f(start).sub(center));
+        Vector3f localEnd = inverseOrientation.transform(new Vector3f(end).sub(center));
+        Vector3f direction = localEnd.sub(localStart);
+        float tMin = 0.0f;
+        float tMax = Float.MAX_VALUE;
+        // Perform AABB intersection test in local space
+        for (int i = 0; i < 3; i++) {
+            if (Math.abs(direction.get(i)) < 1E-5) {
+                // Ray is parallel to slab. No hit if origin not within slab
+                if (localStart.get(i) < -halfExtents.get(i) || localStart.get(i) > halfExtents.get(i)) return null;
+            } else {
+                // Compute intersection t value of ray with near and far plane of slab
+                float ood = 1.0f / direction.get(i);
+                float t1 = (-halfExtents.get(i) - localStart.get(i)) * ood;
+                float t2 = (halfExtents.get(i) - localStart.get(i)) * ood;
+                // Make t1 be intersection with near plane, t2 with far plane
+                if (t1 > t2) {
+                    float temp = t1;
+                    t1 = t2;
+                    t2 = temp;
+                }
+                // Compute the intersection of slab intersection intervals
+                tMin = Math.max(tMin, t1);
+                tMax = Math.min(tMax, t2);
+                // Exit with no collision as soon as slab intersection becomes empty
+                if (tMin > tMax) return null;
+            }
+        }
+        // If we reach here, ray intersects all 3 slabs. Return point closest to the ray origin.
+        Vector3f intersectionPoint = localStart.add(direction.mul(tMin));
+        // Transform intersection point back to world space
+        return orientation.transform(intersectionPoint).add(center);
+    }
+     */
 }
