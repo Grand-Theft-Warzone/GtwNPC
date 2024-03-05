@@ -91,4 +91,16 @@ public class TrafficLightNode extends PathNode {
         }
         return ((TETrafficLight) te).getLightState();
     }
+
+    public boolean isTrafficLightValid(World world) {
+        if (trafficLightPos.getY() == 1080)
+            return false;
+        TileEntity te = world.getTileEntity(trafficLightPos);
+        return te instanceof TETrafficLight;
+    }
+
+    @Override
+    public boolean isValidSpawnNode(World world, PathNodesManager manager, int maxNeighbors) {
+        return !isTrafficLightValid(world) && super.isValidSpawnNode(world, manager, maxNeighbors);
+    }
 }

@@ -7,6 +7,7 @@ import fr.aym.gtwnpc.client.render.NodesRenderer;
 import fr.aym.gtwnpc.client.render.NpcSeatNode;
 import fr.aym.gtwnpc.common.GtwNpcsItems;
 import fr.aym.gtwnpc.dynamx.AutopilotModule;
+import fr.aym.gtwnpc.dynamx.GtwNpcModule;
 import fr.aym.gtwnpc.dynamx.ObstacleDetection;
 import fr.aym.gtwnpc.item.ItemNodes;
 import fr.aym.gtwnpc.network.CSMessageSetNodeMode;
@@ -120,7 +121,7 @@ public class ClientEventHandler {
             event.addDebugRenderers(new DebugRenderer<BaseVehicleEntity<?>>() {
                 @Override
                 public boolean shouldRender(BaseVehicleEntity<?> physicsEntity) {
-                    return physicsEntity.hasModuleOfType(AutopilotModule.class);
+                    return physicsEntity.hasModuleOfType(GtwNpcModule.class) && physicsEntity.getModuleByType(GtwNpcModule.class).hasAutopilot();
                 }
 
                 @Override
@@ -131,14 +132,14 @@ public class ClientEventHandler {
                     z = entity.prevPosZ + (entity.posZ - entity.prevPosZ) * partialTicks;
                     GlStateManager.translate(-x, -y, -z);
 
-                    ObstacleDetection detection = entity.getModuleByType(AutopilotModule.class).getObstacleDetection();
+                    AutopilotModule mod = entity.getModuleByType(GtwNpcModule.class).getAutopilotModule();
+                    ObstacleDetection detection = mod.getObstacleDetection();
                     float mySpeed = entity.getPhysicsHandler() != null && entity.ticksExisted > 10 ? entity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
                     int rayDistance = mySpeed > 35 ? 16 : mySpeed > 20 ? 9 : mySpeed > 5 ? 7 : mySpeed > 2 ? 4 : 3;
 
                     AxisAlignedBB front = detection.getDetectionAABB(rayDistance);
                     RenderGlobal.drawSelectionBoundingBox(front, 0, 1, 0, 1);
 
-                    AutopilotModule mod = entity.getModuleByType(AutopilotModule.class);
                     //com.jme3.math.Vector3f rayOrigin = new com.jme3.math.Vector3f((float) entity.posX, (float) entity.posY, (float) entity.posZ);
                     //List<AIRaycast> rayVecs = detection.createRayVectors(rayDistance * 2);
                     List<AIRaycast> rayVecs = detection.lastVectors;

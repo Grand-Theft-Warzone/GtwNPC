@@ -10,6 +10,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.DimensionType;
+import net.minecraft.world.World;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -91,10 +92,10 @@ public class CarPathNodes extends WorldSavedData implements PathNodesManager, IS
     }
 
     @Override
-    public PathNode selectRandomPathNode(Vec3d around, float radiusMin, float radiusMax, Predicate<PathNode> nodeFilter) {
+    public PathNode selectRandomPathNode(World world, Vec3d around, float radiusMin, float radiusMax, Predicate<PathNode> nodeFilter) {
         Collection<PathNode> nodes = getNodesWithinAABB(new AxisAlignedBB(around.x - radiusMax, around.y - radiusMax, around.z - radiusMax, around.x + radiusMax, around.y + radiusMax, around.z + radiusMax));
         // System.out.println("Selecting random node from " + nodes.size() + " nodes " + nodes.stream().map(n -> n.getDistance(around )).collect(java.util.stream.Collectors.toList()));
-        nodes = nodes.stream().filter(pathNode -> pathNode.getDistance(around) >= radiusMin).filter(nodeFilter).collect(java.util.stream.Collectors.toList());
+        nodes = nodes.stream().filter(pathNode -> pathNode.getDistance(around) >= radiusMin && pathNode.isValidSpawnNode(world, this, 2)).filter(nodeFilter).collect(java.util.stream.Collectors.toList());
         if (!nodes.isEmpty())
             return nodes.stream().skip(new Random().nextInt(nodes.size())).findFirst().get();
         return null;
@@ -102,9 +103,7 @@ public class CarPathNodes extends WorldSavedData implements PathNodesManager, IS
 
     @Override
     public PathNode findNearestNode(Vec3d around, List<PathNode> avoidNodes) {
-        return nodes.values().stream().filter(n -> !avoidNodes.contains(n)).min(Comparator.comparingDouble(pathNode -> {
-            return pathNode.getDistance(around);
-        })).orElse(null);
+        return nodes.values().stream().filter(n -> !avoidNodes.contains(n)).min(Comparator.comparingDouble(pathNode -> pathNode.getDistance(around))).orElse(null);
     }
 
     @Override

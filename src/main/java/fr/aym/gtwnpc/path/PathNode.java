@@ -23,6 +23,7 @@ public class PathNode implements ISerializable, ISerializablePacket {
     protected Vector3f position;
     protected Set<PathNode> neighbors;
     protected Set<UUID> neighborsIds;
+    @Getter
     protected NodeType nodeType = NodeType.UNDEFINED;
 
     public PathNode() {
@@ -175,10 +176,6 @@ public class PathNode implements ISerializable, ISerializablePacket {
         return true;
     }
 
-    public NodeType getNodeType() {
-        return nodeType;
-    }
-
     public int estimateTargetRotationYaw() {
         // estimate the rotation yaw to reach the next node, in degrees, by averaging the direction of the neighbors
         if (neighbors == null)
@@ -189,5 +186,13 @@ public class PathNode implements ISerializable, ISerializablePacket {
         }
         average = average.normalize();
         return (int) Math.toDegrees(Math.atan2(average.z, average.x)) - 90;
+    }
+
+    public boolean isValidSpawnNode(World world, PathNodesManager manager, int maxNeighbors) {
+        /*if(neighbors == null)
+            resolveNeighbors(manager);
+        return neighbors.stream().filter(n -> n.getDistance(this) < 16).count() <= maxNeighbors && neighbors.stream().noneMatch(n -> n instanceof TrafficLightNode && n.getDistance(this) < 10 && ((TrafficLightNode) n).isTrafficLightValid(world));*/
+        Collection<PathNode> nodesAround = manager.getNodesWithinAABB(new AxisAlignedBB(position.x - 6, position.y - 3, position.z - 6, position.x + 6, position.y + 3, position.z + 6));
+        return nodesAround.size()-1 <= maxNeighbors && nodesAround.stream().noneMatch(n -> n instanceof TrafficLightNode && ((TrafficLightNode) n).isTrafficLightValid(world));
     }
 }

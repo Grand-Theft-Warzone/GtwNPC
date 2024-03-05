@@ -1,6 +1,6 @@
 package fr.aym.gtwnpc.server.command;
 
-import fr.aym.gtwnpc.dynamx.AutopilotModule;
+import fr.aym.gtwnpc.dynamx.GtwNpcModule;
 import fr.aym.gtwnpc.utils.GtwNpcsConfig;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import net.minecraft.command.CommandBase;
@@ -34,7 +34,8 @@ public class CmdVehicleNpc implements ISubCommand {
             throw new WrongUsageException(getUsage());
         if (args[1].equals("kill_all")) {
             List<Entity> npcs = sender.getEntityWorld().loadedEntityList.stream().filter(e -> e instanceof BaseVehicleEntity
-                    && ((BaseVehicleEntity<?>) e).hasModuleOfType(AutopilotModule.class)).collect(Collectors.toList());
+                    && ((BaseVehicleEntity<?>) e).hasModuleOfType(GtwNpcModule.class)
+                    && ((BaseVehicleEntity<?>) e).getModuleByType(GtwNpcModule.class).hasAutopilot()).collect(Collectors.toList());
             npcs.forEach(Entity::setDead);
             sender.sendMessage(new TextComponentString(TextFormatting.RED + "Killed " + npcs.size() + " vehicle npcs"));
             return;

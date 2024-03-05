@@ -2,7 +2,6 @@ package fr.aym.gtwnpc.utils;
 
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
-import fr.aym.gtwnpc.dynamx.AutopilotModule;
 import fr.aym.gtwnpc.dynamx.ObstacleDetection;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import fr.dynamx.common.physics.entities.BaseVehiclePhysicsHandler;
@@ -25,10 +24,10 @@ public class AIRaycast {
     private final BaseVehicleEntity<?> entity;
     private final Vector3f origin;
     private final Vector3f rayVec;
-    private final boolean isInFront;
+    private final RayCastType type;
 
     public HitInfo rayTraceLineOnEntities(ObstacleDetection obstacleDetection, List<Entity> entities, float rayDistance, int frontSize) {
-        if(!isInFront())
+        if (type == RayCastType.RIGHT)
             return new HitInfo(null, null, 0, ObstacleDetection.ObstacleAction.IGNORE);
         Vec3d origin = new Vec3d(this.origin.x, this.origin.y, this.origin.z);
         Vec3d rayVec = new Vec3d(this.rayVec.x, this.rayVec.y, this.rayVec.z);
@@ -73,14 +72,6 @@ public class AIRaycast {
         return new HitInfo(hitEntity, new Vector3f((float) hitVec.x, (float) hitVec.y, (float) hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.STOP);
     }
 
-    public boolean updateCollisionWith(BaseVehicleEntity<?> otherEntity, com.jme3.math.Vector3f rayOrigin, com.jme3.math.Vector3f rayVec, float rayDistance, OOBB otherOOBB, boolean searchPathOut) {
-        ObstacleDetection oth = otherEntity.getModuleByType(AutopilotModule.class) != null ? otherEntity.getModuleByType(AutopilotModule.class).getObstacleDetection() : null;
-        if (oth == null)
-            return true;
-        float otherSpeed = otherEntity.getPhysicsHandler() != null && otherEntity.ticksExisted > 10 ? otherEntity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
-        return true;
-    }
-
     public HitInfo rayTraceLineOnVehicles(ObstacleDetection obstacleDetection, List<BaseVehicleEntity<?>> vehicles, float rayDistance, int frontSize) {
         org.joml.Vector3f hitVec = null;
         BaseVehicleEntity<?> hitEntity = null;
@@ -102,10 +93,10 @@ public class AIRaycast {
                 double dr = origin.distance(rayVec);
                 if (di > dr) {
                     intersection = null;
-                    if(!entity.getPassengers().isEmpty())
+                    if (!entity.getPassengers().isEmpty())
                         System.out.println("Enculé de GPT");
                 }
-                if(!entity.getPassengers().isEmpty())
+                if (!entity.getPassengers().isEmpty())
                     System.out.println("From " + origin + " to " + rayVec + " " + intersection + " " + di + " " + dr);
             }
             if (obstacleDetection.getMyOOBB().collidesWithOOBB(otherOOBB) && false) {
@@ -144,26 +135,30 @@ public class AIRaycast {
         //   System.out.println("No hit entity");
         if (hitEntity == null)
             return new HitInfo(null, null, 0, ObstacleDetection.ObstacleAction.IGNORE);
+        // check relative angle of the two vehicles to check if we are following the other
+        Quaternion myRot = entity.physicsRotation;
+        Quaternion otherRot = hitEntity.physicsRotation;
+        float dot = new Quaternionf(myRot.getX(), myRot.getY(), myRot.getZ(), myRot.getW()).dot(new Quaternionf(otherRot.getX(), otherRot.getY(), otherRot.getZ(), otherRot.getW()));
         if (hitDistance - frontSize > 4) {
-            // check relative angle of the two vehicles to check if we are following the other
-            Quaternion myRot = entity.physicsRotation;
-            Quaternion otherRot = hitEntity.physicsRotation;
-            float dot = new Quaternionf(myRot.getX(), myRot.getY(), myRot.getZ(), myRot.getW()).dot(new Quaternionf(otherRot.getX(), otherRot.getY(), otherRot.getZ(), otherRot.getW()));
             if (dot > 0.5f) {
                 if (!entity.getPassengers().isEmpty())
                     System.out.println("Following vehicle " + hitEntity);
                 return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.SLOW_DOWN);
             }
-            if (hitDistance - frontSize > 12 && isInFront()) {
+            if (hitDistance - frontSize > 12 /*&& type != RayCastType.RIGHT*/) {
                 if (!entity.getPassengers().isEmpty())
                     System.out.println("Staying away from vehicle " + hitEntity);
                 return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.SLOW_DOWN);
             }
             if (!entity.getPassengers().isEmpty())
-                System.out.println("Collided2 with vehicle " + hitEntity + " " + hitDistance + " " + hitVec + " " + isInFront());
+                System.out.println("Collided2 with vehicle " + hitEntity + " " + hitDistance + " " + hitVec + " " + type);
+            if (type == RayCastType.FRONT_LEFT && dot < 0.5f)
+                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.STEER_RIGHT);
+            if (type == RayCastType.FRONT_RIGHT && dot < 0.5f)
+                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.STEER_LEFT);
             return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.STOP);
         }
-        if (!isInFront()) {
+        if (type == RayCastType.RIGHT) {
             float otherSpeed = hitEntity.getPhysicsHandler() != null && hitEntity.ticksExisted > 10 ? hitEntity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
             if (otherSpeed < 0.1f) {
                 if (!entity.getPassengers().isEmpty())
@@ -172,7 +167,13 @@ public class AIRaycast {
             }
         }
         if (!entity.getPassengers().isEmpty())
-            System.out.println("Collided1 with vehicle " + hitEntity + " " + hitDistance + " " + hitVec + " " + isInFront());
+            System.out.println("Collided1 with vehicle " + hitEntity + " " + hitDistance + " " + hitVec + " " + type);
+        if (hitDistance - frontSize > -1 && dot < 0.6f) {
+            if (type == RayCastType.FRONT_LEFT)
+                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.STEER_RIGHT);
+            if (type == RayCastType.FRONT_RIGHT)
+                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.STEER_LEFT);
+        }
         return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.STOP);
         //return hitEntity != null ? ((hitDistance - frontSize) > 4 ? ObstacleDetection.ObstacleAction.SLOW_DOWN : ObstacleDetection.ObstacleAction.STOP) : needsSlow ? ObstacleDetection.ObstacleAction.SLOW_DOWN : ObstacleDetection.ObstacleAction.IGNORE;
     }
@@ -194,5 +195,12 @@ public class AIRaycast {
                     ", action=" + action +
                     '}';
         }
+    }
+
+    public enum RayCastType {
+        FRONT_LEFT,
+        FRONT_CENTER,
+        FRONT_RIGHT,
+        RIGHT
     }
 }

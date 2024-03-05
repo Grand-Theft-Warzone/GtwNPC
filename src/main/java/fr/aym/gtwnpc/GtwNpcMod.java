@@ -9,7 +9,6 @@ import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.entity.EntityGtwPoliceNpc;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
 import fr.aym.gtwnpc.network.CSMessageSetNodeMode;
-import fr.aym.gtwnpc.network.SCMessagePutAutopilot;
 import fr.aym.gtwnpc.server.command.CommandGtwNpcMod;
 import fr.aym.gtwnpc.utils.GtwNpcsConfig;
 import fr.dynamx.api.contentpack.DynamXAddon;
@@ -73,7 +72,6 @@ public class GtwNpcMod {
         network.registerMessage(BBMessagePathNodes.HandlerClient.class, BBMessagePathNodes.class, 1, Side.CLIENT);
         network.registerMessage(BBMessagePathNodes.HandlerServer.class, BBMessagePathNodes.class, 2, Side.SERVER);
         network.registerMessage(CSMessageSetNodeMode.Handler.class, CSMessageSetNodeMode.class, 3, Side.SERVER);
-        network.registerMessage(SCMessagePutAutopilot.HandleClient.class, SCMessagePutAutopilot.class, 4, Side.CLIENT);
 
         SkinRepository.loadSkins(new File("GtwNpc", "skins"));
     }

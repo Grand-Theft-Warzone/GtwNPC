@@ -3,6 +3,7 @@ package fr.aym.gtwnpc.client.render;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 import fr.aym.gtwnpc.dynamx.AutopilotModule;
+import fr.aym.gtwnpc.dynamx.GtwNpcModule;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.dynamx.api.contentpack.object.render.IModelPackObject;
 import fr.dynamx.api.entities.IModuleContainer;
@@ -38,11 +39,11 @@ public class NpcSeatNode extends SimpleNode<BaseRenderContext.EntityRenderContex
     @Override
     public void render(BaseRenderContext.EntityRenderContext context, IModelPackObject packInfo) {
         BaseVehicleEntity<?> entity = (BaseVehicleEntity<?>) context.getEntity();
-        if(entity == null) {
+        if(entity == null || entity.getControllingPassenger() != null) {
             return;
         }
-        AutopilotModule autopilot = entity.getModuleByType(AutopilotModule.class);
-        if(autopilot == null) {
+        GtwNpcModule autopilot = entity.getModuleByType(GtwNpcModule.class);
+        if(autopilot == null || !autopilot.hasAutopilot() || autopilot.getAutopilotModule().getStolenTime() > 0) {
             return;
         }
         if(gtwNpc == null) {
@@ -66,7 +67,7 @@ public class NpcSeatNode extends SimpleNode<BaseRenderContext.EntityRenderContex
             if (position == EnumSeatPlayerPosition.LYING) transform.rotate(FastMath.PI / 2, 1, 0, 0);
             GlStateManager.pushMatrix();
             GlStateManager.multMatrix(ClientDynamXUtils.getMatrixBuffer(transform));
-            Minecraft.getMinecraft().getRenderManager().renderEntity(seatRider, 0.0, 0.0, 0.0, seatRider.rotationYaw, partialTicks, false);
+            Minecraft.getMinecraft().getRenderManager().renderEntity(seatRider, 0.0, 0.0, 0.0, 0, 0, false);
             GlStateManager.popMatrix();
             fr.dynamx.client.handlers.ClientEventHandler.renderingEntity = null;
         }
@@ -78,8 +79,8 @@ public class NpcSeatNode extends SimpleNode<BaseRenderContext.EntityRenderContex
         if(entity == null) {
             return;
         }
-        AutopilotModule autopilot = entity.getModuleByType(AutopilotModule.class);
-        if(autopilot == null) {
+        GtwNpcModule autopilot = entity.getModuleByType(GtwNpcModule.class);
+        if(autopilot == null || !autopilot.hasAutopilot()) {
             return;
         }
         if (DynamXDebugOptions.SEATS_AND_STORAGE.isActive()) {

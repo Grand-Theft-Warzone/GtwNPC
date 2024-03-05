@@ -12,6 +12,7 @@ import fr.dynamx.api.network.sync.EntityVariable;
 import fr.dynamx.api.network.sync.SimulationHolder;
 import fr.dynamx.api.network.sync.SynchronizationRules;
 import fr.dynamx.common.entities.BaseVehicleEntity;
+import fr.dynamx.common.entities.modules.AbstractLightsModule;
 import fr.dynamx.common.entities.modules.engines.CarEngineModule;
 import fr.dynamx.common.network.sync.SPPhysicsEntitySynchronizer;
 import fr.dynamx.common.physics.entities.BaseVehiclePhysicsHandler;
@@ -35,13 +36,13 @@ import java.util.List;
 import java.util.Queue;
 import java.util.function.Predicate;
 
-public class AutopilotModule extends CarEngineModule
-{
+public class AutopilotModule {
     //TODO CLEAN
     //TODO DIMS OF VEHICLE
     //TODO SAVE STATE (TARGET...) + ensure path still exists on load
 
     private final BaseVehicleEntity<?> entity;
+    private final GtwNpcModule engineModule;
 
     private final Queue<PathNode> path = new ArrayDeque<>();
     private PathNode lastTargetNode;
@@ -65,23 +66,25 @@ public class AutopilotModule extends CarEngineModule
     @Setter
     private float forcedSteering;
 
-    private EntityVariable<String> npcSkin = new EntityVariable<String>(SynchronizationRules.SERVER_TO_CLIENTS, "");
+    @Getter
+    private int stolenTime;
 
-    public AutopilotModule(BaseVehicleEntity<?> vehicleEntity, CarEngineModule engineModule) {
-        super(vehicleEntity, engineModule.getEngineInfo());
+    public AutopilotModule(BaseVehicleEntity<?> vehicleEntity, GtwNpcModule engineModule) {
         this.entity = vehicleEntity;
+        this.engineModule = engineModule;
         this.obstacleDetection = new ObstacleDetection(entity, this);
         //System.out.println("Autopilot module ignited !");
-        this.npcSkin.set(SkinRepository.getRandomSkin(SkinRepository.NpcType.NPC, vehicleEntity.world.rand).toString());
     }
 
     public void setState(String state) {
-       // System.out.println("State: " + state);
+        // System.out.println("State: " + state);
         this.state = state;
     }
 
-    public String getNpcSkin() {
-        return npcSkin.get();
+    public void stealVehicle() {
+        stolenTime = 1;
+        stopNavigation(Integer.MAX_VALUE);
+        setState("stolen");
     }
 
     protected void startNavigation() {
@@ -91,15 +94,16 @@ public class AutopilotModule extends CarEngineModule
         com.jme3.math.Vector3f look = DynamXGeometry.rotateVectorByQuaternion(com.jme3.math.Vector3f.UNIT_Z, entity.physicsRotation);
         com.jme3.math.Vector3f pos = Vector3fPool.get(entity.physicsPosition);
         Predicate<PathNode> predicate = node -> {
-            com.jme3.math.Vector3f dir = pos.subtractLocal(node.getPosition().x, node.getPosition().y, node.getPosition().z);
+           /* com.jme3.math.Vector3f dir = pos.subtractLocal(node.getPosition().x, node.getPosition().y, node.getPosition().z);
             dir = dir.normalize();
             float dot = dir.dot(look);
             //System.out.println("Dot: " + dot + " " + node + " " + look + " " + dir + " " + pos + " " + entity.getPositionVector() + " " + node.getPosition());
-            return dot < -0.6f;
+            return dot < 0.2f;*/
+            return true;
         };
-        PathNode target = CarPathNodes.getInstance().selectRandomPathNode(entity.getPositionVector(), 40, 3000, predicate);
-        if(target == null) {
-            target = CarPathNodes.getInstance().selectRandomPathNode(entity.getPositionVector(), 40, 3000, n -> true);
+        PathNode target = CarPathNodes.getInstance().selectRandomPathNode(entity.world, entity.getPositionVector(), 40, 3000, predicate);
+        if (target == null) {
+            target = CarPathNodes.getInstance().selectRandomPathNode(entity.world, entity.getPositionVector(), 40, 3000, n -> true);
         }
         //CarPathNodes.getInstance().getNode(UUID.fromString("e75bb806-5fa7-4c3e-a78c-bb6ca06942a4"));
         GEntityAIMoveToNodes.BIG_TARGET = target;
@@ -157,9 +161,7 @@ public class AutopilotModule extends CarEngineModule
         navigating = true;
     }
 
-    @Override
     public void readFromNBT(NBTTagCompound tag) {
-        super.readFromNBT(tag);
         navigating = tag.getBoolean("navigating");
         //System.out.println("Loading nav " + navigating);
         if (navigating) {
@@ -177,11 +179,10 @@ public class AutopilotModule extends CarEngineModule
                 }
             }
         }
+        stolenTime = tag.getInteger("stolenTime");
     }
 
-    @Override
     public void writeToNBT(NBTTagCompound tag) {
-        super.writeToNBT(tag);
         tag.setBoolean("navigating", navigating);
         //System.out.println("Saving nav " + navigating + " " + path.size() + " " + path);
         if (navigating && !this.path.isEmpty()) {
@@ -190,8 +191,9 @@ public class AutopilotModule extends CarEngineModule
                 path.appendTag(new NBTTagString(node.getId().toString()));
             }
             tag.setTag("path", path);
-           // System.out.println("Saved " + path);
+            // System.out.println("Saved " + path);
         }
+        tag.setInteger("stolenTime", stolenTime);
     }
 
     protected void updateNavigation() {
@@ -324,18 +326,18 @@ public class AutopilotModule extends CarEngineModule
             }
         }
 
-      //  System.out.println("Target " + target);
-        if(target instanceof TrafficLightNode) {
-            if(!target.canPassThrough(entity)) {
+        //  System.out.println("Target " + target);
+        if (target instanceof TrafficLightNode) {
+            if (!target.canPassThrough(entity)) {
                 float dist = target.getDistance(entity.getPositionVector());
-             //   System.out.println("Light IS RED ! " + dist);
-                if(dist < 7.2f) {
+                //   System.out.println("Light IS RED ! " + dist);
+                if (dist < 7.2f) {
                     speed = 0;
-                } else if(dist < 10) {
+                } else if (dist < 10) {
                     speed = 2;
-                } else if(dist < 16) {
+                } else if (dist < 16) {
                     speed = 10;
-                } else if(dist < 25) {
+                } else if (dist < 25) {
                     speed = 20;
                 } else {
                     speed = 30;
@@ -354,7 +356,7 @@ public class AutopilotModule extends CarEngineModule
         }
         if (phycites != null) {
             //System.out.println("Cur speed: " + phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) + " km/h");
-            float mySpeed = entity.ticksExisted > 10 ?phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
+            float mySpeed = entity.ticksExisted > 10 ? phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
             if (mySpeed > speed + 10 || speed == 0) {
                 // System.out.println("Ma braker");
                 if (mySpeed > 0.5f)
@@ -385,7 +387,6 @@ public class AutopilotModule extends CarEngineModule
         return FastMath.abs((float) Math.acos(dot));
     }
 
-
     protected void stopNavigation(int cooldown) {
         navigating = false;
         path.clear();
@@ -394,59 +395,42 @@ public class AutopilotModule extends CarEngineModule
         setControls(32); // handbrake
     }
 
-    @Override
-    public void onPackInfosReloaded() {
-        super.onPackInfosReloaded();
-    }
-
-    @Override
-    public boolean listenEntityUpdates(Side side) {
-        return true;
-    }
-
-    @Override
     public void updateEntity() {
         if (entity.getSynchronizer().getSimulationHolder().ownsControls(entity.world.isRemote ? Side.CLIENT : Side.SERVER)) {
-            if (true) {
+            if (stolenTime == 0) {
                 updateNavigation();
                 //stopNavigation();
                 obstacleDetection.detectObstacles();
             } else {
                 // stopNavigation();
             }
+            if (entity.ticksExisted % 300 == 0 && entity.hasModuleOfType(AbstractLightsModule.LightsModule.class))
+                entity.getModuleByType(AbstractLightsModule.LightsModule.class).setLightOn(3, !entity.world.isDaytime());
         }
-        if (entity.world.isRemote) {
-            super.updateEntity();
-      //      System.out.println("Entity steer: " + steerForce + " " + forcedSteeringTime + " " + forcedSteering + " " + entity + " " + entity.getPassengers() + " " + navigationTarget + " " + state +" "+cooldown);
-        }
-    }
-
-    @Override
-    public void onSetSimulationHolder(SimulationHolder simulationHolder, EntityPlayer simulationPlayerHolder, SimulationHolder.UpdateContext changeContext) {
-        super.onSetSimulationHolder(simulationHolder, simulationPlayerHolder, changeContext);
-        if (changeContext == SimulationHolder.UpdateContext.NORMAL && entity.getSynchronizer() instanceof SPPhysicsEntitySynchronizer) {
-            //  System.out.println("Set simulation holder: " + simulationHolder);
-            if (simulationHolder != SimulationHolder.DRIVER_SP) {
-                entity.getSynchronizer().setSimulationHolder(SimulationHolder.DRIVER_SP, null);
+        if (!entity.world.isRemote) {
+            if (stolenTime > 0) {
+                if (entity.getControllingPassenger() != null) {
+                    stolenTime = 1;
+                } else {
+                    stolenTime++;
+                    if (stolenTime > 20 * 60 * 5) {
+                        System.out.println("Killing stolen entity");
+                        entity.setDead();
+                    }
+                }
             }
         }
     }
 
-    @Override
-    public void initPhysicsEntity(@Nullable BaseVehiclePhysicsHandler<?> handler) {
-        if (handler != null) {
-            physicsHandler = new EnginePhysicsHandler(this, handler, handler.getWheels()) {
-                @Override
-                public void steer(float strength) {
-                    //System.out.println("Intercepted steer: " + strength + " // " + steerForce);
-                    if (forcedSteeringTime > 0) {
-                        forcedSteeringTime--;
-                        super.steer(forcedSteering);
-                    } else {
-                        super.steer(steerForce);
-                    }
-                }
-            };
-        }
+    public void setSpeedLimit(float limit) {
+        engineModule.setSpeedLimit(limit);
+    }
+
+    public int getControls() {
+        return engineModule.getControls();
+    }
+
+    public void setControls(int controls) {
+        engineModule.setControls(controls);
     }
 }

@@ -73,6 +73,8 @@ public class BlockTrafficLight extends DynamXBlock<BlockObject<?>> {
 
     @Override
     public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+        if(playerIn.isSneaking())
+            return super.onBlockActivated(worldIn, pos, state, playerIn, hand, facing, hitX, hitY, hitZ);
         if (!worldIn.isRemote && playerIn.getHeldItemMainhand().getItem() == Item.getItemFromBlock(GtwNpcMod.trafficLight)) {
             byte mode = ((TETrafficLight) worldIn.getTileEntity(pos)).switchMode();
             playerIn.sendMessage(new TextComponentString("Active mode: " + (mode == 0 ? "Short1" : mode == 2 ? "Short2" : mode == 1 ? "Long1" : mode == 3 ? "Long2" : mode == 4 ? "Off" : "Unknown (" + mode + ")")));

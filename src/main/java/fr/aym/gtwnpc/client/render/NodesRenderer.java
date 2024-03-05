@@ -178,11 +178,11 @@ public class NodesRenderer {
                     }
                 }
                 GlStateManager.translate(center.x, center.y, center.z);
-               /* if (GEntityAIMoveToNodes.BIG_TARGET != null && node.getId().equals(GEntityAIMoveToNodes.BIG_TARGET.getId())) {
-                    NodeColor.POINTED_LINKING.apply();
+                if (GEntityAIMoveToNodes.BIG_TARGET != null && node.getId().equals(GEntityAIMoveToNodes.BIG_TARGET.getId())) {
+                    NodeColor.IDLE_90.apply();
                 } else if (GEntityAIMoveToNodes.INTERMEDIATE_TARGET != null && node.getId().equals(GEntityAIMoveToNodes.INTERMEDIATE_TARGET.getId())) {
-                    NodeColor.POINTED_UNLINKING.apply();
-                }*/
+                    NodeColor.IDLE_70.apply();
+                }
                 sphere.draw(0.9f, 30, 30);
                 GlStateManager.popMatrix();
                 renderedNodes.add(node.getId());

@@ -2,6 +2,7 @@ package fr.aym.gtwnpc.path;
 
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 
 import java.util.Collection;
 import java.util.List;
@@ -26,7 +27,7 @@ public interface PathNodesManager {
 
     boolean hasNode(UUID id);
 
-    PathNode selectRandomPathNode(Vec3d around, float radiusMin, float radiusMax, Predicate<PathNode> nodeFilter);
+    PathNode selectRandomPathNode(World world, Vec3d around, float radiusMin, float radiusMax, Predicate<PathNode> nodeFilter);
 
     PathNode findNearestNode(Vec3d around, List<PathNode> avoidNodes);
 
