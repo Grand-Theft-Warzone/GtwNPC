@@ -36,14 +36,23 @@ public class BlockTrafficLight extends DynamXBlock<BlockObject<?>> {
         //TODO SET ID WITH NEW DYNAMX VERSION
         redSource.setLightId("red");
         redSource.setObjectName("red");
+        redSource.setBaseMaterial("red_off");
+        redSource.setTextures(new String[] {"red_off", "red_on"});
+        redSource.setBlinkSequence(new int[] {-1, 20});
         redSource.appendTo(blockObjectInfo);
         SimplePartLightSource orangeSource = new SimplePartLightSource((ISubInfoTypeOwner<ILightOwner<?>>) blockObjectInfo, "Light_Orange");
         orangeSource.setLightId("orange");
         orangeSource.setObjectName("orange");
+        orangeSource.setBaseMaterial("orange_off");
+        orangeSource.setTextures(new String[] {"orange_off", "orange_on"});
+        orangeSource.setBlinkSequence(new int[] {-1, 20});
         orangeSource.appendTo(blockObjectInfo);
         SimplePartLightSource greenSource = new SimplePartLightSource((ISubInfoTypeOwner<ILightOwner<?>>) blockObjectInfo, "Light_Green");
         greenSource.setLightId("green");
         greenSource.setObjectName("green");
+        greenSource.setBaseMaterial("green_off");
+        greenSource.setTextures(new String[] {"green_off", "green_on"});
+        greenSource.setBlinkSequence(new int[] {-1, 20});
         greenSource.appendTo(blockObjectInfo);
     }
 

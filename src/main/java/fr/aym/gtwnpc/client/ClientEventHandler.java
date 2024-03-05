@@ -91,7 +91,6 @@ public class ClientEventHandler {
                 PathNode node;
                 TileEntity te = MC.world.getTileEntity(result.getBlockPos());
                 NodeType type = NodeType.values()[(!stack.hasTagCompound() ? 0 : stack.getTagCompound().getInteger("mode")) + 1];
-                System.out.println("Type is ENCULE " + type + " " + stack.getTagCompound().getInteger("mode"));
                 if (te instanceof TETrafficLight && type != NodeType.PEDESTRIAN) {
                     if (NodesRenderer.selectedNode == null)
                         return;

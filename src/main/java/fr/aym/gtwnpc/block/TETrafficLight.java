@@ -34,7 +34,7 @@ public class TETrafficLight extends TEDynamXBlock implements ITickable {
          * Orange : 30 ticks
          * Green : 100 ticks
          */
-        if (!world.isRemote || true) {
+        if (!world.isRemote) {
             setLightState(ServerEventHandler.getTFStateByMode(mode));
         }
     }
@@ -65,6 +65,8 @@ public class TETrafficLight extends TEDynamXBlock implements ITickable {
     public void setLightState(byte lightState) {
         byte old = this.lightState;
         this.lightState = lightState;
+        if(world == null || getLightsModule() == null)
+            return;
         if (this.lightState != old) {
             IBlockState st = world.getBlockState(getPos());
             this.world.notifyBlockUpdate(getPos(), st, st, 3);
@@ -97,7 +99,7 @@ public class TETrafficLight extends TEDynamXBlock implements ITickable {
     @Override
     public void readFromNBT(NBTTagCompound compound) {
         super.readFromNBT(compound);
-        this.lightState = compound.getByte("LightState");
+        setLightState(compound.getByte("LightState"));
         this.mode = compound.getByte("Mode");
     }
 

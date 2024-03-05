@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 public interface PathNodesManager {
     PathNode getNode(UUID id);
@@ -25,7 +26,7 @@ public interface PathNodesManager {
 
     boolean hasNode(UUID id);
 
-    PathNode selectRandomPathNode(Vec3d around, float radiusMin, float radiusMax);
+    PathNode selectRandomPathNode(Vec3d around, float radiusMin, float radiusMax, Predicate<PathNode> nodeFilter);
 
     PathNode findNearestNode(Vec3d around, List<PathNode> avoidNodes);
 

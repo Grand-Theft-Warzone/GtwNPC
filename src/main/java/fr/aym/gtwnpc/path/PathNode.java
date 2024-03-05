@@ -6,6 +6,7 @@ import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
 import fr.dynamx.common.entities.BaseVehicleEntity;
+import fr.dynamx.utils.optimization.Vector3fPool;
 import lombok.Getter;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.Vec3d;
@@ -176,5 +177,17 @@ public class PathNode implements ISerializable, ISerializablePacket {
 
     public NodeType getNodeType() {
         return nodeType;
+    }
+
+    public int estimateTargetRotationYaw() {
+        // estimate the rotation yaw to reach the next node, in degrees, by averaging the direction of the neighbors
+        if (neighbors == null)
+            return 0;
+        com.jme3.math.Vector3f average = Vector3fPool.get();
+        for (PathNode neighbor : neighbors) {
+            average.addLocal(neighbor.getPosition().x - position.x, neighbor.getPosition().y - position.y, neighbor.getPosition().z - position.z);
+        }
+        average = average.normalize();
+        return (int) Math.toDegrees(Math.atan2(average.z, average.x)) - 90;
     }
 }

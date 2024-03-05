@@ -11,12 +11,17 @@ import lombok.Setter;
 import java.io.*;
 
 public class GtwNpcsConfig {
-    private static final Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(SpawningConfig.CitizenSpawningConfig.class, SpawningConfig.CitizenSpawningConfig.adapter).registerTypeAdapter(SpawningConfig.PoliceSpawningConfig.class, SpawningConfig.PoliceSpawningConfig.adapter).create();
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting()
+            .registerTypeAdapter(SpawningConfig.CitizenSpawningConfig.class, SpawningConfig.CitizenSpawningConfig.adapter)
+            .registerTypeAdapter(SpawningConfig.PoliceSpawningConfig.class, SpawningConfig.PoliceSpawningConfig.adapter)
+            .registerTypeAdapter(VehiclesSpawningRules.class, VehiclesSpawningRules.adapter)
+            .create();
     private static File configFile;
 
     public static BaseConfig config;
     public static SpawningConfig.CitizenSpawningConfig citizenSpawningConfig;
     public static SpawningConfig.PoliceSpawningConfig policeSpawningConfig;
+    public static VehiclesSpawningRules vehiclesSpawningRules;
 
     public static void load(File configFile) {
         GtwNpcsConfig.configFile = configFile;
@@ -25,9 +30,13 @@ public class GtwNpcsConfig {
                 config = gson.fromJson(new FileReader(configFile), BaseConfig.class);
                 citizenSpawningConfig = config.getCitizenSpawningConfig();
                 policeSpawningConfig = config.getPoliceSpawningConfig();
-                if(config.getVersion() !=1) {
-                    GtwNpcMod.log.warn("Updating config file to version 1");
-                    config.setVersion(1);
+                vehiclesSpawningRules = config.getVehiclesSpawningRules();
+                if(config.getVersion() != 2 || vehiclesSpawningRules == null) {
+                    if(vehiclesSpawningRules == null) // Maj from v1 to v2: create default
+                        config.setVehiclesSpawningRules(new VehiclesSpawningRules(true, 100, 100,
+                                20, 50, 40));
+                    GtwNpcMod.log.warn("Updating config file to version 2");
+                    config.setVersion(2);
                     save();
                 }
             } catch (FileNotFoundException e) {
@@ -37,7 +46,10 @@ public class GtwNpcsConfig {
         if (config == null) { //Error or not existing: create default
             citizenSpawningConfig = new SpawningConfig.CitizenSpawningConfig(60, 20, 1, 20, 42, 128);
             policeSpawningConfig = new SpawningConfig.PoliceSpawningConfig(80, 10, 1, new int[]{1, 40, 50, 60, 70, 80}, 40, 100, new int[]{4, 8, 14, 20, 30});
-            config = new BaseConfig(1, true, 60000, 1000, 0.45f, 0.60f, 0.8f, 50, 0.65f, 2, 4, 20, citizenSpawningConfig, policeSpawningConfig);
+            vehiclesSpawningRules = new VehiclesSpawningRules(true, 100, 100, 20, 50, 40);
+            config = new BaseConfig(1, true, 60000, 1000, 0.45f, 0.60f,
+                    0.8f, 50, 0.65f, 2, 4, 20,
+                    citizenSpawningConfig, policeSpawningConfig, vehiclesSpawningRules);
             save();
             GtwNpcMod.log.info("Config file created at " + configFile.getAbsolutePath());
         }
@@ -55,6 +67,7 @@ public class GtwNpcsConfig {
             wri.close();
             citizenSpawningConfig = config.getCitizenSpawningConfig();
             policeSpawningConfig = config.getPoliceSpawningConfig();
+            vehiclesSpawningRules = config.getVehiclesSpawningRules();
         } catch (IOException e) {
             throw new RuntimeException("Failed to write config", e);
         }
@@ -79,5 +92,6 @@ public class GtwNpcsConfig {
         private float npcHealth;
         private SpawningConfig.CitizenSpawningConfig citizenSpawningConfig;
         private SpawningConfig.PoliceSpawningConfig policeSpawningConfig;
+        private VehiclesSpawningRules vehiclesSpawningRules;
     }
 }

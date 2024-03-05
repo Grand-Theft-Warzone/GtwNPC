@@ -97,7 +97,7 @@ public class ObstacleDetection {
         List<BaseVehicleEntity<?>> vehicles = entities.stream().filter(e -> e instanceof BaseVehicleEntity).map(e -> (BaseVehicleEntity<?>) e).collect(Collectors.toList());
         entities.removeIf(e -> e instanceof BaseVehicleEntity);
         ObstacleAction retainedAction = ObstacleAction.IGNORE;
-        checkFar2 *= 2;
+        checkFar2 *= 1.5f;
         List<AIRaycast> rayVectors = createRayVectors(checkFar2);
         if (!entities.isEmpty()) {
             ObstacleAction action = avoidCollisionWithEntities(entities, rayVectors, checkFar2, 4);
@@ -152,7 +152,7 @@ public class ObstacleDetection {
         float width = Math.abs(wheel1.getPosition().x - wheel2.getPosition().x);
         float angle = (float) 0;
         float steering = autopilotModule.getForcedSteeringTime() > 0 ? autopilotModule.getForcedSteering() : autopilotModule.getSteerForce();
-        angle += steering * 0.45f;
+        angle += steering * 0.6f;
         float xStart = -width / 2 - increment * 1.5f;
         float xEnd = width / 2 + increment * 1.5f;
         //System.out.println("lol");
@@ -172,7 +172,7 @@ public class ObstacleDetection {
             vectors.add(new AIRaycast(entity, new com.jme3.math.Vector3f(origin), new com.jme3.math.Vector3f(rayVec2), true));
         }
         float angleIncrement = 0.08f;
-        float angleStart = angle - steering * 0.9f;
+        float angleStart = angle - steering * 1.2f;
         float angleEnd = (float) (angleStart + Math.PI / 3);
         com.jme3.math.Vector3f origin = Vector3fPool.get(xStart, wheel1.getPosition().y, wheel1.getPosition().z);
         origin = DynamXGeometry.rotateVectorByQuaternion(origin, entity.physicsRotation);
@@ -199,6 +199,19 @@ public class ObstacleDetection {
                 //System.out.println("Collision with " + i);
                 //if (retainedAction == ObstacleAction.STOP)
                 //  return retainedAction;
+            }
+            if(info.getHitEntity() != null && action == ObstacleAction.STOP) {
+                if(!collisionSimplexs.contains(this))
+                    collisionSimplexs.add(new CollisionSimplex(this));
+                else {
+                    CollisionSimplex simplex = collisionSimplexs.stream().filter(c -> c.getObstacleDetectionB() == this).findFirst().get();
+                    simplex.incrementCollision(this);
+                    if(simplex.getCollisionTime() > 20 * 45) {
+                        System.out.println("Despawning " + this);
+                        entity.setDead();
+                        return ObstacleAction.STOP;
+                    }
+                }
             }
         }
         return retainedAction;

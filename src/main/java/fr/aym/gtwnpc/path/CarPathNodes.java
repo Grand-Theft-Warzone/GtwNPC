@@ -18,6 +18,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 @Mod.EventBusSubscriber(modid = GtwNpcConstants.ID)
 public class CarPathNodes extends WorldSavedData implements PathNodesManager, ISerializable {
@@ -90,10 +91,10 @@ public class CarPathNodes extends WorldSavedData implements PathNodesManager, IS
     }
 
     @Override
-    public PathNode selectRandomPathNode(Vec3d around, float radiusMin, float radiusMax) {
+    public PathNode selectRandomPathNode(Vec3d around, float radiusMin, float radiusMax, Predicate<PathNode> nodeFilter) {
         Collection<PathNode> nodes = getNodesWithinAABB(new AxisAlignedBB(around.x - radiusMax, around.y - radiusMax, around.z - radiusMax, around.x + radiusMax, around.y + radiusMax, around.z + radiusMax));
         // System.out.println("Selecting random node from " + nodes.size() + " nodes " + nodes.stream().map(n -> n.getDistance(around )).collect(java.util.stream.Collectors.toList()));
-        nodes = nodes.stream().filter(pathNode -> pathNode.getDistance(around) >= radiusMin).collect(java.util.stream.Collectors.toList());
+        nodes = nodes.stream().filter(pathNode -> pathNode.getDistance(around) >= radiusMin).filter(nodeFilter).collect(java.util.stream.Collectors.toList());
         if (!nodes.isEmpty())
             return nodes.stream().skip(new Random().nextInt(nodes.size())).findFirst().get();
         return null;

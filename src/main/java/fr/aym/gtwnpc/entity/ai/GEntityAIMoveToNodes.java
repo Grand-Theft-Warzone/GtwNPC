@@ -46,7 +46,7 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
 
         this.path.clear();
         //TODO MIN MAX VALUES TO SET
-        PathNode target = PedestrianPathNodes.getInstance().selectRandomPathNode(entity.getPositionVector(), 20, 3000);
+        PathNode target = PedestrianPathNodes.getInstance().selectRandomPathNode(entity.getPositionVector(), 20, 3000, (n) -> true);
         BIG_TARGET = target;
         if (target == null) {
             //System.out.println("No target");

@@ -16,6 +16,7 @@ import fr.dynamx.common.entities.modules.engines.CarEngineModule;
 import fr.dynamx.common.network.sync.SPPhysicsEntitySynchronizer;
 import fr.dynamx.common.physics.entities.BaseVehiclePhysicsHandler;
 import fr.dynamx.common.physics.entities.modules.EnginePhysicsHandler;
+import fr.dynamx.utils.maths.DynamXGeometry;
 import fr.dynamx.utils.optimization.Vector3fPool;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,6 +33,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.function.Predicate;
 
 public class AutopilotModule extends CarEngineModule
 {
@@ -42,10 +44,11 @@ public class AutopilotModule extends CarEngineModule
     private final BaseVehicleEntity<?> entity;
 
     private final Queue<PathNode> path = new ArrayDeque<>();
+    private PathNode lastTargetNode;
     private String state;
     private boolean navigating;
     private Vector3f navigationTarget;
-    private int cooldown = 40;
+    private int cooldown = 5;
 
     protected boolean hasReachedStartPoint;
     protected List<PathNode> nodeBlacklist = new ArrayList<>();
@@ -85,26 +88,42 @@ public class AutopilotModule extends CarEngineModule
         //System.out.println("Start navigation");
         this.path.clear();
         //TODO MIN MAX VALUES TO SET
-        PathNode target = CarPathNodes.getInstance().selectRandomPathNode(entity.getPositionVector(), 40, 3000); //CarPathNodes.getInstance().getNode(UUID.fromString("e75bb806-5fa7-4c3e-a78c-bb6ca06942a4"));
+        com.jme3.math.Vector3f look = DynamXGeometry.rotateVectorByQuaternion(com.jme3.math.Vector3f.UNIT_Z, entity.physicsRotation);
+        com.jme3.math.Vector3f pos = Vector3fPool.get(entity.physicsPosition);
+        Predicate<PathNode> predicate = node -> {
+            com.jme3.math.Vector3f dir = pos.subtractLocal(node.getPosition().x, node.getPosition().y, node.getPosition().z);
+            dir = dir.normalize();
+            float dot = dir.dot(look);
+            //System.out.println("Dot: " + dot + " " + node + " " + look + " " + dir + " " + pos + " " + entity.getPositionVector() + " " + node.getPosition());
+            return dot < -0.6f;
+        };
+        PathNode target = CarPathNodes.getInstance().selectRandomPathNode(entity.getPositionVector(), 40, 3000, predicate);
+        if(target == null) {
+            target = CarPathNodes.getInstance().selectRandomPathNode(entity.getPositionVector(), 40, 3000, n -> true);
+        }
+        //CarPathNodes.getInstance().getNode(UUID.fromString("e75bb806-5fa7-4c3e-a78c-bb6ca06942a4"));
         GEntityAIMoveToNodes.BIG_TARGET = target;
         if (target == null) {
             //System.out.println("No target");
             setState("lost_no_target");
-            stopNavigation();
+            stopNavigation(30 * 20);
+            lastTargetNode = null;
             return;
         }
-        PathNode start = CarPathNodes.getInstance().findNearestNode(entity.getPositionVector(), nodeBlacklist);
+        PathNode start = lastTargetNode != null ? lastTargetNode : CarPathNodes.getInstance().findNearestNode(entity.getPositionVector(), nodeBlacklist);
         if (start == null) {
             //System.out.println("No start");
             setState("lost_no_start");
-            stopNavigation();
+            stopNavigation(15 * 20);
+            lastTargetNode = null;
             return;
         }
         Queue<PathNode> path = CarPathNodes.getInstance().createPathToNode(start, target);
         if (path == null) {
             //System.out.println("No path to " + target + " " + start + " " + nodeBlacklist);
             setState("lost_no_path");
-            stopNavigation();
+            stopNavigation(5 * 20);
+            lastTargetNode = null;
             return;
         }
         //TODO
@@ -117,19 +136,20 @@ public class AutopilotModule extends CarEngineModule
         target = this.path.peek();
         if (target.getDistance(entity.getPositionVector()) < 3) {
             //System.out.println("00 Intermediate joined !");
+            lastTargetNode = target;
             this.path.remove();
             target = this.path.peek();
             nodeBlacklist.clear();
             hasReachedStartPoint = true;
         } else {
+            lastTargetNode = null;
             hasReachedStartPoint = false;
         }
         GEntityAIMoveToNodes.INTERMEDIATE_TARGET = target;
         Vector3f tare = target == null ? null : target.getPosition();
         if (tare == null) {
             setState("reached_target_0");
-            stopNavigation();
-            cooldown = 1;
+            stopNavigation(1);
             return;
         }
         navigationTarget = tare;
@@ -141,20 +161,19 @@ public class AutopilotModule extends CarEngineModule
     public void readFromNBT(NBTTagCompound tag) {
         super.readFromNBT(tag);
         navigating = tag.getBoolean("navigating");
+        //System.out.println("Loading nav " + navigating);
         if (navigating) {
-            String target = tag.getString("target");
-            if (!target.isEmpty()) {
-                NBTTagList path = tag.getTagList("path", 8);
-                for (int i = 0; i < path.tagCount(); i++) {
-                    PathNode node = CarPathNodes.getInstance().getNode(java.util.UUID.fromString(path.getStringTagAt(i)));
-                    if (node != null) {
-                        this.path.add(node);
-                    } else {
-                        System.out.println("Node not found: " + path.getStringTagAt(i));
-                        stopNavigation();
-                        setState("failed_nbt_load");
-                        break;
-                    }
+            NBTTagList path = tag.getTagList("path", 8);
+            //System.out.println("Read " + path);
+            for (int i = 0; i < path.tagCount(); i++) {
+                PathNode node = CarPathNodes.getInstance().getNode(java.util.UUID.fromString(path.getStringTagAt(i)));
+                if (node != null) {
+                    this.path.add(node);
+                } else {
+                    System.out.println("READ: Node not found: " + path.getStringTagAt(i));
+                    stopNavigation(10 * 20);
+                    setState("failed_nbt_load");
+                    break;
                 }
             }
         }
@@ -164,12 +183,14 @@ public class AutopilotModule extends CarEngineModule
     public void writeToNBT(NBTTagCompound tag) {
         super.writeToNBT(tag);
         tag.setBoolean("navigating", navigating);
+        //System.out.println("Saving nav " + navigating + " " + path.size() + " " + path);
         if (navigating && !this.path.isEmpty()) {
             NBTTagList path = new NBTTagList();
             for (PathNode node : this.path) {
                 path.appendTag(new NBTTagString(node.getId().toString()));
             }
             tag.setTag("path", path);
+           // System.out.println("Saved " + path);
         }
     }
 
@@ -183,7 +204,8 @@ public class AutopilotModule extends CarEngineModule
             return;
         }
         if (path.isEmpty()) {
-            stopNavigation();
+            setState("empty_path");
+            stopNavigation(1);
             return;
         }
         PathNode target = path.peek();
@@ -194,14 +216,14 @@ public class AutopilotModule extends CarEngineModule
                 hasReachedStartPoint = true;
                 nodeBlacklist.clear();
             }
+            lastTargetNode = target;
             path.remove();
             //System.out.println("Go next node");
             if (path.isEmpty()) {
                 //System.out.println("22 No path left");
                 //target.onReached(entity.world, entity);
                 setState("reached_target_1");
-                stopNavigation();
-                cooldown = 1;
+                stopNavigation(1);
                 return;
             }
             target = path.peek();
@@ -210,8 +232,7 @@ public class AutopilotModule extends CarEngineModule
         Vector3f tare = target == null ? null : target.getPosition();
         if (tare == null) {
             setState("reached_target_2");
-            stopNavigation();
-            cooldown = 40;
+            stopNavigation(40);
             return;
         }
         navigationTarget = tare;
@@ -365,10 +386,10 @@ public class AutopilotModule extends CarEngineModule
     }
 
 
-    protected void stopNavigation() {
+    protected void stopNavigation(int cooldown) {
         navigating = false;
         path.clear();
-        cooldown = 15 * 20;
+        this.cooldown = cooldown;
         navigationTarget = null;
         setControls(32); // handbrake
     }

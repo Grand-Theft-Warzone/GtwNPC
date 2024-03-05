@@ -4,6 +4,7 @@ import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.dynamx.AutopilotModule;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
+import fr.aym.gtwnpc.network.SCMessagePutAutopilot;
 import fr.aym.gtwnpc.path.CarPathNodes;
 import fr.aym.gtwnpc.path.NodeType;
 import fr.aym.gtwnpc.path.PedestrianPathNodes;
@@ -19,6 +20,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -73,11 +75,19 @@ public class CommonEventHandler {
 
     @SubscribeEvent
     public static void spawnCar(PhysicsEntityEvent.CreateModules<BaseVehicleEntity> event) {
-        if(event.getEntity().hasModuleOfType(CarEngineModule.class) && event.getEntity().getPackInfo().getName().contains("trophy")) {
+        if(false && event.getEntity().hasModuleOfType(CarEngineModule.class) && event.getEntity().getPackInfo().getName().contains("trophy")) {
             CarEngineModule module = (CarEngineModule) event.getEntity().getModuleByType(CarEngineModule.class);
             event.getModuleList().removeIf(m -> m instanceof CarEngineModule);
             event.getModuleList().add(new AutopilotModule((BaseVehicleEntity<?>) event.getEntity(), module));
            // System.out.println("Modules: " + event.getModuleList());
+        }
+    }
+
+    //TODO MOVE TO SERVER
+    @SubscribeEvent
+    public static void startTracking(PlayerEvent.StartTracking event) {
+        if(event.getEntity() instanceof BaseVehicleEntity && ((BaseVehicleEntity<?>) event.getEntity()).hasModuleOfType(AutopilotModule.class)) {
+            GtwNpcMod.network.sendTo(new SCMessagePutAutopilot(event.getEntity().getEntityId()), (EntityPlayerMP) event.getEntityPlayer());
         }
     }
 }

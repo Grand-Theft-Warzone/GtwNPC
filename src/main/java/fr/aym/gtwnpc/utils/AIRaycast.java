@@ -28,6 +28,8 @@ public class AIRaycast {
     private final boolean isInFront;
 
     public HitInfo rayTraceLineOnEntities(ObstacleDetection obstacleDetection, List<Entity> entities, float rayDistance, int frontSize) {
+        if(!isInFront())
+            return new HitInfo(null, null, 0, ObstacleDetection.ObstacleAction.IGNORE);
         Vec3d origin = new Vec3d(this.origin.x, this.origin.y, this.origin.z);
         Vec3d rayVec = new Vec3d(this.rayVec.x, this.rayVec.y, this.rayVec.z);
         Vec3d hitVec = null;
