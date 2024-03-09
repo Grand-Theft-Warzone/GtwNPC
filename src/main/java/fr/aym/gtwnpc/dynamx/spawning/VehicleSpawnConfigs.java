@@ -3,6 +3,7 @@ package fr.aym.gtwnpc.dynamx.spawning;
 import fr.aym.acslib.utils.nbtserializer.ISerializable;
 import fr.aym.acslib.utils.nbtserializer.NBTSerializer;
 import fr.aym.gtwnpc.GtwNpcMod;
+import fr.aym.gtwnpc.dynamx.VehicleType;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import lombok.Getter;
 import net.minecraft.nbt.NBTBase;
@@ -84,7 +85,10 @@ public class VehicleSpawnConfigs extends WorldSavedData implements ISerializable
         }
     }
 
-    public VehicleSpawnConfig getVehicleSpawnConfig(Random rand, VehicleSpawnConfig.VehicleType type) {
-        return WeightedRandom.getRandomItem(rand, vehicleSpawnConfigs.stream().filter(config -> config.getVehicleType() == type).collect(Collectors.toList()));
+    public VehicleSpawnConfig getVehicleSpawnConfig(Random rand, VehicleType type) {
+        List<VehicleSpawnConfig> cfg = vehicleSpawnConfigs.stream().filter(config -> config.getVehicleType() == type).collect(Collectors.toList());
+        if (cfg.isEmpty())
+            return null;
+        return WeightedRandom.getRandomItem(rand, cfg);
     }
 }

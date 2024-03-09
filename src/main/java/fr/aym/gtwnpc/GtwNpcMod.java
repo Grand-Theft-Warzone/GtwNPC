@@ -5,6 +5,7 @@ import fr.aym.gtwnpc.block.TETrafficLight;
 import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.common.CommonProxy;
 import fr.aym.gtwnpc.common.GtwNpcsItems;
+import fr.aym.gtwnpc.dynamx.VehicleType;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.entity.EntityGtwPoliceNpc;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
@@ -12,6 +13,10 @@ import fr.aym.gtwnpc.network.CSMessageSetNodeMode;
 import fr.aym.gtwnpc.server.command.CommandGtwNpcMod;
 import fr.aym.gtwnpc.utils.GtwNpcsConfig;
 import fr.dynamx.api.contentpack.DynamXAddon;
+import fr.dynamx.api.network.sync.EntityVariableSerializer;
+import fr.dynamx.api.network.sync.EntityVariableTypes;
+import fr.dynamx.api.network.sync.SynchronizedEntityVariableRegistry;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Mod;
@@ -19,6 +24,7 @@ import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
@@ -74,6 +80,37 @@ public class GtwNpcMod {
         network.registerMessage(CSMessageSetNodeMode.Handler.class, CSMessageSetNodeMode.class, 3, Side.SERVER);
 
         SkinRepository.loadSkins(new File("GtwNpc", "skins"));
+
+        EntityVariableTypes.registerSerializer(String[].class, new EntityVariableSerializer<String[]>() {
+            @Override
+            public void writeObject(ByteBuf byteBuf, String[] strings) {
+                byteBuf.writeInt(strings.length);
+                for (String s : strings) {
+                    ByteBufUtils.writeUTF8String(byteBuf, s);
+                }
+            }
+
+            @Override
+            public String[] readObject(ByteBuf byteBuf) {
+                int size = byteBuf.readInt();
+                String[] strings = new String[size];
+                for (int i = 0; i < size; i++) {
+                    strings[i] = ByteBufUtils.readUTF8String(byteBuf);
+                }
+                return strings;
+            }
+        });
+        EntityVariableTypes.registerSerializer(VehicleType.class, new EntityVariableSerializer<VehicleType>() {
+            @Override
+            public void writeObject(ByteBuf byteBuf, VehicleType vehicleType) {
+                byteBuf.writeInt(vehicleType.ordinal());
+            }
+
+            @Override
+            public VehicleType readObject(ByteBuf byteBuf) {
+                return VehicleType.values()[byteBuf.readInt()];
+            }
+        });
     }
 
     @Mod.EventHandler

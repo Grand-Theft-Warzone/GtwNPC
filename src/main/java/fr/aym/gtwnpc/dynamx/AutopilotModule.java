@@ -3,37 +3,25 @@ package fr.aym.gtwnpc.dynamx;
 import com.jme3.math.FastMath;
 import com.jme3.math.Matrix3f;
 import com.jme3.math.Quaternion;
-import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.entity.ai.GEntityAIMoveToNodes;
 import fr.aym.gtwnpc.path.CarPathNodes;
 import fr.aym.gtwnpc.path.PathNode;
 import fr.aym.gtwnpc.path.TrafficLightNode;
-import fr.dynamx.api.network.sync.EntityVariable;
-import fr.dynamx.api.network.sync.SimulationHolder;
-import fr.dynamx.api.network.sync.SynchronizationRules;
+import fr.dynamx.addons.basics.common.modules.BasicsAddonModule;
 import fr.dynamx.common.entities.BaseVehicleEntity;
-import fr.dynamx.common.entities.modules.AbstractLightsModule;
-import fr.dynamx.common.entities.modules.engines.CarEngineModule;
 import fr.dynamx.common.network.sync.SPPhysicsEntitySynchronizer;
 import fr.dynamx.common.physics.entities.BaseVehiclePhysicsHandler;
-import fr.dynamx.common.physics.entities.modules.EnginePhysicsHandler;
-import fr.dynamx.utils.maths.DynamXGeometry;
 import fr.dynamx.utils.optimization.Vector3fPool;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraftforge.fml.relauncher.Side;
 
-import javax.annotation.Nullable;
 import javax.vecmath.Vector3f;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.function.Predicate;
 
 public class AutopilotModule {
@@ -85,34 +73,12 @@ public class AutopilotModule {
         stolenTime = 1;
         stopNavigation(Integer.MAX_VALUE);
         setState("stolen");
+        setSpeedLimit(Float.MAX_VALUE);
     }
 
-    protected void startNavigation() {
-        //System.out.println("Start navigation");
-        this.path.clear();
-        //TODO MIN MAX VALUES TO SET
-        com.jme3.math.Vector3f look = DynamXGeometry.rotateVectorByQuaternion(com.jme3.math.Vector3f.UNIT_Z, entity.physicsRotation);
-        com.jme3.math.Vector3f pos = Vector3fPool.get(entity.physicsPosition);
-        Predicate<PathNode> predicate = node -> {
-           /* com.jme3.math.Vector3f dir = pos.subtractLocal(node.getPosition().x, node.getPosition().y, node.getPosition().z);
-            dir = dir.normalize();
-            float dot = dir.dot(look);
-            //System.out.println("Dot: " + dot + " " + node + " " + look + " " + dir + " " + pos + " " + entity.getPositionVector() + " " + node.getPosition());
-            return dot < 0.2f;*/
-            return true;
-        };
-        PathNode target = CarPathNodes.getInstance().selectRandomPathNode(entity.world, entity.getPositionVector(), 40, 3000, predicate);
-        if (target == null) {
-            target = CarPathNodes.getInstance().selectRandomPathNode(entity.world, entity.getPositionVector(), 40, 3000, n -> true);
-        }
-        //CarPathNodes.getInstance().getNode(UUID.fromString("e75bb806-5fa7-4c3e-a78c-bb6ca06942a4"));
-        GEntityAIMoveToNodes.BIG_TARGET = target;
-        if (target == null) {
-            //System.out.println("No target");
-            setState("lost_no_target");
-            stopNavigation(30 * 20);
-            lastTargetNode = null;
-            return;
+    public boolean makePathToNode(PathNode target, boolean direct) {
+        if (navigating) {
+            stopNavigation(0);
         }
         PathNode start = lastTargetNode != null ? lastTargetNode : CarPathNodes.getInstance().findNearestNode(entity.getPositionVector(), nodeBlacklist);
         if (start == null) {
@@ -120,15 +86,15 @@ public class AutopilotModule {
             setState("lost_no_start");
             stopNavigation(15 * 20);
             lastTargetNode = null;
-            return;
+            return false;
         }
-        Queue<PathNode> path = CarPathNodes.getInstance().createPathToNode(start, target);
+        Queue<PathNode> path = direct ? new ArrayDeque<>(Collections.singleton(target)) : CarPathNodes.getInstance().createPathToNode(start, target);
         if (path == null) {
             //System.out.println("No path to " + target + " " + start + " " + nodeBlacklist);
             setState("lost_no_path");
             stopNavigation(5 * 20);
             lastTargetNode = null;
-            return;
+            return false;
         }
         //TODO
         /*
@@ -136,7 +102,6 @@ public class AutopilotModule {
         creative tab
          */
         this.path.addAll(path);
-
         target = this.path.peek();
         if (target.getDistance(entity.getPositionVector()) < 3) {
             //System.out.println("00 Intermediate joined !");
@@ -153,12 +118,43 @@ public class AutopilotModule {
         Vector3f tare = target == null ? null : target.getPosition();
         if (tare == null) {
             setState("reached_target_0");
-            stopNavigation(1);
-            return;
+            stopNavigation(0);
+            return true;
         }
         navigationTarget = tare;
         //System.out.println("Launching to " + target + " at " + tare);
         navigating = true;
+        return true;
+    }
+
+    protected void startNavigation() {
+        //System.out.println("Start navigation");
+        this.path.clear();
+        //TODO MIN MAX VALUES TO SET
+        //com.jme3.math.Vector3f look = DynamXGeometry.rotateVectorByQuaternion(com.jme3.math.Vector3f.UNIT_Z, entity.physicsRotation);
+        //com.jme3.math.Vector3f pos = Vector3fPool.get(entity.physicsPosition);
+        Predicate<PathNode> predicate = node -> {
+           /* com.jme3.math.Vector3f dir = pos.subtractLocal(node.getPosition().x, node.getPosition().y, node.getPosition().z);
+            dir = dir.normalize();
+            float dot = dir.dot(look);
+            //System.out.println("Dot: " + dot + " " + node + " " + look + " " + dir + " " + pos + " " + entity.getPositionVector() + " " + node.getPosition());
+            return dot < 0.2f;*/
+            return true;
+        };
+        PathNode target = CarPathNodes.getInstance().selectRandomPathNode(entity.world, entity.getPositionVector(), 40, 3000, predicate);
+        /*if (target == null) {
+            target = CarPathNodes.getInstance().selectRandomPathNode(entity.world, entity.getPositionVector(), 40, 3000, n -> true);
+        }*/
+        //CarPathNodes.getInstance().getNode(UUID.fromString("e75bb806-5fa7-4c3e-a78c-bb6ca06942a4"));
+        GEntityAIMoveToNodes.BIG_TARGET = target;
+        if (target == null) {
+            //System.out.println("No target");
+            setState("lost_no_target");
+            stopNavigation(30 * 20);
+            lastTargetNode = null;
+            return;
+        }
+        makePathToNode(target, false);
     }
 
     public void readFromNBT(NBTTagCompound tag) {
@@ -203,7 +199,9 @@ public class AutopilotModule {
             if (cooldown-- == 0) {
                 startNavigation();
             }
-            return;
+            if (!navigating) {
+                return;
+            }
         }
         if (path.isEmpty()) {
             setState("empty_path");
@@ -225,7 +223,7 @@ public class AutopilotModule {
                 //System.out.println("22 No path left");
                 //target.onReached(entity.world, entity);
                 setState("reached_target_1");
-                stopNavigation(1);
+                stopNavigation(0);
                 return;
             }
             target = path.peek();
@@ -234,7 +232,7 @@ public class AutopilotModule {
         Vector3f tare = target == null ? null : target.getPosition();
         if (tare == null) {
             setState("reached_target_2");
-            stopNavigation(40);
+            stopNavigation(0);
             return;
         }
         navigationTarget = tare;
@@ -274,13 +272,16 @@ public class AutopilotModule {
         }
 
         float speed = target.getNodeType().getMaxSpeed();
-        if (Math.abs(steerForce) > 0.5f) {
+        if (engineModule.getVehicleType().isPolice()) {
+            speed += 15;
+        }
+        if (Math.abs(steerForce) > 0.5f && speed > 12) {
             speed = 12;
-        } else if (Math.abs(steerForce) > 0.25f) {
+        } else if (Math.abs(steerForce) > 0.25f && speed > 20) {
             speed = 20;
-        } else if (Math.abs(steerForce) > 0.1f) {
+        } else if (Math.abs(steerForce) > 0.1f && speed > 30) {
             speed = 30;
-        } else if (Math.abs(steerForce) > 0.06f) {
+        } else if (Math.abs(steerForce) > 0.06f && speed > 40) {
             speed = 40;
         }
 
@@ -327,7 +328,7 @@ public class AutopilotModule {
         }
 
         //  System.out.println("Target " + target);
-        if (target instanceof TrafficLightNode) {
+        if (target instanceof TrafficLightNode && !engineModule.getVehicleType().isPolice()) {
             if (!target.canPassThrough(entity)) {
                 float dist = target.getDistance(entity.getPositionVector());
                 //   System.out.println("Light IS RED ! " + dist);
@@ -395,6 +396,10 @@ public class AutopilotModule {
         setControls(32); // handbrake
     }
 
+    public boolean isPoliceTracking() {
+        return engineModule.getPoliceAI() != null && engineModule.getPoliceAI().isCatchingVilains();
+    }
+
     public void updateEntity() {
         if (entity.getSynchronizer().getSimulationHolder().ownsControls(entity.world.isRemote ? Side.CLIENT : Side.SERVER)) {
             if (stolenTime == 0) {
@@ -404,8 +409,11 @@ public class AutopilotModule {
             } else {
                 // stopNavigation();
             }
-            if (entity.ticksExisted % 300 == 0 && entity.hasModuleOfType(AbstractLightsModule.LightsModule.class))
-                entity.getModuleByType(AbstractLightsModule.LightsModule.class).setLightOn(3, !entity.world.isDaytime());
+            if (entity.ticksExisted % 300 == 0 && entity.hasModuleOfType(BasicsAddonModule.class)) {
+                BasicsAddonModule basicsAddonModule = entity.getModuleByType(BasicsAddonModule.class);
+                basicsAddonModule.setHeadLightsOn(!entity.world.isDaytime());
+                basicsAddonModule.setSirenOn(isPoliceTracking());
+            }
         }
         if (!entity.world.isRemote) {
             if (stolenTime > 0) {

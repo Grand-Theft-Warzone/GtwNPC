@@ -2,6 +2,11 @@ package fr.aym.gtwnpc.dynamx.spawning;
 
 import com.jme3.math.Vector3f;
 import fr.aym.acslib.utils.nbtserializer.ISerializable;
+import fr.aym.gtwnpc.dynamx.GtwNpcModule;
+import fr.aym.gtwnpc.dynamx.VehicleType;
+import fr.dynamx.common.contentpack.DynamXObjectLoaders;
+import fr.dynamx.common.contentpack.parts.PartEntitySeat;
+import fr.dynamx.common.contentpack.type.vehicle.ModularVehicleInfo;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import fr.dynamx.common.entities.vehicles.CarEntity;
 import lombok.Getter;
@@ -10,8 +15,7 @@ import net.minecraft.util.WeightedRandom;
 import net.minecraft.world.World;
 
 @Getter
-public class VehicleSpawnConfig extends WeightedRandom.Item implements ISerializable
-{
+public class VehicleSpawnConfig extends WeightedRandom.Item implements ISerializable {
     private String vehicleName;
     private byte vehicleMeta;
     private VehicleType vehicleType;
@@ -34,7 +38,7 @@ public class VehicleSpawnConfig extends WeightedRandom.Item implements ISerializ
 
     @Override
     public Object[] getObjectsToSave() {
-        return new Object[] {vehicleName, vehicleMeta, vehicleType, itemWeight};
+        return new Object[]{vehicleName, vehicleMeta, vehicleType, itemWeight};
     }
 
     @Override
@@ -46,13 +50,16 @@ public class VehicleSpawnConfig extends WeightedRandom.Item implements ISerializ
     }
 
     public BaseVehicleEntity<?> createVehicle(World world, EntityPlayer player, Vector3f position, float yaw) {
-        return new CarEntity<>(vehicleName, world, position, yaw, vehicleMeta);
-    }
-
-    public enum VehicleType {
-        CIVILIAN,
-        POLICE,
-        SWAT,
-        MILITARY
+        ModularVehicleInfo info = DynamXObjectLoaders.WHEELED_VEHICLES.findInfo(vehicleName);
+        if (info == null)
+            return null;
+        CarEntity<?> e = new CarEntity<>(vehicleName, world, position, yaw, vehicleMeta);
+        int passengers = world.rand.nextInt(info.getPartsByType(PartEntitySeat.class).size() - 1) + 1;
+        if (passengers == 1 && vehicleType != VehicleType.CIVILIAN && world.rand.nextInt(3) < 2) {
+            passengers = 2;
+        }
+        int finalPassengers = passengers;
+        e.setInitCallback((entity, modules) -> e.getModuleByType(GtwNpcModule.class).enableAutopilot(vehicleType, finalPassengers));
+        return e;
     }
 }

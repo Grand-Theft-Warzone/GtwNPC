@@ -42,7 +42,8 @@ public class NpcSpawningSystem {
             PlayerInformation info = PlayerManager.getPlayerInformation(player.getUniqueID());
             doSpawning(world, GtwNpcsConfig.citizenSpawningConfig, player, blockpos$mutableblockpos, r, info);
             if (info == null || info.getWantedLevel() == 0 || info.getTrackingPolicemen().size() < GtwNpcsConfig.policeSpawningConfig.getMaxTrackingPolicemen()[info.getWantedLevel()]) {
-                GtwNpcsConfig.policeSpawningConfig.setWantedLevel(info == null ? 0 : info.getWantedLevel());
+                // Spawn a little amount of policemen if the player is not wanted, or riding (a vehicle)
+                GtwNpcsConfig.policeSpawningConfig.setWantedLevel(info == null || player.isRiding() ? 0 : info.getWantedLevel());
                 doSpawning(world, GtwNpcsConfig.policeSpawningConfig, player, blockpos$mutableblockpos, r, info);
             }
         }

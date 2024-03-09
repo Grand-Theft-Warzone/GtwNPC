@@ -5,6 +5,7 @@ import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.block.TETrafficLight;
 import fr.aym.gtwnpc.client.render.NodesRenderer;
 import fr.aym.gtwnpc.client.render.NpcSeatNode;
+import fr.aym.gtwnpc.client.render.NpcSeatsPadre;
 import fr.aym.gtwnpc.common.GtwNpcsItems;
 import fr.aym.gtwnpc.dynamx.AutopilotModule;
 import fr.aym.gtwnpc.dynamx.GtwNpcModule;
@@ -42,6 +43,7 @@ import org.lwjgl.opengl.GL11;
 import javax.vecmath.Vector3f;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(modid = GtwNpcConstants.ID, value = Side.CLIENT)
 public class ClientEventHandler {
@@ -190,7 +192,7 @@ public class ClientEventHandler {
                     RenderGlobal.drawBoundingBox(c1.x - 0.05f, c1.y - 0.05f, c1.z - 0.05f,
                             c1.x + 0.05f, c1.y + 0.05f, c1.z + 0.05f,
                             1, 1, 1, 1);
-                    c1 = new Vector3f(-8.637E+1f,  4.893E+0f, -1.262E+3f);
+                    c1 = new Vector3f(-8.637E+1f, 4.893E+0f, -1.262E+3f);
                     RenderGlobal.drawBoundingBox(c1.x - 0.05f, c1.y - 0.05f, c1.z - 0.05f,
                             c1.x + 0.05f, c1.y + 0.05f, c1.z + 0.05f,
                             1, 0, 0, 1);
@@ -208,13 +210,12 @@ public class ClientEventHandler {
 
     @SubscribeEvent
     public static void sceneBuild(BuildSceneGraphEvent.BuildEntityScene event) {
-        System.out.println("EVVENT");
         if (!(event.getPackInfo() instanceof ModularVehicleInfo))
             return;
-        PartEntitySeat seat = ((ModularVehicleInfo) event.getPackInfo()).getPartByTypeAndId(PartEntitySeat.class, (byte) 0);
-        if (seat == null)
+        List<PartEntitySeat> seats = ((ModularVehicleInfo) event.getPackInfo()).getPartsByType(PartEntitySeat.class);
+        if (seats.isEmpty())
             return;
-        event.addSceneNode("seat.npc", (scale, list) -> (SceneNode) new NpcSeatNode(seat, scale));
+        event.addSceneNode("npc.seats", (scale, list) -> (SceneNode) new NpcSeatsPadre(scale, seats.stream().map(seat -> new NpcSeatNode(seat, scale)).collect(Collectors.toList())));
     }
 
     /*@SubscribeEvent

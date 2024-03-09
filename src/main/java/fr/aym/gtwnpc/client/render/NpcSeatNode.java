@@ -2,7 +2,6 @@ package fr.aym.gtwnpc.client.render;
 
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
-import fr.aym.gtwnpc.dynamx.AutopilotModule;
 import fr.aym.gtwnpc.dynamx.GtwNpcModule;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.dynamx.api.contentpack.object.render.IModelPackObject;
@@ -23,7 +22,6 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraftforge.client.MinecraftForgeClient;
 
 import javax.annotation.Nonnull;
 
@@ -38,51 +36,41 @@ public class NpcSeatNode extends SimpleNode<BaseRenderContext.EntityRenderContex
 
     @Override
     public void render(BaseRenderContext.EntityRenderContext context, IModelPackObject packInfo) {
+        // Existence already checked by NpcSeatsPadre
         BaseVehicleEntity<?> entity = (BaseVehicleEntity<?>) context.getEntity();
-        if(entity == null || entity.getControllingPassenger() != null) {
-            return;
-        }
         GtwNpcModule autopilot = entity.getModuleByType(GtwNpcModule.class);
-        if(autopilot == null || !autopilot.hasAutopilot() || autopilot.getAutopilotModule().getStolenTime() > 0) {
+        if (autopilot.getNpcSkins().length <= seat.getId()) {
             return;
         }
-        if(gtwNpc == null) {
+        if (gtwNpc == null) {
             gtwNpc = new EntityGtwNpc(entity.world);
         }
-        if (MinecraftForgeClient.getRenderPass() == 0 && entity instanceof IModuleContainer.ISeatsContainer) {
-            SeatsModule seats = ((IModuleContainer.ISeatsContainer)entity).getSeats();
-            assert seats != null;
-            gtwNpc.setSkin(autopilot.getNpcSkin());
-            gtwNpc.setRidingHack(entity);
-            Entity seatRider = gtwNpc;
-            seatRider.setPosition(entity.posX, entity.posY, entity.posZ);
-            fr.dynamx.client.handlers.ClientEventHandler.renderingEntity = seatRider.getPersistentID();
-            DynamXRenderUtils.popGlAllAttribBits();
-            float partialTicks = context.getPartialTicks();
-            this.transformToRotationPoint();
-            EnumSeatPlayerPosition position = seat.getPlayerPosition();
-            RenderPhysicsEntity.shouldRenderPlayerSitting = position == EnumSeatPlayerPosition.SITTING;
-            if (seat.getPlayerSize() != null)
-                transform.scale(seat.getPlayerSize().x, seat.getPlayerSize().y, seat.getPlayerSize().z);
-            if (position == EnumSeatPlayerPosition.LYING) transform.rotate(FastMath.PI / 2, 1, 0, 0);
-            GlStateManager.pushMatrix();
-            GlStateManager.multMatrix(ClientDynamXUtils.getMatrixBuffer(transform));
-            Minecraft.getMinecraft().getRenderManager().renderEntity(seatRider, 0.0, 0.0, 0.0, 0, 0, false);
-            GlStateManager.popMatrix();
-            fr.dynamx.client.handlers.ClientEventHandler.renderingEntity = null;
+        SeatsModule seats = ((IModuleContainer.ISeatsContainer) entity).getSeats();
+        assert seats != null;
+        if (seats.getSeatToPassengerMap().containsKey(seat)) {
+            return;
         }
+        gtwNpc.setSkin(autopilot.getNpcSkins()[seat.getId()]);
+        gtwNpc.setRidingHack(entity);
+        Entity seatRider = gtwNpc;
+        seatRider.setPosition(entity.posX, entity.posY, entity.posZ);
+        fr.dynamx.client.handlers.ClientEventHandler.renderingEntity = seatRider.getPersistentID();
+        DynamXRenderUtils.popGlAllAttribBits();
+        this.transformToRotationPoint();
+        EnumSeatPlayerPosition position = seat.getPlayerPosition();
+        RenderPhysicsEntity.shouldRenderPlayerSitting = position == EnumSeatPlayerPosition.SITTING;
+        if (seat.getPlayerSize() != null)
+            transform.scale(seat.getPlayerSize().x, seat.getPlayerSize().y, seat.getPlayerSize().z);
+        if (position == EnumSeatPlayerPosition.LYING) transform.rotate(FastMath.PI / 2, 1, 0, 0);
+        GlStateManager.pushMatrix();
+        GlStateManager.multMatrix(ClientDynamXUtils.getMatrixBuffer(transform));
+        Minecraft.getMinecraft().getRenderManager().renderEntity(seatRider, 0.0, 0.0, 0.0, 0, 0, false);
+        GlStateManager.popMatrix();
+        fr.dynamx.client.handlers.ClientEventHandler.renderingEntity = null;
     }
 
     @Override
     public void renderDebug(BaseRenderContext.EntityRenderContext context, IModelPackObject packInfo) {
-        BaseVehicleEntity<?> entity = (BaseVehicleEntity<?>) context.getEntity();
-        if(entity == null) {
-            return;
-        }
-        GtwNpcModule autopilot = entity.getModuleByType(GtwNpcModule.class);
-        if(autopilot == null || !autopilot.hasAutopilot()) {
-            return;
-        }
         if (DynamXDebugOptions.SEATS_AND_STORAGE.isActive()) {
             GlStateManager.pushMatrix();
             this.transformForDebug();

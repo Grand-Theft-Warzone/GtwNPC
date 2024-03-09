@@ -22,6 +22,7 @@ public class GtwNpcsConfig {
     public static SpawningConfig.CitizenSpawningConfig citizenSpawningConfig;
     public static SpawningConfig.PoliceSpawningConfig policeSpawningConfig;
     public static VehiclesSpawningRules vehiclesSpawningRules;
+    public static VehiclesSpawningRatios vehiclesSpawningRatios;
 
     public static void load(File configFile) {
         GtwNpcsConfig.configFile = configFile;
@@ -31,12 +32,15 @@ public class GtwNpcsConfig {
                 citizenSpawningConfig = config.getCitizenSpawningConfig();
                 policeSpawningConfig = config.getPoliceSpawningConfig();
                 vehiclesSpawningRules = config.getVehiclesSpawningRules();
-                if(config.getVersion() != 2 || vehiclesSpawningRules == null) {
+                vehiclesSpawningRatios = config.getVehiclesSpawningRatios();
+                if(config.getVersion() != 3 || vehiclesSpawningRules == null || vehiclesSpawningRatios == null) {
                     if(vehiclesSpawningRules == null) // Maj from v1 to v2: create default
                         config.setVehiclesSpawningRules(new VehiclesSpawningRules(true, 100, 100,
                                 20, 50, 40));
-                    GtwNpcMod.log.warn("Updating config file to version 2");
-                    config.setVersion(2);
+                    if(vehiclesSpawningRatios == null) // Maj from v2 to v3: create default
+                        config.setVehiclesSpawningRatios(new VehiclesSpawningRatios());
+                    GtwNpcMod.log.warn("Updating config file to version 3");
+                    config.setVersion(3);
                     save();
                 }
             } catch (FileNotFoundException e) {
@@ -47,9 +51,10 @@ public class GtwNpcsConfig {
             citizenSpawningConfig = new SpawningConfig.CitizenSpawningConfig(60, 20, 1, 20, 42, 128);
             policeSpawningConfig = new SpawningConfig.PoliceSpawningConfig(80, 10, 1, new int[]{1, 40, 50, 60, 70, 80}, 40, 100, new int[]{4, 8, 14, 20, 30});
             vehiclesSpawningRules = new VehiclesSpawningRules(true, 100, 100, 20, 50, 40);
+            vehiclesSpawningRatios = new VehiclesSpawningRatios();
             config = new BaseConfig(1, true, 60000, 1000, 0.45f, 0.60f,
                     0.8f, 50, 0.65f, 2, 4, 20,
-                    citizenSpawningConfig, policeSpawningConfig, vehiclesSpawningRules);
+                    citizenSpawningConfig, policeSpawningConfig, vehiclesSpawningRules, vehiclesSpawningRatios);
             save();
             GtwNpcMod.log.info("Config file created at " + configFile.getAbsolutePath());
         }
@@ -68,6 +73,7 @@ public class GtwNpcsConfig {
             citizenSpawningConfig = config.getCitizenSpawningConfig();
             policeSpawningConfig = config.getPoliceSpawningConfig();
             vehiclesSpawningRules = config.getVehiclesSpawningRules();
+            vehiclesSpawningRatios = config.getVehiclesSpawningRatios();
         } catch (IOException e) {
             throw new RuntimeException("Failed to write config", e);
         }
@@ -93,5 +99,6 @@ public class GtwNpcsConfig {
         private SpawningConfig.CitizenSpawningConfig citizenSpawningConfig;
         private SpawningConfig.PoliceSpawningConfig policeSpawningConfig;
         private VehiclesSpawningRules vehiclesSpawningRules;
+        private VehiclesSpawningRatios vehiclesSpawningRatios;
     }
 }

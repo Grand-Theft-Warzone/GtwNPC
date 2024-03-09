@@ -1,22 +1,28 @@
 package fr.aym.gtwnpc.common;
 
 import fr.aym.gtwnpc.GtwNpcMod;
+import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.dynamx.GtwNpcModule;
+import fr.aym.gtwnpc.dynamx.VehicleType;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
 import fr.aym.gtwnpc.path.CarPathNodes;
 import fr.aym.gtwnpc.path.NodeType;
 import fr.aym.gtwnpc.path.PedestrianPathNodes;
+import fr.aym.gtwnpc.player.PlayerInformation;
+import fr.aym.gtwnpc.player.PlayerManager;
 import fr.aym.gtwnpc.sqript.EventGNpcInit;
 import fr.aym.gtwnpc.sqript.EventOnPlayerAttack2;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.dynamx.api.events.PhysicsEntityEvent;
 import fr.dynamx.api.events.VehicleEntityEvent;
+import fr.dynamx.common.core.DismountHelper;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import fr.dynamx.common.entities.modules.engines.CarEngineModule;
 import fr.nico.sqript.ScriptManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -59,17 +65,26 @@ public class CommonEventHandler {
 
     @SubscribeEvent
     public static void onPlayerInteractWithVehicle(VehicleEntityEvent.EntityMount event) {
-        if (event.getSeat().isDriver() && event.getEntity().hasModuleOfType(GtwNpcModule.class)) {
-            GtwNpcModule autopilot = event.getEntity().getModuleByType(GtwNpcModule.class);
-            if (autopilot.hasAutopilot() && autopilot.getAutopilotModule().getStolenTime() == 0) {
-                autopilot.getAutopilotModule().stealVehicle();
-                if (!event.getEntity().world.isRemote) {
-                    EntityGtwNpc npc = new EntityGtwNpc(event.getEntity().world);
-                    npc.setPositionAndRotation(event.getEntityMounted().getPositionVector().x, event.getEntityMounted().getPositionVector().y, event.getEntityMounted().getPositionVector().z, event.getEntityMounted().rotationYaw + 180, 0);
-                    npc.setSkin(autopilot.getNpcSkin());
-                    npc.world.spawnEntity(npc);
-                }
-            }
+        if (!event.getEntity().hasModuleOfType(GtwNpcModule.class)) {
+            return;
         }
+        GtwNpcModule autopilot = event.getEntity().getModuleByType(GtwNpcModule.class);
+        if (!autopilot.hasAutopilot() || autopilot.getAutopilotModule().getStolenTime() != 0) {
+            return;
+        }
+        autopilot.getAutopilotModule().stealVehicle();
+        if (event.getEntity().world.isRemote) {
+            return;
+        }
+        autopilot.dismountNpcPassengers(event.getEntityMounted().rotationYaw + 180);
+        if (!(event.getEntityMounted() instanceof EntityPlayer)) {
+            return;
+        }
+        if (autopilot.getVehicleType() == VehicleType.CIVILIAN && event.getEntity().world.rand.nextBoolean()) {
+            return;
+        }
+        PlayerInformation info = PlayerManager.getPlayerInformation((EntityPlayer) event.getEntityMounted());
+        info.setWantedLevel(info.getWantedLevel() + 1);
+        event.getEntityMounted().sendMessage(new TextComponentString("You stole a vehicle, your wanted level is now " + info.getWantedLevel()));
     }
 }

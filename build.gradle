@@ -67,7 +67,8 @@ dependencies {
     implementation ":Furenikus_Roads-1.2.5:deobf"
     compileOnly 'org.projectlombok:lombok:1.18.24'
     implementation ":ACsGuis:1.2.12-all"
-    implementation ":DynamX:4.1.0-dev18-all-deobf"
+    implementation ":DynamX:4.1.0-dev19-all-deobf"
+    implementation ":BasicsAddon:1.0.10-for-DynamX-4.1.0b18"
 
     implementation 'org.joml:joml:1.10.5'
 

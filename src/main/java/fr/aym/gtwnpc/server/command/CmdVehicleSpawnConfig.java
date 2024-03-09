@@ -1,5 +1,6 @@
 package fr.aym.gtwnpc.server.command;
 
+import fr.aym.gtwnpc.dynamx.VehicleType;
 import fr.aym.gtwnpc.dynamx.spawning.VehicleSpawnConfig;
 import fr.aym.gtwnpc.dynamx.spawning.VehicleSpawnConfigs;
 import fr.dynamx.common.contentpack.DynamXObjectLoaders;
@@ -41,11 +42,11 @@ public class CmdVehicleSpawnConfig implements ISubCommand
             if(args.length < 4)
                 throw new WrongUsageException("/gtwnpcmod vehicle_config add <vehicleName> <weight> [CIVILIAN|POLICE|SWAT|MILITARY] [metadata]");
             String vehicleName = args[2];
-            VehicleSpawnConfig.VehicleType type = VehicleSpawnConfig.VehicleType.CIVILIAN;
+            VehicleType type = VehicleType.CIVILIAN;
             int weight = CommandBase.parseInt(args[3]);
             if(args.length > 4) {
                 try {
-                    type = VehicleSpawnConfig.VehicleType.valueOf(args[4].toUpperCase());
+                    type = VehicleType.valueOf(args[4].toUpperCase());
                 } catch (IllegalArgumentException e) {
                     throw new CommandException("Unknown vehicle type: " + args[4]);
                 }
