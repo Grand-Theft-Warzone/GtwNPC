@@ -24,7 +24,7 @@ public class NpcSeatsPadre extends SimpleNode<BaseRenderContext.EntityRenderCont
             return;
         }
         GtwNpcModule autopilot = entity.getModuleByType(GtwNpcModule.class);
-        if (autopilot == null || !autopilot.hasAutopilot() || autopilot.getAutopilotModule().getStolenTime() > 0) {
+        if (autopilot == null || !autopilot.hasAutopilot() || autopilot.getStolenTime() > 0) {
             return;
         }
         if (MinecraftForgeClient.getRenderPass() == 0 && entity instanceof IModuleContainer.ISeatsContainer) {

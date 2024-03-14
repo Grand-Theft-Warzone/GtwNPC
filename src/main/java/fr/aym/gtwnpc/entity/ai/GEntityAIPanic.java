@@ -45,7 +45,7 @@ public class GEntityAIPanic extends EntityAIBase
                     exec = true;
                 }
             }
-            if(!exec && this.creature.isFriendly())
+            if(!exec && (this.creature.isFriendly() || creature.getState().equals("panic")))
                 exec = this.findRandomPosition();
         }
         if(exec && previousState == null) {

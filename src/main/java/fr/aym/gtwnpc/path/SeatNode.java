@@ -68,7 +68,7 @@ public class SeatNode extends PathNode {
 
     @Override
     public boolean onReached(World world, EntityGtwNpc npc) {
-        if(npc.getNpcType() == SkinRepository.NpcType.POLICE)
+        if(npc.getNpcType() != SkinRepository.NpcType.NPC)
             return true;
         if (!world.getEntitiesWithinAABB(EntityChairMount.class, new AxisAlignedBB(seatPos.getX(), seatPos.getY() - 1, seatPos.getZ(), seatPos.getX() + 1, seatPos.getY() + 1, seatPos.getZ() + 1)).isEmpty())
             return true;

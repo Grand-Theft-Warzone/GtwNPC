@@ -54,9 +54,6 @@ public class AutopilotModule {
     @Setter
     private float forcedSteering;
 
-    @Getter
-    private int stolenTime;
-
     public AutopilotModule(BaseVehicleEntity<?> vehicleEntity, GtwNpcModule engineModule) {
         this.entity = vehicleEntity;
         this.engineModule = engineModule;
@@ -67,13 +64,6 @@ public class AutopilotModule {
     public void setState(String state) {
         // System.out.println("State: " + state);
         this.state = state;
-    }
-
-    public void stealVehicle() {
-        stolenTime = 1;
-        stopNavigation(Integer.MAX_VALUE);
-        setState("stolen");
-        setSpeedLimit(Float.MAX_VALUE);
     }
 
     public boolean makePathToNode(PathNode target, boolean direct) {
@@ -175,7 +165,6 @@ public class AutopilotModule {
                 }
             }
         }
-        stolenTime = tag.getInteger("stolenTime");
     }
 
     public void writeToNBT(NBTTagCompound tag) {
@@ -189,7 +178,6 @@ public class AutopilotModule {
             tag.setTag("path", path);
             // System.out.println("Saved " + path);
         }
-        tag.setInteger("stolenTime", stolenTime);
     }
 
     protected void updateNavigation() {
@@ -348,16 +336,9 @@ public class AutopilotModule {
         // System.out.println("Steer: " + Math.abs(steerForce));
         //System.out.println("Speed: " + speed + " for " + target.getDistance(entity.getPositionVector()) + " meters to target and angle " + nextAngle);
         setSpeedLimit(speed);
-        BaseVehiclePhysicsHandler<?> phycites = entity.getPhysicsHandler();
-        if (phycites == null && entity.getSynchronizer() instanceof SPPhysicsEntitySynchronizer<?>) {
-            Entity e = ((SPPhysicsEntitySynchronizer<?>) entity.getSynchronizer()).getOtherSideEntity();
-            if (e instanceof BaseVehicleEntity<?>) {
-                phycites = ((BaseVehicleEntity<?>) e).getPhysicsHandler();
-            }
-        }
-        if (phycites != null) {
+        float mySpeed = getVehicleSpeed();
+        if (mySpeed != Float.MIN_VALUE) {
             //System.out.println("Cur speed: " + phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) + " km/h");
-            float mySpeed = entity.ticksExisted > 10 ? phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
             if (mySpeed > speed + 10 || speed == 0) {
                 // System.out.println("Ma braker");
                 if (mySpeed > 0.5f)
@@ -372,6 +353,17 @@ public class AutopilotModule {
         }
         //System.out.println("Controls: " + controls + " for " + diff + " current: " + yaw + " target: " + angle +" accel? " + (controls & 2));
         setControls(controls);
+    }
+
+    public float getVehicleSpeed() {
+        BaseVehiclePhysicsHandler<?> phycites = entity.getPhysicsHandler();
+        if (phycites == null && entity.getSynchronizer() instanceof SPPhysicsEntitySynchronizer<?>) {
+            Entity e = ((SPPhysicsEntitySynchronizer<?>) entity.getSynchronizer()).getOtherSideEntity();
+            if (e instanceof BaseVehicleEntity<?>) {
+                phycites = ((BaseVehicleEntity<?>) e).getPhysicsHandler();
+            }
+        }
+        return phycites != null ? phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : Float.MIN_VALUE;
     }
 
     protected float getNextTurnAngle(PathNode nextNode, PathNode nextNextNode) {
@@ -402,7 +394,7 @@ public class AutopilotModule {
 
     public void updateEntity() {
         if (entity.getSynchronizer().getSimulationHolder().ownsControls(entity.world.isRemote ? Side.CLIENT : Side.SERVER)) {
-            if (stolenTime == 0) {
+            if (engineModule.getStolenTime() == 0) {
                 updateNavigation();
                 //stopNavigation();
                 obstacleDetection.detectObstacles();
@@ -413,19 +405,6 @@ public class AutopilotModule {
                 BasicsAddonModule basicsAddonModule = entity.getModuleByType(BasicsAddonModule.class);
                 basicsAddonModule.setHeadLightsOn(!entity.world.isDaytime());
                 basicsAddonModule.setSirenOn(isPoliceTracking());
-            }
-        }
-        if (!entity.world.isRemote) {
-            if (stolenTime > 0) {
-                if (entity.getControllingPassenger() != null) {
-                    stolenTime = 1;
-                } else {
-                    stolenTime++;
-                    if (stolenTime > 20 * 60 * 5) {
-                        System.out.println("Killing stolen entity");
-                        entity.setDead();
-                    }
-                }
             }
         }
     }

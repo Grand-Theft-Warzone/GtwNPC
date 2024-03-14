@@ -4,6 +4,7 @@ import fr.dynamx.common.entities.BaseVehicleEntity;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.minecraft.entity.Entity;
 
 import java.util.Objects;
 
@@ -11,19 +12,16 @@ import java.util.Objects;
 @Setter
 @RequiredArgsConstructor
 public class CollisionSimplex {
-    private final ObstacleDetection obstacleDetectionB;
+    private final Entity obstacle;
     private int collisionTime;
     private boolean isCollidingB;
     private boolean isATurningAround;
 
-    public boolean isCollidingWith(BaseVehicleEntity<?> entity) {
-        return obstacleDetectionB.getEntity() == entity;
+    public boolean isCollidingWith(Entity entity) {
+        return obstacle == entity;
     }
 
-    public void incrementCollision(ObstacleDetection detection) {
-        if (obstacleDetectionB == detection) {
-            isCollidingB = true;
-        }
+    public void incrementCollision() {
         //System.out.println("Incrementing collision " + detection + " " + this);
         collisionTime++;
     }
@@ -33,18 +31,18 @@ public class CollisionSimplex {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         CollisionSimplex that = (CollisionSimplex) o;
-        return Objects.equals(obstacleDetectionB, that.obstacleDetectionB);
+        return Objects.equals(obstacle, that.obstacle);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(obstacleDetectionB);
+        return Objects.hash(obstacle);
     }
 
     @Override
     public String toString() {
         return "CollisionSimplex{" +
-                "obstacleDetectionB=" + obstacleDetectionB +
+                "obstacleDetectionB=" + obstacle +
                 ", collisionTime=" + collisionTime +
                 ", isCollidingB=" + isCollidingB +
                 '}';

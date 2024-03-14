@@ -26,6 +26,7 @@ import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fml.relauncher.Side;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.Objects;
 
 @SynchronizedEntityVariable.SynchronizedPhysicsModule(
@@ -38,6 +39,9 @@ public class GtwNpcModule extends CarEngineModule {
 
     @Getter
     private VehiclePoliceAI policeAI;
+
+    @SynchronizedEntityVariable(name = "stolenTime")
+    private final EntityVariable<Integer> stolenTime = new EntityVariable<>(SynchronizationRules.SERVER_TO_CLIENTS, 0);
 
     @SynchronizedEntityVariable(name = "hasAutopilot")
     private final EntityVariable<Boolean> hasAutopilot = new EntityVariable<>((var, val) -> {
@@ -66,8 +70,15 @@ public class GtwNpcModule extends CarEngineModule {
     @SynchronizedEntityVariable(name = "npcSkin")
     private final EntityVariable<String[]> npcSkins = new EntityVariable<>(SynchronizationRules.SERVER_TO_CLIENTS, new String[0]);
 
+    private final boolean stealable;
+
     public GtwNpcModule(BaseVehicleEntity<?> vehicleEntity, CarEngineModule engineModule) {
         super(vehicleEntity, engineModule.getEngineInfo());
+        stealable = vehicleEntity.world.rand.nextBoolean();
+    }
+
+    public boolean isStealable() {
+        return vehicleType.get() != VehicleType.CIVILIAN || stealable;
     }
 
     public void enableAutopilot(VehicleType vehicleType, int passengerCount) {
@@ -77,8 +88,9 @@ public class GtwNpcModule extends CarEngineModule {
         hasAutopilot.set(true);
         String[] skins = new String[passengerCount];
         for (int i = 0; i < passengerCount; i++) {
-            skins[i] = SkinRepository.getRandomSkin(SkinRepository.NpcType.NPC, entity.world.rand).toString();
+            skins[i] = SkinRepository.getRandomSkin(vehicleType.getNpcType(), entity.world.rand).toString();
         }
+        System.out.println("Autopilot:enable. Skins: " + Arrays.toString(skins));
         npcSkins.set(skins);
         setVehicleType(vehicleType);
     }
@@ -108,6 +120,27 @@ public class GtwNpcModule extends CarEngineModule {
         }
     }
 
+    public int getStolenTime() {
+        return stolenTime.get();
+    }
+
+    public void stealVehicle(String state) {
+        stolenTime.set(1);
+        if (autopilotModule != null) {
+            autopilotModule.stopNavigation(Integer.MAX_VALUE);
+            autopilotModule.setState(state);
+        }
+        setSpeedLimit(Float.MAX_VALUE);
+    }
+
+    public void restoreAi() {
+        stolenTime.set(0);
+        if (autopilotModule != null) {
+            autopilotModule.setState("restored");
+            autopilotModule.stopNavigation(80); // wait for other npcs to join
+        }
+    }
+
     @Override
     public void readFromNBT(NBTTagCompound tag) {
         super.readFromNBT(tag);
@@ -123,6 +156,7 @@ public class GtwNpcModule extends CarEngineModule {
             npcSkins[i] = skins.getStringTagAt(i);
         }
         this.npcSkins.set(npcSkins);
+        stolenTime.set(tag.getInteger("stolenTime"));
     }
 
     @Override
@@ -137,6 +171,7 @@ public class GtwNpcModule extends CarEngineModule {
             skins.appendTag(new NBTTagString(skin));
         }
         tag.setTag("npcSkins", skins);
+        tag.setInteger("stolenTime", stolenTime.get());
     }
 
     @Override
@@ -152,6 +187,20 @@ public class GtwNpcModule extends CarEngineModule {
                 policeAI.update();
             }
             autopilotModule.updateEntity();
+
+            if (!entity.world.isRemote) {
+                if (stolenTime.get() > 0) {
+                    if (entity.getControllingPassenger() != null) {
+                        stolenTime.set(1);
+                    } else if (entity.ticksExisted % 10 == 0) {
+                        stolenTime.set(stolenTime.get() + 10);
+                        if (stolenTime.get() > 20 * 60 * 5) {
+                            System.out.println("Killing stolen entity");
+                            entity.setDead();
+                        }
+                    }
+                }
+            }
         }
         if (entity.world.isRemote) {
             super.updateEntity();
@@ -177,7 +226,7 @@ public class GtwNpcModule extends CarEngineModule {
             physicsHandler = new EnginePhysicsHandler(this, handler, handler.getWheels()) {
                 @Override
                 public void steer(float strength) {
-                    if (autopilotModule == null || autopilotModule.getStolenTime() > 0) {
+                    if (autopilotModule == null || getStolenTime() > 0) {
                         super.steer(strength);
                         return;
                     }
@@ -202,18 +251,33 @@ public class GtwNpcModule extends CarEngineModule {
             npc.rotationYaw = rotationYaw;
             Vector3fPool.openPool();
             Vector3f dismountPosition = DynamXGeometry.rotateVectorByQuaternion(seat.getPosition().add(Vector3fPool.get(seat.getPosition().x > 0.0F ? 1.0F : -1.0F, 0.0F, 0.0F)), entity.physicsRotation).addLocal(entity.physicsPosition);
-            AxisAlignedBB collisionDetectionBox = new AxisAlignedBB((double) dismountPosition.x, (double) (dismountPosition.y + 1.0F), (double) dismountPosition.z, (double) (dismountPosition.x + 1.0F), (double) (dismountPosition.y + 2.0F), (double) (dismountPosition.z + 1.0F));
+            AxisAlignedBB collisionDetectionBox = new AxisAlignedBB(dismountPosition.x, dismountPosition.y + 1.0F, dismountPosition.z, dismountPosition.x + 1.0F, dismountPosition.y + 2.0F, dismountPosition.z + 1.0F);
             if (!npc.world.collidesWithAnyBlock(collisionDetectionBox)) {
-                npc.setPositionAndUpdate((double) dismountPosition.x, collisionDetectionBox.minY, (double) dismountPosition.z);
+                npc.setPositionAndUpdate(dismountPosition.x, collisionDetectionBox.minY, dismountPosition.z);
             } else {
                 dismountPosition = DynamXGeometry.rotateVectorByQuaternion(seat.getPosition().add(Vector3fPool.get(seat.getPosition().x > 0.0F ? -2.0F : 2.0F, 0.0F, 0.0F)), entity.physicsRotation).addLocal(entity.physicsPosition);
-                collisionDetectionBox = new AxisAlignedBB((double) dismountPosition.x, (double) (dismountPosition.y + 1.0F), (double) dismountPosition.z, (double) (dismountPosition.x + 1.0F), (double) (dismountPosition.y + 2.0F), (double) (dismountPosition.z + 1.0F));
-                npc.setPositionAndUpdate((double) dismountPosition.x, collisionDetectionBox.minY, (double) dismountPosition.z);
+                collisionDetectionBox = new AxisAlignedBB(dismountPosition.x, dismountPosition.y + 1.0F, dismountPosition.z, dismountPosition.x + 1.0F, dismountPosition.y + 2.0F, dismountPosition.z + 1.0F);
+                npc.setPositionAndUpdate(dismountPosition.x, collisionDetectionBox.minY, dismountPosition.z);
             }
             Vector3fPool.closePool();
             npc.setSkin(skin);
-            npc.setNpcType(getVehicleType() == VehicleType.CIVILIAN ? SkinRepository.NpcType.NPC : SkinRepository.NpcType.POLICE);
+            npc.setNpcType(getVehicleType().getNpcType());
+            npc.setOwnerVehicle(entity);
             npc.world.spawnEntity(npc);
         }
+        npcSkins.set(new String[0]);
+    }
+
+    public boolean mountNpcPassenger(EntityGtwNpc passenger) {
+        String[] skins = getNpcSkins();
+        if (skins.length + 1 < entity.getPackInfo().getPartsByType(PartEntitySeat.class).size()) {
+            String[] newSkins = new String[skins.length + 1];
+            System.arraycopy(skins, 0, newSkins, 0, skins.length);
+            newSkins[skins.length] = passenger.getSkin();
+            npcSkins.set(newSkins);
+            restoreAi();
+            return true;
+        }
+        return false;
     }
 }

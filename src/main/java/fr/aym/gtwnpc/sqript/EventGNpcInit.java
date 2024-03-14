@@ -24,6 +24,6 @@ import net.minecraftforge.fml.common.eventhandler.Cancelable;
 @Cancelable
 public class EventGNpcInit extends ScriptEvent {
     public EventGNpcInit(EntityGtwNpc entity) {
-        super(new ScriptTypeAccessor[]{new ScriptTypeAccessor(new TypeGNpc(entity), "entity")});
+        super(new ScriptTypeAccessor(new TypeGNpc(entity), "entity"));
     }
 }

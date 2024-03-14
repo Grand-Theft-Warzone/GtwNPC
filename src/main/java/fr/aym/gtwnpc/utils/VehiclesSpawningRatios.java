@@ -56,36 +56,44 @@ public class VehiclesSpawningRatios {
         @Override
         public VehiclesSpawningRatios read(JsonReader in) throws IOException {
             in.beginObject();
-            float[] civilianRatio = new float[5];
-            float[] policeRatio = new float[5];
-            float[] swatRatio = new float[5];
-            float[] militaryRatio = new float[5];
+            float[] civilianRatio = new float[6];
+            float[] policeRatio = new float[6];
+            float[] swatRatio = new float[6];
+            float[] militaryRatio = new float[6];
             while (in.hasNext()) {
                 switch (in.nextName()) {
                     case "civilianRatio":
                         in.beginArray();
-                        for (int i = 0; i < 5; i++) {
+                        for (int i = 0; i < 6; i++) {
+                            if(!in.hasNext()) //sixth element was added later
+                                civilianRatio[i] = 0.15f;
                             civilianRatio[i] = (float) in.nextDouble();
                         }
                         in.endArray();
                         break;
                     case "policeRatio":
                         in.beginArray();
-                        for (int i = 0; i < 5; i++) {
+                        for (int i = 0; i < 6; i++) {
+                            if(!in.hasNext()) //sixth element was added later
+                                civilianRatio[i] = 0.15f;
                             policeRatio[i] = (float) in.nextDouble();
                         }
                         in.endArray();
                         break;
                     case "swatRatio":
                         in.beginArray();
-                        for (int i = 0; i < 5; i++) {
+                        for (int i = 0; i < 6; i++) {
+                            if(!in.hasNext()) //sixth element was added later
+                                civilianRatio[i] = 0.35f;
                             swatRatio[i] = (float) in.nextDouble();
                         }
                         in.endArray();
                         break;
                     case "militaryRatio":
                         in.beginArray();
-                        for (int i = 0; i < 5; i++) {
+                        for (int i = 0; i < 6; i++) {
+                            if(!in.hasNext()) //sixth element was added later
+                                civilianRatio[i] = 0.35f;
                             militaryRatio[i] = (float) in.nextDouble();
                         }
                         in.endArray();
@@ -97,10 +105,10 @@ public class VehiclesSpawningRatios {
         }
     };
 
-    private float[] civilianRatio = new float[]{0.95f, 0.6f, 0.5f, 0.35f, 0.2f};
-    private float[] policeRatio = new float[]{0.05f, 0.4f, 0.5f, 0.35f, 0.2f};
-    private float[] swatRatio = new float[]{0.0f, 0.0f, 0f, 0.3f, 0.3f};
-    private float[] militaryRatio = new float[]{0.0f, 0.0f, 0f, 0f, 0.3f};
+    private float[] civilianRatio = new float[]{0.95f, 0.6f, 0.5f, 0.35f, 0.2f, 0.15f};
+    private float[] policeRatio = new float[]{0.05f, 0.4f, 0.5f, 0.35f, 0.2f, 0.15f};
+    private float[] swatRatio = new float[]{0.0f, 0.0f, 0f, 0.3f, 0.3f, 0.35f};
+    private float[] militaryRatio = new float[]{0.0f, 0.0f, 0f, 0f, 0.3f, 0.35f};
 
     private Map<Integer, List<SpawnRatio>> ratios;
 
@@ -108,7 +116,7 @@ public class VehiclesSpawningRatios {
         if (ratios == null) {
             ratios = new HashMap<>();
             List<SpawnRatio> ratios;
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 6; i++) {
                 ratios = new ArrayList<>();
                 ratios.add(new SpawnRatio((int) (civilianRatio[i] * 100), VehicleType.CIVILIAN));
                 ratios.add(new SpawnRatio((int) (policeRatio[i] * 100), VehicleType.POLICE));

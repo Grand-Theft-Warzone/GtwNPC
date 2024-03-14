@@ -31,7 +31,8 @@ public class ObstacleDetection {
     private OOBB myOOBB;
 
     private final List<CollisionSimplex> collisionSimplexs = new ArrayList<>();
-    private final List<CollisionCluster> collisionClusters = new ArrayList<>();
+
+    private int stuckTime = 0;
 
     public ObstacleDetection(BaseVehicleEntity<?> entity, AutopilotModule autopilotModule) {
         this.entity = entity;
@@ -70,13 +71,6 @@ public class ObstacleDetection {
         collisionSimplexs.forEach(c -> {
             c.setCollidingB(false);
         });
-        collisionClusters.removeIf(c -> !c.isCollidingA() || !c.isCollidingB());
-        collisionClusters.forEach(c -> {
-            if (c.getObstacleDetectionA() == this)
-                c.setCollidingA(false);
-            if (c.getObstacleDetectionB() == this)
-                c.setCollidingB(false);
-        });
     }
 
     public AxisAlignedBB getDetectionAABB(int rayDistance) {
@@ -92,7 +86,7 @@ public class ObstacleDetection {
         // System.out.println("======== Updating " + entity + " =========");
         updateOOBB();
         float mySpeed = entity.getPhysicsHandler() != null && entity.ticksExisted > 10 ? entity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
-        int checkFar2 = mySpeed > 35 ? 16 : (int) (mySpeed > 12 ? 8 :  Math.ceil(mySpeed/2+0.01));
+        int checkFar2 = mySpeed > 35 ? 16 : (int) (mySpeed > 12 ? 8 : Math.ceil(mySpeed / 2 + 0.01));
         checkFar2 = Math.max(2, checkFar2);
         AxisAlignedBB front = getDetectionAABB(checkFar2);
         List<Entity> entities = entity.world.getEntitiesInAABBexcluding(entity, front, Predicates.and(EntitySelectors.NOT_SPECTATING, entity -> entity != null && entity.canBeCollidedWith() && entity.getRidingEntity() == null));
@@ -140,7 +134,7 @@ public class ObstacleDetection {
                 if (mySpeed > 2f)
                     controls |= 4; // braking
                 //else
-                  //  controls |= 32; // handbrake
+                //  controls |= 32; // handbrake
                 controls &= ~2; // no acceleration
                 autopilotModule.setControls(controls);
                 break;
@@ -154,8 +148,8 @@ public class ObstacleDetection {
                 controls = autopilotModule.getControls();
                 if (mySpeed > 2f)
                     controls |= 4; // braking
-               // else
-                 //   controls |= 32; // handbrake
+                // else
+                //   controls |= 32; // handbrake
                 controls &= ~2; // no acceleration
                 autopilotModule.setControls(controls);
                 break;
@@ -169,6 +163,21 @@ public class ObstacleDetection {
                 controls &= ~2; // no acceleration
                 autopilotModule.setControls(controls);
                 break;
+        }
+
+        if (Math.abs(mySpeed) < 0.5f) {
+            stuckTime++;
+            if (stuckTime > 20 * 45) {
+                if (entity.world.isRemote) {
+                    Entity entity1 = ((SPPhysicsEntitySynchronizer<?>) entity.getSynchronizer()).getOtherSideEntity();
+                    if (entity1 != null)
+                        entity1.setDead();
+                    return;
+                }
+                entity.setDead();
+            }
+        } else if(stuckTime > 0) {
+            stuckTime -= 3;
         }
     }
 
@@ -246,15 +255,16 @@ public class ObstacleDetection {
             if (retainedAction.ordinal() < action.ordinal()) {
                 retainedAction = action;
                 //System.out.println("Collision with " + i);
-                //if (retainedAction == ObstacleAction.STOP)
-                //  return retainedAction;
+                if (retainedAction == ObstacleAction.STOP)
+                    return retainedAction;
             }
-            if (info.getHitEntity() != null && action.ordinal() >= ObstacleAction.STOP.ordinal()) {
-                if (collisionSimplexs.stream().noneMatch(c -> c.getObstacleDetectionB() == this))
-                    collisionSimplexs.add(new CollisionSimplex(this));
+            // already despawning if stuck > 60sec
+            /*if (info.getHitEntity() != null && action.ordinal() >= ObstacleAction.STOP.ordinal()) {
+                if (collisionSimplexs.stream().noneMatch(c -> c.getObstacle() == info.getHitEntity()))
+                    collisionSimplexs.add(new CollisionSimplex(info.getHitEntity()));
                 else {
-                    CollisionSimplex simplex = collisionSimplexs.stream().filter(c -> c.getObstacleDetectionB() == this).findFirst().get();
-                    simplex.incrementCollision(this);
+                    CollisionSimplex simplex = collisionSimplexs.stream().filter(c -> c.getObstacle() == info.getHitEntity()).findFirst().get();
+                    simplex.incrementCollision();
                     if (simplex.getCollisionTime() > 20 * 45) {
                         System.out.println("Despawning " + this);
                         if(entity.world.isRemote) {
@@ -267,7 +277,7 @@ public class ObstacleDetection {
                         return ObstacleAction.STOP;
                     }
                 }
-            }
+            }*/
         }
         return retainedAction;
     }
@@ -276,7 +286,20 @@ public class ObstacleDetection {
         Vec3d origin = new Vec3d(entity.posX, entity.posY, entity.posZ);
         ObstacleAction retainedAction = ObstacleAction.IGNORE;
         for (AIRaycast rayVec : rayVectors) {
-            ObstacleAction action = rayVec.rayTraceLineOnEntities(this, entities, rayDistance, frontSize).getAction();
+            AIRaycast.HitInfo info = rayVec.rayTraceLineOnEntities(this, entities, rayDistance, frontSize);
+            ObstacleAction action = info.getAction();
+            if (info.getHitEntity() != null && action.ordinal() >= ObstacleAction.STOP.ordinal()) {
+                if (collisionSimplexs.stream().noneMatch(c -> c.getObstacle() == info.getHitEntity()))
+                    collisionSimplexs.add(new CollisionSimplex(info.getHitEntity()));
+                else {
+                    CollisionSimplex simplex = collisionSimplexs.stream().filter(c -> c.getObstacle() == info.getHitEntity()).findFirst().get();
+                    simplex.incrementCollision();
+                    if (simplex.getCollisionTime() > 20 * 10) {
+                        System.out.println("Forcing way " + this);
+                        action = ObstacleAction.SLOW_DOWN;
+                    }
+                }
+            }
             if (retainedAction.ordinal() < action.ordinal()) {
                 retainedAction = action;
                 if (retainedAction == ObstacleAction.STOP)

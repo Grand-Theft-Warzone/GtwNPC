@@ -38,7 +38,7 @@ public class VehiclePoliceAI {
         if (!engineModule.hasAutopilot()) {
             return;
         }
-        if (engineModule.getAutopilotModule().getStolenTime() > 0) {
+        if (engineModule.getStolenTime() > 0) {
             setPlayerTarget(null);
             return;
         }
@@ -46,18 +46,29 @@ public class VehiclePoliceAI {
             PathNode targetNode = CarPathNodes.getInstance().findNearestNode(playerTarget.getPositionVector(), engineModule.getAutopilotModule().nodeBlacklist);
             if (targetNode == null) {
                 this.targetNode = null;
-              //  System.out.println("Target node is null");
-                return;
-            }
-            if (entity.getDistance(playerTarget) < 15) {
-                engineModule.getAutopilotModule().stealVehicle();
-                if (!entity.world.isRemote)
-                    engineModule.dismountNpcPassengers(entity.rotationYaw + 180);
-               // System.out.println("Dismount police");
+                //  System.out.println("Target node is null");
                 return;
             }
             boolean direct = false;
-            if (targetNode.getDistance(playerTarget.getPositionVector()) > 30) {
+            if (entity.getDistance(playerTarget) < (engineModule.getAutopilotModule().getObstacleDetection().getStuckTime() > 40 ? 36 : 20)) {
+                if (Math.abs(engineModule.getAutopilotModule().getVehicleSpeed()) < 5) {
+                    if (entity.world.rand.nextInt(100) < 5) {
+                        System.out.println("Dismount police");
+                        if (!entity.world.isRemote) {
+                            engineModule.stealVehicle("dismounted");
+                            engineModule.dismountNpcPassengers(entity.rotationYaw + 180);
+                        }
+                    } else {
+                        engineModule.getAutopilotModule().stopNavigation(4);
+                    }
+                    return;
+                } else {
+                    //System.out.println("Rerouting near player");
+                    targetNode = new PathNode(new Vector3f((float) playerTarget.posX, (float) playerTarget.posY, (float) playerTarget.posZ), new HashSet<>(), NodeType.CAR_CITY_LOW_SPED);
+                    direct = true;
+                }
+            }
+            if (!direct && targetNode.getDistance(playerTarget.getPositionVector()) > 30) {
                 targetNode = new PathNode(new Vector3f((float) playerTarget.posX, (float) playerTarget.posY, (float) playerTarget.posZ), new HashSet<>(), NodeType.UNDEFINED);
                 direct = true;
                 //System.out.println("Direct path");
@@ -65,10 +76,10 @@ public class VehiclePoliceAI {
             if (targetNode != this.targetNode) {
                 this.targetNode = targetNode;
                 if (!engineModule.getAutopilotModule().makePathToNode(targetNode, direct)) {
-                   // System.out.println("Tg you " + targetNode.getPosition());
+                    // System.out.println("Tg you " + targetNode.getPosition());
                     this.targetNode = null;
                 }// else
-                  //  System.out.println("New target node " + targetNode.getPosition());
+                //  System.out.println("New target node " + targetNode.getPosition());
             } else {
                 //System.out.println("Same target node " + targetNode.getPosition());
             }
@@ -79,9 +90,9 @@ public class VehiclePoliceAI {
             });
             if (target != null) {
                 setPlayerTarget(target);
-              //  System.out.println("Set target " + playerTarget);
+                //  System.out.println("Set target " + playerTarget);
             } else {
-             //   System.out.println("No target");
+                //   System.out.println("No target");
             }
         }
     }

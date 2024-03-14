@@ -52,7 +52,9 @@ public class SkinRepository {
     @Getter
     public enum NpcType {
         NPC("npc"),
-        POLICE("police");
+        POLICE("police"),
+        SWAT("swat"),
+        MILITARY("military");
 
         private final String name;
 

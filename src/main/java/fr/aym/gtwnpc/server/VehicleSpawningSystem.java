@@ -60,6 +60,9 @@ public class VehicleSpawningSystem {
     public static VehicleType getSpawnVehicleType(Random random, VehicleSpawnConfigs spawnConfigs, int wantedLevel) {
         VehiclesSpawningRatios ratios = GtwNpcsConfig.vehiclesSpawningRatios;
         List<VehiclesSpawningRatios.SpawnRatio> weightedRandoms = ratios.getVehicleRatios(wantedLevel);
+        if(weightedRandoms == null) {
+            System.out.println("Fils de pute " + weightedRandoms+" "+wantedLevel+" "+ratios.getRatios());
+        }
         weightedRandoms.removeIf(ratio -> spawnConfigs.getVehicleSpawnConfig(random, ratio.getType()) == null);
         if(weightedRandoms.isEmpty())
             return VehicleType.CIVILIAN;

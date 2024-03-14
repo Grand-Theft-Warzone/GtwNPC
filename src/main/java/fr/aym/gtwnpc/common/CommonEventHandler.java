@@ -1,7 +1,6 @@
 package fr.aym.gtwnpc.common;
 
 import fr.aym.gtwnpc.GtwNpcMod;
-import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.dynamx.GtwNpcModule;
 import fr.aym.gtwnpc.dynamx.VehicleType;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
@@ -15,8 +14,8 @@ import fr.aym.gtwnpc.sqript.EventGNpcInit;
 import fr.aym.gtwnpc.sqript.EventOnPlayerAttack2;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.dynamx.api.events.PhysicsEntityEvent;
+import fr.dynamx.api.events.PhysicsEvent;
 import fr.dynamx.api.events.VehicleEntityEvent;
-import fr.dynamx.common.core.DismountHelper;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import fr.dynamx.common.entities.modules.engines.CarEngineModule;
 import fr.nico.sqript.ScriptManager;
@@ -65,17 +64,14 @@ public class CommonEventHandler {
 
     @SubscribeEvent
     public static void onPlayerInteractWithVehicle(VehicleEntityEvent.EntityMount event) {
-        if (!event.getEntity().hasModuleOfType(GtwNpcModule.class)) {
+        if (event.getEntity().world.isRemote || !event.getEntity().hasModuleOfType(GtwNpcModule.class)) {
             return;
         }
         GtwNpcModule autopilot = event.getEntity().getModuleByType(GtwNpcModule.class);
-        if (!autopilot.hasAutopilot() || autopilot.getAutopilotModule().getStolenTime() != 0) {
+        if (!autopilot.hasAutopilot() || autopilot.getStolenTime() != 0 || !autopilot.isStealable()) {
             return;
         }
-        autopilot.getAutopilotModule().stealVehicle();
-        if (event.getEntity().world.isRemote) {
-            return;
-        }
+        autopilot.stealVehicle("stolen");
         autopilot.dismountNpcPassengers(event.getEntityMounted().rotationYaw + 180);
         if (!(event.getEntityMounted() instanceof EntityPlayer)) {
             return;
@@ -86,5 +82,35 @@ public class CommonEventHandler {
         PlayerInformation info = PlayerManager.getPlayerInformation((EntityPlayer) event.getEntityMounted());
         info.setWantedLevel(info.getWantedLevel() + 1);
         event.getEntityMounted().sendMessage(new TextComponentString("You stole a vehicle, your wanted level is now " + info.getWantedLevel()));
+    }
+
+    @SubscribeEvent
+    public static void onPhysicsCollision(PhysicsEvent.PhysicsCollision event) {
+        if (!(event.getObject1().getObjectIn() instanceof BaseVehicleEntity<?>) || !(event.getObject2().getObjectIn() instanceof BaseVehicleEntity<?>)) {
+            return;
+        }
+        BaseVehicleEntity<?> vehicle1 = (BaseVehicleEntity<?>) event.getObject1().getObjectIn();
+        BaseVehicleEntity<?> vehicle2 = (BaseVehicleEntity<?>) event.getObject2().getObjectIn();
+        if (vehicle1.hasModuleOfType(GtwNpcModule.class) && vehicle2.getControllingPassenger() instanceof EntityPlayer) {
+            GtwNpcModule module = vehicle1.getModuleByType(GtwNpcModule.class);
+            if (module.getVehicleType() != VehicleType.CIVILIAN && module.getAutopilotModule() != null && module.getStolenTime() == 0) {
+                PlayerInformation info = PlayerManager.getPlayerInformation((EntityPlayer) vehicle2.getControllingPassenger());
+                if (!info.getCollidedVehicles().contains(vehicle1)) {
+                    info.getCollidedVehicles().add(vehicle1);
+                    info.setWantedLevel(info.getWantedLevel() + 1);
+                    vehicle2.getControllingPassenger().sendMessage(new TextComponentString("You collided with a police vehicle, your wanted level is now " + info.getWantedLevel()));
+                }
+            }
+        } else if (vehicle2.hasModuleOfType(GtwNpcModule.class) && vehicle1.getControllingPassenger() instanceof EntityPlayer) {
+            GtwNpcModule module = vehicle2.getModuleByType(GtwNpcModule.class);
+            if (module.getVehicleType() != VehicleType.CIVILIAN && module.getAutopilotModule() != null && module.getStolenTime() == 0) {
+                PlayerInformation info = PlayerManager.getPlayerInformation((EntityPlayer) vehicle1.getControllingPassenger());
+                if (!info.getCollidedVehicles().contains(vehicle2)) {
+                    info.getCollidedVehicles().add(vehicle2);
+                    info.setWantedLevel(info.getWantedLevel() + 1);
+                    vehicle1.getControllingPassenger().sendMessage(new TextComponentString("You collided with a police vehicle, your wanted level is now " + info.getWantedLevel()));
+                }
+            }
+        }
     }
 }

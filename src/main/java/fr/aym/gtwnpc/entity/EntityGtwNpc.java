@@ -5,8 +5,8 @@ import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.entity.ai.*;
 import fr.aym.gtwnpc.utils.GtwNpcsConfig;
 import fr.aym.gtwnpc.utils.ShotHelper;
+import fr.dynamx.common.entities.BaseVehicleEntity;
 import lombok.Getter;
-import lombok.Setter;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.EntityAIOpenDoor;
@@ -27,6 +27,7 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
+import java.util.List;
 
 public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackMob {
     private static final DataParameter<String> STATE = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.STRING);
@@ -42,7 +43,11 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
     protected GEntityAIPoliceTarget policeTargetAI;
 
     @Getter
-    @Setter
+    protected BaseVehicleEntity<?> ownerVehicle;
+    @Getter
+    protected GEntityAIReturnToCar returnToCarAI;
+
+    @Getter
     private SkinRepository.NpcType npcType = SkinRepository.NpcType.NPC;
 
     private Entity ridingHack;
@@ -57,6 +62,18 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
     public void setNpcType(SkinRepository.NpcType npcType) {
         this.npcType = npcType;
         setSkin(SkinRepository.getRandomSkin(npcType, world.rand).toString());
+    }
+
+    public void setOwnerVehicle(BaseVehicleEntity<?> ownerVehicle) {
+        this.ownerVehicle = ownerVehicle;
+        if (ownerVehicle != null) {
+            if (returnToCarAI == null)
+                returnToCarAI = new GEntityAIReturnToCar(this, GtwNpcsConfig.config.getAttackingMoveSpeed());
+            this.tasks.addTask(3, returnToCarAI);
+        } else if (returnToCarAI != null) {
+            this.tasks.removeTask(returnToCarAI);
+            returnToCarAI = null;
+        }
     }
 
     @Override
@@ -116,6 +133,22 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
         this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(GtwNpcsConfig.config.getAttackDamage());
         this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_SPEED).setBaseValue(GtwNpcsConfig.config.getAttackSpeed());
         this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(GtwNpcsConfig.config.getNpcHealth());
+    }
+
+    @Override
+    public boolean attackEntityFrom(DamageSource source, float amount) {
+        if(source.getTrueSource() instanceof EntityGtwNpc)
+            return false;
+        if(source.isProjectile() && source.getTrueSource() instanceof EntityPlayer) {
+            //assume it's a gun: all npcs near should panic
+            List<EntityGtwNpc> npcsNear = world.getEntitiesWithinAABB(EntityGtwNpc.class, getEntityBoundingBox().grow(20));
+            npcsNear.addAll(world.getEntitiesWithinAABB(EntityGtwNpc.class, source.getTrueSource().getEntityBoundingBox().grow(10)));
+            for (EntityGtwNpc npc : npcsNear) {
+                npc.setRevengeTarget((EntityLivingBase) source.getTrueSource());
+                npc.setState("panic");
+            }
+        }
+        return super.attackEntityFrom(source, amount);
     }
 
     @Override
@@ -187,7 +220,7 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
     @Override
     public void dismountEntity(Entity entityIn) {
         super.dismountEntity(entityIn);
-        if(getState().equals("sitting"))
+        if (getState().equals("sitting"))
             setState("wandering");
     }
 
@@ -307,8 +340,8 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
     @Override
     protected void updateAITasks() {
         super.updateAITasks();
-        if(getState().equals("sitting")) {
-            if(getRidingEntity() == null || getRidingEntity().isDead || (getRidingEntity().ticksExisted > 20*60*2 && rand.nextInt(100) == 1))
+        if (getState().equals("sitting")) {
+            if (getRidingEntity() == null || getRidingEntity().isDead || (getRidingEntity().ticksExisted > 20 * 60 * 2 && rand.nextInt(100) == 1))
                 setState("wandering");
         }
     }

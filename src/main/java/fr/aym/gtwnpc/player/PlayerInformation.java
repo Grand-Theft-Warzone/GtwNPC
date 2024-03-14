@@ -1,6 +1,7 @@
 package fr.aym.gtwnpc.player;
 
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
+import fr.dynamx.common.entities.BaseVehicleEntity;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.entity.player.EntityPlayer;
@@ -14,6 +15,7 @@ public class PlayerInformation
     private final EntityPlayer playerIn;
     private int wantedLevel;
     private final List<EntityGtwNpc> trackingPolicemen = new ArrayList<>();
+    private final List<BaseVehicleEntity<?>> collidedVehicles = new ArrayList<>();
 
     public PlayerInformation(EntityPlayer playerIn) {
         this.playerIn = playerIn;
