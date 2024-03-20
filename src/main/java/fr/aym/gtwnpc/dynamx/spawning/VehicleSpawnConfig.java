@@ -1,6 +1,8 @@
 package fr.aym.gtwnpc.dynamx.spawning;
 
 import com.jme3.math.Vector3f;
+import fr.aym.acsguis.component.textarea.GuiLabel;
+import fr.aym.acsguis.component.textarea.UpdatableGuiLabel;
 import fr.aym.acslib.utils.nbtserializer.ISerializable;
 import fr.aym.gtwnpc.dynamx.GtwNpcModule;
 import fr.aym.gtwnpc.dynamx.VehicleType;
@@ -54,10 +56,18 @@ public class VehicleSpawnConfig extends WeightedRandom.Item implements ISerializ
         if (info == null)
             return null;
         CarEntity<?> e = new CarEntity<>(vehicleName, world, position, yaw, vehicleMeta);
-        int passengers = world.rand.nextInt(info.getPartsByType(PartEntitySeat.class).size() - 1) + 1;
-        if (passengers == 1 && vehicleType != VehicleType.CIVILIAN && world.rand.nextInt(3) < 2) {
+        int seats = info.getPartsByType(PartEntitySeat.class).size();
+        int passengers = seats == 1 ? 1 : world.rand.nextInt( seats - 1) + 1;
+        if (passengers == 1 && vehicleType != VehicleType.CIVILIAN && seats > 1 && world.rand.nextInt(3) < 2) {
             passengers = 2;
         }
+        new GuiLabel("") {
+            @Override
+            public void tick() {
+                super.tick();
+                this.setText("Time left: " + 18);
+            }
+        };
         int finalPassengers = passengers;
         e.setInitCallback((entity, modules) -> e.getModuleByType(GtwNpcModule.class).enableAutopilot(vehicleType, finalPassengers));
         return e;

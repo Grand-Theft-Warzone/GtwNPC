@@ -3,6 +3,7 @@ package fr.aym.gtwnpc.utils;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import fr.aym.gtwnpc.dynamx.VehicleType;
 import lombok.AllArgsConstructor;
@@ -65,8 +66,11 @@ public class VehiclesSpawningRatios {
                     case "civilianRatio":
                         in.beginArray();
                         for (int i = 0; i < 6; i++) {
-                            if(!in.hasNext()) //sixth element was added later
+                            JsonToken token = in.peek();
+                            if(token == JsonToken.END_ARRAY && i==5) {//sixth element was added later
                                 civilianRatio[i] = 0.15f;
+                                break;
+                            }
                             civilianRatio[i] = (float) in.nextDouble();
                         }
                         in.endArray();
@@ -74,8 +78,11 @@ public class VehiclesSpawningRatios {
                     case "policeRatio":
                         in.beginArray();
                         for (int i = 0; i < 6; i++) {
-                            if(!in.hasNext()) //sixth element was added later
-                                civilianRatio[i] = 0.15f;
+                            JsonToken token = in.peek();
+                            if(token == JsonToken.END_ARRAY && i==5) {//sixth element was added later
+                                policeRatio[i] = 0.15f;
+                                break;
+                            }
                             policeRatio[i] = (float) in.nextDouble();
                         }
                         in.endArray();
@@ -83,8 +90,11 @@ public class VehiclesSpawningRatios {
                     case "swatRatio":
                         in.beginArray();
                         for (int i = 0; i < 6; i++) {
-                            if(!in.hasNext()) //sixth element was added later
-                                civilianRatio[i] = 0.35f;
+                            JsonToken token = in.peek();
+                            if(token == JsonToken.END_ARRAY && i==5) {//sixth element was added later
+                                swatRatio[i] = 0.35f;
+                                break;
+                            }
                             swatRatio[i] = (float) in.nextDouble();
                         }
                         in.endArray();
@@ -92,8 +102,11 @@ public class VehiclesSpawningRatios {
                     case "militaryRatio":
                         in.beginArray();
                         for (int i = 0; i < 6; i++) {
-                            if(!in.hasNext()) //sixth element was added later
-                                civilianRatio[i] = 0.35f;
+                            JsonToken token = in.peek();
+                            if(token == JsonToken.END_ARRAY && i==5) {//sixth element was added later
+                                militaryRatio[i] = 0.35f;
+                                break;
+                            }
                             militaryRatio[i] = (float) in.nextDouble();
                         }
                         in.endArray();

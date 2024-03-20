@@ -36,6 +36,7 @@ public class ServerEventHandler {
             World world = FMLCommonHandler.instance().getMinecraftServerInstance().getWorld(0);
             if(world == null)
                 return;
+			PlayerManager.tick();
             NpcSpawningSystem.tick((WorldServer) world);
 
             // Traffic light timings

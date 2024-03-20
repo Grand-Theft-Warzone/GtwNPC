@@ -3,7 +3,9 @@ package fr.aym.gtwnpc.entity.ai;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.path.PathNode;
 import fr.aym.gtwnpc.path.PedestrianPathNodes;
+import fr.dynamx.common.entities.BaseVehicleEntity;
 import net.minecraft.entity.ai.EntityAIBase;
+import net.minecraft.util.math.AxisAlignedBB;
 
 import javax.vecmath.Vector3f;
 import java.util.ArrayDeque;
@@ -20,6 +22,8 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
 
     protected boolean hasReachedStartPoint;
     protected List<PathNode> nodeBlacklist = new ArrayList<>();
+
+    private int stuckTime;
 
     public GEntityAIMoveToNodes(EntityGtwNpc creatureIn) {
         this.entity = creatureIn;
@@ -123,6 +127,7 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
         if (!entity.getState().equals("wandering") && !entity.getState().equals("lost")) {
             return false;
         }
+        entity.getNavigator().setSpeed(entity.getMoveSpeed());
         //System.out.println("IA round");
         PathNode target = path.peek();
         ////System.out.println("Intermediate dist " + target.getDistance(entity.getPositionVector()));
@@ -218,6 +223,26 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
             if (target != null)
                 target.onReached(entity.world, entity);
             return false;
+        } else {
+            // check if there is a vehicle in the way and avoid it
+            AxisAlignedBB detection = entity.getEntityBoundingBox().grow(1);
+            detection = detection.offset(entity.getLookVec().scale(2));
+            List<BaseVehicleEntity> entities = entity.world.getEntitiesWithinAABB(BaseVehicleEntity.class, detection);
+            if (!entities.isEmpty()) {
+                stuckTime++;
+                if(stuckTime >= 400) {
+                    //System.out.println("Npc is stuck. Trying to find a new path.");
+                    if (!hasReachedStartPoint && target != null) {
+                        nodeBlacklist.add(target);
+                        //System.out.println("Blacklisted8 " + target);
+                    }
+                    return false;
+                } else if(stuckTime < 200) {
+                    //System.out.println("Vehicle in the way. Npc is halting.");
+                    entity.getNavigator().setSpeed(0);
+                }
+                return true;
+            }
         }
         if (entity.getNavigator().noPath()) {
             //System.out.println("00 No path vanilla");

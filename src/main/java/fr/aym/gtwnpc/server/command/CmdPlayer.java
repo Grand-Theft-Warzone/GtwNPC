@@ -36,6 +36,13 @@ public class CmdPlayer implements ISubCommand
                 case "wanted_level":
                     PlayerInformation info = PlayerManager.getPlayerInformation((EntityPlayer) sender);
                     sender.sendMessage(new TextComponentString(TextFormatting.GOLD + "Your wanted level is: " + info.getWantedLevel()));
+                    if(info.getWantedLevel() > 0) {
+                        if (info.getHiddenTime() > 0) {
+                            sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "You are hidden since " + info.getHiddenTime() + " ticks"));
+                        } else {
+                            sender.sendMessage(new TextComponentString(TextFormatting.RED + "You have " + info.getSeeingPolicemenCount() + " policemen seeing you"));
+                        }
+                    }
                     return;
                 default:
                     throw new WrongUsageException("/gtwnpcmod player get <wanted_level>");

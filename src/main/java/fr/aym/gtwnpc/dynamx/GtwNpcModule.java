@@ -77,6 +77,11 @@ public class GtwNpcModule extends CarEngineModule {
         stealable = vehicleEntity.world.rand.nextBoolean();
     }
 
+    public BaseVehicleEntity<?> getEntity() {
+        return entity;
+    }
+
+
     public boolean isStealable() {
         return vehicleType.get() != VehicleType.CIVILIAN || stealable;
     }
@@ -139,6 +144,10 @@ public class GtwNpcModule extends CarEngineModule {
             autopilotModule.setState("restored");
             autopilotModule.stopNavigation(80); // wait for other npcs to join
         }
+    }
+
+    public boolean isTrackingWanted() {
+        return !entity.isDead && policeAI != null && policeAI.isCatchingVilains() && getStolenTime() == 0;
     }
 
     @Override

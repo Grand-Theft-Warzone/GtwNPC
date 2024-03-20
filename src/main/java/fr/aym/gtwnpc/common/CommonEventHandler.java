@@ -95,8 +95,8 @@ public class CommonEventHandler {
             GtwNpcModule module = vehicle1.getModuleByType(GtwNpcModule.class);
             if (module.getVehicleType() != VehicleType.CIVILIAN && module.getAutopilotModule() != null && module.getStolenTime() == 0) {
                 PlayerInformation info = PlayerManager.getPlayerInformation((EntityPlayer) vehicle2.getControllingPassenger());
-                if (!info.getCollidedVehicles().contains(vehicle1)) {
-                    info.getCollidedVehicles().add(vehicle1);
+                if (!info.getCollidedVehicles().containsKey(vehicle1)) {
+                    info.getCollidedVehicles().put(vehicle1, vehicle1.ticksExisted);
                     info.setWantedLevel(info.getWantedLevel() + 1);
                     vehicle2.getControllingPassenger().sendMessage(new TextComponentString("You collided with a police vehicle, your wanted level is now " + info.getWantedLevel()));
                 }
@@ -105,8 +105,8 @@ public class CommonEventHandler {
             GtwNpcModule module = vehicle2.getModuleByType(GtwNpcModule.class);
             if (module.getVehicleType() != VehicleType.CIVILIAN && module.getAutopilotModule() != null && module.getStolenTime() == 0) {
                 PlayerInformation info = PlayerManager.getPlayerInformation((EntityPlayer) vehicle1.getControllingPassenger());
-                if (!info.getCollidedVehicles().contains(vehicle2)) {
-                    info.getCollidedVehicles().add(vehicle2);
+                if (!info.getCollidedVehicles().containsKey(vehicle2)) {
+                    info.getCollidedVehicles().put(vehicle2, vehicle2.ticksExisted);
                     info.setWantedLevel(info.getWantedLevel() + 1);
                     vehicle1.getControllingPassenger().sendMessage(new TextComponentString("You collided with a police vehicle, your wanted level is now " + info.getWantedLevel()));
                 }

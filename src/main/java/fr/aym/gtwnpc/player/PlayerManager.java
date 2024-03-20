@@ -31,4 +31,8 @@ public class PlayerManager
     public static Map<UUID, PlayerInformation> getPlayerInfos() {
         return playerInfos;
     }
+
+    public static void tick() {
+        playerInfos.values().forEach(PlayerInformation::update);
+    }
 }

@@ -90,6 +90,7 @@ public class VehiclePoliceAI {
             });
             if (target != null) {
                 setPlayerTarget(target);
+                PlayerManager.getPlayerInformation(target).getTrackingVehicles().add(engineModule);
                 //  System.out.println("Set target " + playerTarget);
             } else {
                 //   System.out.println("No target");
