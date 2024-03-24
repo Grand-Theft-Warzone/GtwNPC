@@ -74,7 +74,7 @@ public class VehicleSpawningSystem {
         if (world.rand.nextInt(40) != 0)
             return;
         VehicleSpawnConfigs spawnConfigs = VehicleSpawnConfigs.getInstance();
-        if (spawnConfigs.getVehicleSpawnConfigs().isEmpty())
+        if (spawnConfigs == null || spawnConfigs.getVehicleSpawnConfigs().isEmpty())
             return;
         AxisAlignedBB bb = player.getEntityBoundingBox().grow(GtwNpcsConfig.vehiclesSpawningRules.getVehicleSpawningRadius());
         List<BaseVehicleEntity> vehiclesAround = world.getEntitiesWithinAABB(BaseVehicleEntity.class, bb, vehicle -> vehicle.hasModuleOfType(GtwNpcModule.class) && ((GtwNpcModule) vehicle.getModuleByType(GtwNpcModule.class)).hasAutopilot());
