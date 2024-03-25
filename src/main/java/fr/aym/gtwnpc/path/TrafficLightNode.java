@@ -3,6 +3,7 @@ package fr.aym.gtwnpc.path;
 import fr.aym.gtwnpc.block.TETrafficLight;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import lombok.Getter;
+import net.minecraft.entity.Entity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -67,7 +68,7 @@ public class TrafficLightNode extends PathNode {
     }
 
     @Override
-    public boolean canPassThrough(BaseVehicleEntity<?> entity) {
+    public boolean canPassThrough(Entity entity) {
         if (trafficLightPos.getY() == 1080)
             return super.canPassThrough(entity);
         TileEntity te = entity.world.getTileEntity(trafficLightPos);

@@ -294,7 +294,7 @@ public class ObstacleDetection {
                 else {
                     CollisionSimplex simplex = collisionSimplexs.stream().filter(c -> c.getObstacle() == info.getHitEntity()).findFirst().get();
                     simplex.incrementCollision();
-                    if (simplex.getCollisionTime() > 20 * 10) {
+                    if (simplex.getCollisionTime() > 20 * 5) {
                         System.out.println("Forcing way " + this);
                         action = ObstacleAction.SLOW_DOWN;
                     }

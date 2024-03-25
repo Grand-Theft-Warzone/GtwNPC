@@ -17,6 +17,7 @@ import fr.dynamx.common.physics.entities.modules.EnginePhysicsHandler;
 import fr.dynamx.utils.maths.DynamXGeometry;
 import fr.dynamx.utils.optimization.Vector3fPool;
 import lombok.Getter;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -95,7 +96,7 @@ public class GtwNpcModule extends CarEngineModule {
         for (int i = 0; i < passengerCount; i++) {
             skins[i] = SkinRepository.getRandomSkin(vehicleType.getNpcType(), entity.world.rand).toString();
         }
-        System.out.println("Autopilot:enable. Skins: " + Arrays.toString(skins));
+        //System.out.println("Autopilot:enable. Skins: " + Arrays.toString(skins));
         npcSkins.set(skins);
         setVehicleType(vehicleType);
     }
@@ -136,6 +137,17 @@ public class GtwNpcModule extends CarEngineModule {
             autopilotModule.setState(state);
         }
         setSpeedLimit(Float.MAX_VALUE);
+    }
+
+    public float getVehicleSpeed() {
+        BaseVehiclePhysicsHandler<?> phycites = entity.getPhysicsHandler();
+        if (phycites == null && entity.getSynchronizer() instanceof SPPhysicsEntitySynchronizer<?>) {
+            Entity e = ((SPPhysicsEntitySynchronizer<?>) entity.getSynchronizer()).getOtherSideEntity();
+            if (e instanceof BaseVehicleEntity<?>) {
+                phycites = ((BaseVehicleEntity<?>) e).getPhysicsHandler();
+            }
+        }
+        return phycites != null ? phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : Float.MIN_VALUE;
     }
 
     public void restoreAi() {

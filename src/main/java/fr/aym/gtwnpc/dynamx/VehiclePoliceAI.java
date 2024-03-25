@@ -51,7 +51,7 @@ public class VehiclePoliceAI {
             }
             boolean direct = false;
             if (entity.getDistance(playerTarget) < (engineModule.getAutopilotModule().getObstacleDetection().getStuckTime() > 40 ? 36 : 20)) {
-                if (Math.abs(engineModule.getAutopilotModule().getVehicleSpeed()) < 5) {
+                if (Math.abs(engineModule.getVehicleSpeed()) < 5) {
                     if (entity.world.rand.nextInt(100) < 5) {
                         System.out.println("Dismount police");
                         if (!entity.world.isRemote) {

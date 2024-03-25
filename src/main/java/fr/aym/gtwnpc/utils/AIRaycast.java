@@ -67,7 +67,7 @@ public class AIRaycast {
         //    System.out.println("Hit entity: " + hitEntity + " at " + hitVec + " " + rayDistance + " " + hitDistance);
         if (hitEntity == null)
             return new HitInfo(null, null, 0, ObstacleDetection.ObstacleAction.IGNORE);
-        if (hitDistance - frontSize > 4)
+        if (hitDistance - frontSize > 4 || hitDistance < 1)
             return new HitInfo(hitEntity, new Vector3f((float) hitVec.x, (float) hitVec.y, (float) hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.SLOW_DOWN);
         return new HitInfo(hitEntity, new Vector3f((float) hitVec.x, (float) hitVec.y, (float) hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.STOP);
     }

@@ -274,7 +274,7 @@ public class AutopilotModule {
         }
 
         float nextAngle = 0;
-        if (path.size() > 2) {
+        if (path.size() >= 2) {
             PathNode nextNextNode = path.stream().skip(1).findFirst().orElse(null);
             if (nextNextNode != null) {
                 nextAngle = getNextTurnAngle(target, nextNextNode);
@@ -336,7 +336,7 @@ public class AutopilotModule {
         // System.out.println("Steer: " + Math.abs(steerForce));
         //System.out.println("Speed: " + speed + " for " + target.getDistance(entity.getPositionVector()) + " meters to target and angle " + nextAngle);
         setSpeedLimit(speed);
-        float mySpeed = getVehicleSpeed();
+        float mySpeed = engineModule.getVehicleSpeed();
         if (mySpeed != Float.MIN_VALUE) {
             //System.out.println("Cur speed: " + phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) + " km/h");
             if (mySpeed > speed + 10 || speed == 0) {
@@ -353,17 +353,6 @@ public class AutopilotModule {
         }
         //System.out.println("Controls: " + controls + " for " + diff + " current: " + yaw + " target: " + angle +" accel? " + (controls & 2));
         setControls(controls);
-    }
-
-    public float getVehicleSpeed() {
-        BaseVehiclePhysicsHandler<?> phycites = entity.getPhysicsHandler();
-        if (phycites == null && entity.getSynchronizer() instanceof SPPhysicsEntitySynchronizer<?>) {
-            Entity e = ((SPPhysicsEntitySynchronizer<?>) entity.getSynchronizer()).getOtherSideEntity();
-            if (e instanceof BaseVehicleEntity<?>) {
-                phycites = ((BaseVehicleEntity<?>) e).getPhysicsHandler();
-            }
-        }
-        return phycites != null ? phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : Float.MIN_VALUE;
     }
 
     protected float getNextTurnAngle(PathNode nextNode, PathNode nextNextNode) {

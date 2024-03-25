@@ -94,7 +94,7 @@ public class ClientEventHandler {
                 PathNode node;
                 TileEntity te = MC.world.getTileEntity(result.getBlockPos());
                 NodeType type = NodeType.values()[(!stack.hasTagCompound() ? 0 : stack.getTagCompound().getInteger("mode")) + 1];
-                if (te instanceof TETrafficLight && type != NodeType.PEDESTRIAN) {
+                if (te instanceof TETrafficLight) {
                     if (NodesRenderer.selectedNode == null)
                         return;
                     node = new TrafficLightNode(result.getBlockPos(), NodesRenderer.selectedNode, type);

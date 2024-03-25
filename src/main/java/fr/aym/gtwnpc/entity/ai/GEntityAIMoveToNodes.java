@@ -1,8 +1,10 @@
 package fr.aym.gtwnpc.entity.ai;
 
+import fr.aym.gtwnpc.dynamx.GtwNpcModule;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.path.PathNode;
 import fr.aym.gtwnpc.path.PedestrianPathNodes;
+import fr.aym.gtwnpc.path.TrafficLightNode;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -50,7 +52,7 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
 
         this.path.clear();
         //TODO MIN MAX VALUES TO SET
-        PathNode target = PedestrianPathNodes.getInstance().selectRandomPathNode(entity.world, entity.getPositionVector(), 20, 3000, (n) -> true);
+        PathNode target = PedestrianPathNodes.getInstance().selectRandomPathNode(entity.world, entity.getPositionVector(), 20, 3000, (n) -> !(n instanceof TrafficLightNode));
         BIG_TARGET = target;
         if (target == null) {
             //System.out.println("No target");
@@ -216,6 +218,17 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
                         return false;
                     }
                 }
+                if (target instanceof TrafficLightNode && path.size() >= 2) {
+                    if (!target.canPassThrough(entity) && path.stream().skip(1).findFirst().orElse(null) instanceof TrafficLightNode) {
+                        float speed = entity.getMoveSpeed();
+                        if (dist < 2f) {
+                            speed = 0;
+                        } else if (dist < 3f) {
+                            speed /= 2;
+                        }
+                        entity.getNavigator().setSpeed(speed);
+                    }
+                }
                 ////System.out.println("Indexes " + entity.getNavigator().getPath().getCurrentPathIndex() + " on " + entity.getNavigator().getPath());
                 return true;
             }
@@ -225,23 +238,30 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
             return false;
         } else {
             // check if there is a vehicle in the way and avoid it
-            AxisAlignedBB detection = entity.getEntityBoundingBox().grow(1);
+            AxisAlignedBB detection = entity.getEntityBoundingBox().grow(0f);
             detection = detection.offset(entity.getLookVec().scale(2));
             List<BaseVehicleEntity> entities = entity.world.getEntitiesWithinAABB(BaseVehicleEntity.class, detection);
+            if (stuckTime > 40) {
+                entities.removeIf(e -> {
+                    GtwNpcModule module = (GtwNpcModule) e.getModuleByType(GtwNpcModule.class);
+                    return module != null && module.getVehicleSpeed() < 1;
+                });
+            }
             if (!entities.isEmpty()) {
                 stuckTime++;
-                if(stuckTime >= 400) {
+                if (stuckTime >= 400) {
                     //System.out.println("Npc is stuck. Trying to find a new path.");
                     if (!hasReachedStartPoint && target != null) {
                         nodeBlacklist.add(target);
                         //System.out.println("Blacklisted8 " + target);
                     }
                     return false;
-                } else if(stuckTime < 200) {
+                } else if (stuckTime < 200) {
                     //System.out.println("Vehicle in the way. Npc is halting.");
                     entity.getNavigator().setSpeed(0);
                 }
-                return true;
+            } else if (stuckTime > 5) {
+                stuckTime -= 5;
             }
         }
         if (entity.getNavigator().noPath()) {
@@ -252,6 +272,18 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
                 //System.out.println("Blacklisted2 " + target);
             }
             return false;
+        }
+        if (target instanceof TrafficLightNode && path.size() >= 2) {
+            if (!target.canPassThrough(entity) && path.stream().skip(1).findFirst().orElse(null) instanceof TrafficLightNode) {
+                float speed = entity.getMoveSpeed();
+                double dist = target.getDistance(entity.getPositionVector());
+                if (dist < 2f) {
+                    speed = 0;
+                } else if (dist < 3f) {
+                    speed /= 2;
+                }
+                entity.getNavigator().setSpeed(speed);
+            }
         }
         return true;
     }

@@ -8,6 +8,7 @@ import fr.aym.gtwnpc.network.BBMessagePathNodes;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import fr.dynamx.utils.optimization.Vector3fPool;
 import lombok.Getter;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -172,7 +173,7 @@ public class PathNode implements ISerializable, ISerializablePacket {
         return true;
     }
 
-    public boolean canPassThrough(BaseVehicleEntity<?> entity) {
+    public boolean canPassThrough(Entity entity) {
         return true;
     }
 
