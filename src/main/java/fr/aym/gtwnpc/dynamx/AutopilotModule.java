@@ -349,7 +349,7 @@ public class AutopilotModule {
                 controls |= 2; // forward
             }
         } else {
-            System.out.println("ERROR - No physics handler");
+            //System.out.println("ERROR - No physics handler");
         }
         //System.out.println("Controls: " + controls + " for " + diff + " current: " + yaw + " target: " + angle +" accel? " + (controls & 2));
         setControls(controls);
@@ -375,6 +375,7 @@ public class AutopilotModule {
         this.cooldown = cooldown;
         navigationTarget = null;
         setControls(32); // handbrake
+        setSpeedLimit(Float.MAX_VALUE);
     }
 
     public boolean isPoliceTracking() {

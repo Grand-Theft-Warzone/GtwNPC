@@ -93,8 +93,8 @@ public class AIRaycast {
                 double dr = origin.distance(rayVec);
                 if (di > dr) {
                     intersection = null;
-                    if (!entity.getPassengers().isEmpty())
-                        System.out.println("Enculé de GPT");
+                    //if (!entity.getPassengers().isEmpty())
+                      //  System.out.println("Enculé de GPT");
                 }
                 if (!entity.getPassengers().isEmpty())
                     System.out.println("From " + origin + " to " + rayVec + " " + intersection + " " + di + " " + dr);

@@ -61,13 +61,6 @@ public class VehicleSpawnConfig extends WeightedRandom.Item implements ISerializ
         if (passengers == 1 && vehicleType != VehicleType.CIVILIAN && seats > 1 && world.rand.nextInt(3) < 2) {
             passengers = 2;
         }
-        new GuiLabel("") {
-            @Override
-            public void tick() {
-                super.tick();
-                this.setText("Time left: " + 18);
-            }
-        };
         int finalPassengers = passengers;
         e.setInitCallback((entity, modules) -> e.getModuleByType(GtwNpcModule.class).enableAutopilot(vehicleType, finalPassengers));
         return e;

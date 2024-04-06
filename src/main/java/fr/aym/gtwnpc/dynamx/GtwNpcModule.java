@@ -1,5 +1,6 @@
 package fr.aym.gtwnpc.dynamx;
 
+import com.jme3.bullet.objects.PhysicsVehicle;
 import com.jme3.math.Vector3f;
 import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
@@ -10,6 +11,7 @@ import fr.dynamx.api.network.sync.SynchronizationRules;
 import fr.dynamx.api.network.sync.SynchronizedEntityVariable;
 import fr.dynamx.common.contentpack.parts.PartEntitySeat;
 import fr.dynamx.common.entities.BaseVehicleEntity;
+import fr.dynamx.common.entities.PhysicsEntity;
 import fr.dynamx.common.entities.modules.engines.CarEngineModule;
 import fr.dynamx.common.network.sync.SPPhysicsEntitySynchronizer;
 import fr.dynamx.common.physics.entities.BaseVehiclePhysicsHandler;
@@ -27,7 +29,6 @@ import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fml.relauncher.Side;
 
 import javax.annotation.Nullable;
-import java.util.Arrays;
 import java.util.Objects;
 
 @SynchronizedEntityVariable.SynchronizedPhysicsModule(
@@ -70,6 +71,9 @@ public class GtwNpcModule extends CarEngineModule {
 
     @SynchronizedEntityVariable(name = "npcSkin")
     private final EntityVariable<String[]> npcSkins = new EntityVariable<>(SynchronizationRules.SERVER_TO_CLIENTS, new String[0]);
+
+    @SynchronizedEntityVariable(name = "effectiveSteer")
+    private final EntityVariable<Float> effectiveSteer = new EntityVariable<>(SynchronizationRules.SERVER_TO_CLIENTS, -10f);
 
     private final boolean stealable;
 
@@ -143,11 +147,15 @@ public class GtwNpcModule extends CarEngineModule {
         BaseVehiclePhysicsHandler<?> phycites = entity.getPhysicsHandler();
         if (phycites == null && entity.getSynchronizer() instanceof SPPhysicsEntitySynchronizer<?>) {
             Entity e = ((SPPhysicsEntitySynchronizer<?>) entity.getSynchronizer()).getOtherSideEntity();
-            if (e instanceof BaseVehicleEntity<?>) {
+            if (e instanceof BaseVehicleEntity<?> && ((BaseVehicleEntity<?>) e).initialized == PhysicsEntity.EnumEntityInitState.ALL) {
                 phycites = ((BaseVehicleEntity<?>) e).getPhysicsHandler();
             }
         }
-        return phycites != null ? phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : Float.MIN_VALUE;
+        if (phycites != null && ((PhysicsVehicle) phycites.getCollisionObject()).getController() == null) {
+            System.out.println("ENCULE DE FILS DE PUTE DE MERDE " + entity);
+            return Float.MIN_VALUE;
+        }
+        return entity.ticksExisted > 10 && phycites != null ? phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : Float.MIN_VALUE;
     }
 
     public void restoreAi() {
@@ -249,14 +257,22 @@ public class GtwNpcModule extends CarEngineModule {
                 public void steer(float strength) {
                     if (autopilotModule == null || getStolenTime() > 0) {
                         super.steer(strength);
+                        if(!entity.world.isRemote)
+                            effectiveSteer.set(-10f);
+                        return;
+                    }
+                    if(entity.world.isRemote) {
+                        super.steer(effectiveSteer.get() == -10 ? strength : effectiveSteer.get());
                         return;
                     }
                     //System.out.println("Intercepted steer: " + strength + " // " + steerForce);
                     if (autopilotModule.getForcedSteeringTime() > 0) {
                         autopilotModule.setForcedSteeringTime(autopilotModule.getForcedSteeringTime() - 1);
                         super.steer(autopilotModule.getForcedSteering());
+                        effectiveSteer.set(autopilotModule.getForcedSteering());
                     } else {
                         super.steer(autopilotModule.getSteerForce());
+                        effectiveSteer.set(autopilotModule.getSteerForce());
                     }
                 }
             };

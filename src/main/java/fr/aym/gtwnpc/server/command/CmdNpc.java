@@ -71,5 +71,7 @@ public class CmdNpc implements ISubCommand {
             r.addAll(CommandBase.getListOfStringsMatchingLastWord(args, "reload_config", "kill_all", "get", "set"));
         else if (args.length == 3)
             r.addAll(CommandBase.getListOfStringsMatchingLastWord(args, "do_spawning"));
+        else if (args.length == 4 && args[2].equals("do_spawning"))
+            r.addAll(CommandBase.getListOfStringsMatchingLastWord(args, "true", "false"));
     }
 }
