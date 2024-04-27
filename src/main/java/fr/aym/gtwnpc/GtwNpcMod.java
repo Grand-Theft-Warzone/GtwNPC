@@ -14,8 +14,8 @@ import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.entity.EntityGtwPoliceNpc;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
 import fr.aym.gtwnpc.network.CSMessageSetNodeMode;
+import fr.aym.gtwnpc.network.SCMessagePlayerInformation;
 import fr.aym.gtwnpc.server.command.CommandGtwNpcMod;
-import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.aym.gtwnpc.utils.GtwNpcsConfig;
 import fr.aym.mps.core.BasicMpsConfig;
 import fr.dynamx.api.contentpack.DynamXAddon;
@@ -70,7 +70,7 @@ public class GtwNpcMod {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         log.info("Loading protection class");
-        ModProtectionConfig config = new BasicMpsConfig(VERSION, MPS_ACCESS_KEY, MPS_SERVER_VERSION, MPS_URL, new String[] {MPS_AUX_URL}, new String[0], "fr.aym.gtwnpc.impl.ProtectionStarter");
+        ModProtectionConfig config = new BasicMpsConfig(VERSION, MPS_ACCESS_KEY, MPS_SERVER_VERSION, MPS_URL, new String[]{MPS_AUX_URL}, new String[0], "fr.aym.gtwnpc.impl.ProtectionStarter");
         ModProtectionContainer container = ACsLib.getPlatform().provideService(ModProtectionService.class).createNewMpsContainer(ID, config, false);
         container.setup(NAME);
 
@@ -89,6 +89,7 @@ public class GtwNpcMod {
         network.registerMessage(BBMessagePathNodes.HandlerClient.class, BBMessagePathNodes.class, 1, Side.CLIENT);
         network.registerMessage(BBMessagePathNodes.HandlerServer.class, BBMessagePathNodes.class, 2, Side.SERVER);
         network.registerMessage(CSMessageSetNodeMode.Handler.class, CSMessageSetNodeMode.class, 3, Side.SERVER);
+        network.registerMessage(SCMessagePlayerInformation.Handler.class, SCMessagePlayerInformation.class, 4, Side.CLIENT);
 
         SkinRepository.loadSkins(new File("GtwNpc", "skins"));
 

@@ -13,6 +13,7 @@ import fr.aym.gtwnpc.dynamx.ObstacleDetection;
 import fr.aym.gtwnpc.item.ItemNodes;
 import fr.aym.gtwnpc.network.CSMessageSetNodeMode;
 import fr.aym.gtwnpc.path.*;
+import fr.aym.gtwnpc.player.PlayerManager;
 import fr.aym.gtwnpc.utils.AIRaycast;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.aym.gtwnpc.utils.GtwNpcsUtils;
@@ -34,8 +35,10 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.client.event.MouseEvent;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -216,6 +219,18 @@ public class ClientEventHandler {
         if (seats.isEmpty())
             return;
         event.addSceneNode("npc.seats", (scale, list) -> (SceneNode) new NpcSeatsPadre(scale, seats.stream().map(seat -> new NpcSeatNode(seat, scale)).collect(Collectors.toList())));
+    }
+
+    @SubscribeEvent
+    public static void clientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.START && MC.world != null) {
+            PlayerManager.tick();
+        }
+    }
+
+    @SubscribeEvent
+    public static void worldUnload(WorldEvent.Unload event) {
+        PlayerManager.clear();
     }
 
     /*@SubscribeEvent

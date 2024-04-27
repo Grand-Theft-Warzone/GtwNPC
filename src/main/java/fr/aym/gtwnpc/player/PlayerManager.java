@@ -35,4 +35,8 @@ public class PlayerManager
     public static void tick() {
         playerInfos.values().forEach(PlayerInformation::update);
     }
+
+    public static void clear() {
+        playerInfos.clear();
+    }
 }

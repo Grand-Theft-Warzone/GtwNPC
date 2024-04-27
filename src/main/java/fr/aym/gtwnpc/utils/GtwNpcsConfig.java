@@ -54,7 +54,7 @@ public class GtwNpcsConfig {
             vehiclesSpawningRules = new VehiclesSpawningRules(true, 100, 100, 20, 50, 40);
             vehiclesSpawningRatios = new VehiclesSpawningRatios();
             config = new BaseConfig(1, true, 60000, 1000, 0.45f, 0.60f,
-                    0.8f, 50, 0.65f, 2, 4, 20, 20 * 60,
+                    0.8f, 50, 0.65f, 2, 4, 20, 60,
                     citizenSpawningConfig, policeSpawningConfig, vehiclesSpawningRules, vehiclesSpawningRatios);
             save();
             GtwNpcMod.log.info("Config file created at " + configFile.getAbsolutePath());
@@ -97,7 +97,7 @@ public class GtwNpcsConfig {
         private float attackDamage;
         private float attackSpeed;
         private float npcHealth;
-        private int playerHideCooldown = 20 * 60;
+        private int playerHideCooldown = 60;
         private SpawningConfig.CitizenSpawningConfig citizenSpawningConfig;
         private SpawningConfig.PoliceSpawningConfig policeSpawningConfig;
         private VehiclesSpawningRules vehiclesSpawningRules;
