@@ -5,6 +5,7 @@ import com.jme3.math.Vector3f;
 import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
+import fr.dynamx.addons.basics.common.modules.FuelTankModule;
 import fr.dynamx.api.network.sync.EntityVariable;
 import fr.dynamx.api.network.sync.SimulationHolder;
 import fr.dynamx.api.network.sync.SynchronizationRules;
@@ -141,6 +142,10 @@ public class GtwNpcModule extends CarEngineModule {
             autopilotModule.setState(state);
         }
         setSpeedLimit(Float.MAX_VALUE);
+        FuelTankModule fuelTankModule = entity.getModuleByType(FuelTankModule.class);
+        if (fuelTankModule != null) {
+            fuelTankModule.setFuel(fuelTankModule.getInfo().getTankSize());
+        }
     }
 
     public float getVehicleSpeed() {
@@ -163,6 +168,10 @@ public class GtwNpcModule extends CarEngineModule {
         if (autopilotModule != null) {
             autopilotModule.setState("restored");
             autopilotModule.stopNavigation(80); // wait for other npcs to join
+        }
+        FuelTankModule fuelTankModule = entity.getModuleByType(FuelTankModule.class);
+        if (fuelTankModule != null) {
+            fuelTankModule.disableFuelConsumption();
         }
     }
 
@@ -228,6 +237,11 @@ public class GtwNpcModule extends CarEngineModule {
                             entity.setDead();
                         }
                     }
+                } else {
+                    FuelTankModule fuelTankModule = entity.getModuleByType(FuelTankModule.class);
+                    if (fuelTankModule != null && fuelTankModule.isFuelConsumptionDisabled()) {
+                        fuelTankModule.disableFuelConsumption();
+                    }
                 }
             }
         }
@@ -257,11 +271,11 @@ public class GtwNpcModule extends CarEngineModule {
                 public void steer(float strength) {
                     if (autopilotModule == null || getStolenTime() > 0) {
                         super.steer(strength);
-                        if(!entity.world.isRemote)
+                        if (!entity.world.isRemote)
                             effectiveSteer.set(-10f);
                         return;
                     }
-                    if(entity.world.isRemote) {
+                    if (entity.world.isRemote) {
                         super.steer(effectiveSteer.get() == -10 ? strength : effectiveSteer.get());
                         return;
                     }

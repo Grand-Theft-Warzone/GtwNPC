@@ -68,7 +68,7 @@ dependencies {
     compileOnly 'org.projectlombok:lombok:1.18.24'
     implementation ":ACsGuis:1.2.12-all"
     implementation ":DynamX:4.1.0-dev20-all-deobf"
-    implementation ":BasicsAddon:1.0.10-for-DynamX-4.1.0b18"
+    implementation ":BasicsAddon:1.0.10-for-DynamX-4.1.0b21"
 
     implementation 'org.joml:joml:1.10.5'
 
