@@ -157,7 +157,7 @@ public class GtwNpcModule extends CarEngineModule {
             }
         }
         if (phycites != null && ((PhysicsVehicle) phycites.getCollisionObject()).getController() == null) {
-            System.out.println("ENCULE DE FILS DE PUTE DE MERDE " + entity);
+            //System.out.println("ENCULE DE FILS DE PUTE DE MERDE " + entity);
             return Float.MIN_VALUE;
         }
         return entity.ticksExisted > 10 && phycites != null ? phycites.getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : Float.MIN_VALUE;
@@ -167,6 +167,7 @@ public class GtwNpcModule extends CarEngineModule {
         stolenTime.set(0);
         if (autopilotModule != null) {
             autopilotModule.setState("restored");
+            System.out.println("Restoring autopilot");
             autopilotModule.stopNavigation(80); // wait for other npcs to join
         }
         FuelTankModule fuelTankModule = entity.getModuleByType(FuelTankModule.class);

@@ -72,7 +72,7 @@ public class AutopilotModule {
         }
         PathNode start = lastTargetNode != null ? lastTargetNode : CarPathNodes.getInstance().findNearestNode(entity.getPositionVector(), nodeBlacklist);
         if (start == null) {
-            //System.out.println("No start");
+            System.out.println("No start");
             setState("lost_no_start");
             stopNavigation(15 * 20);
             lastTargetNode = null;
@@ -81,6 +81,7 @@ public class AutopilotModule {
         Queue<PathNode> path = direct ? new ArrayDeque<>(Collections.singleton(target)) : CarPathNodes.getInstance().createPathToNode(start, target);
         if (path == null) {
             //System.out.println("No path to " + target + " " + start + " " + nodeBlacklist);
+            // TODO ATTEMPTS COUNTER AND BLACKLIST (target blacklist, not start blacklist)
             setState("lost_no_path");
             stopNavigation(5 * 20);
             lastTargetNode = null;
@@ -138,7 +139,7 @@ public class AutopilotModule {
         //CarPathNodes.getInstance().getNode(UUID.fromString("e75bb806-5fa7-4c3e-a78c-bb6ca06942a4"));
         GEntityAIMoveToNodes.BIG_TARGET = target;
         if (target == null) {
-            //System.out.println("No target");
+            System.out.println("No target");
             setState("lost_no_target");
             stopNavigation(30 * 20);
             lastTargetNode = null;
@@ -383,6 +384,9 @@ public class AutopilotModule {
     }
 
     public void updateEntity() {
+        /*System.out.println("==== Updating " + entity.getEntityId() + " ====");
+        System.out.println("Sim holder " + entity.getSynchronizer().getSimulationHolder()+ " " + entity.getSynchronizer().getSimulationHolder().ownsControls(entity.world.isRemote ? Side.CLIENT : Side.SERVER));
+        System.out.println("Controls before " + getControls());*/
         if (entity.getSynchronizer().getSimulationHolder().ownsControls(entity.world.isRemote ? Side.CLIENT : Side.SERVER)) {
             if (engineModule.getStolenTime() == 0) {
                 updateNavigation();
@@ -408,6 +412,10 @@ public class AutopilotModule {
     }
 
     public void setControls(int controls) {
+        //System.out.println("Setting controls " + controls);
         engineModule.setControls(controls);
+        if(entity.getPhysicsHandler() != null) {
+            entity.getPhysicsHandler().setForceActivation(true);
+        }
     }
 }
