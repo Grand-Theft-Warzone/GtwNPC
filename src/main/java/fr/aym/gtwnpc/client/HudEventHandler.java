@@ -52,7 +52,7 @@ public class HudEventHandler {
                 return;
             int size = 20;
             int x = event.getResolution().getScaledWidth() - 5 - size;
-            int y = 5;
+            int y = 260+5;
             for (int i = 0; i < 5; i++) {
                 boolean full = i < info.getWantedLevel() && (int) counter % 2 == 0;
                 ClientEventHandler.MC.getTextureManager().bindTexture(full ? STAR_FULL : STAR_EMPTY);

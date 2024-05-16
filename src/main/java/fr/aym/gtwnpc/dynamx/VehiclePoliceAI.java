@@ -75,7 +75,7 @@ public class VehiclePoliceAI {
             }
             if (targetNode != this.targetNode) {
                 this.targetNode = targetNode;
-                if (!engineModule.getAutopilotModule().makePathToNode(targetNode, direct)) {
+                if (engineModule.getAutopilotModule().makePathToNode(targetNode, direct) != 1) {
                     // System.out.println("Tg you " + targetNode.getPosition());
                     this.targetNode = null;
                 }// else

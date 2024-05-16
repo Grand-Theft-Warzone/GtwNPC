@@ -3,9 +3,11 @@ package fr.aym.gtwnpc.entity;
 import com.modularwarfare.common.guns.ItemGun;
 import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.entity.ai.*;
+import fr.aym.gtwnpc.sqript.EventOnNpcKilled;
 import fr.aym.gtwnpc.utils.GtwNpcsConfig;
 import fr.aym.gtwnpc.utils.ShotHelper;
 import fr.dynamx.common.entities.BaseVehicleEntity;
+import fr.nico.sqript.ScriptManager;
 import lombok.Getter;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.*;
@@ -422,5 +424,14 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
     public Entity getRidingEntity() {
         Entity e = super.getRidingEntity();
         return e == null ? ridingHack : e;
+    }
+
+    @Override
+    public void onDeath(DamageSource cause) {
+        super.onDeath(cause);
+        if(!world.isRemote && cause.getTrueSource() instanceof EntityPlayer) {
+            //System.out.println("Npc killed");
+            ScriptManager.callEvent(new EventOnNpcKilled(this, (EntityPlayer) cause.getTrueSource()));
+        }
     }
 }

@@ -9,12 +9,9 @@ import fr.aym.gtwnpc.path.PathNode;
 import fr.aym.gtwnpc.path.TrafficLightNode;
 import fr.dynamx.addons.basics.common.modules.BasicsAddonModule;
 import fr.dynamx.common.entities.BaseVehicleEntity;
-import fr.dynamx.common.network.sync.SPPhysicsEntitySynchronizer;
-import fr.dynamx.common.physics.entities.BaseVehiclePhysicsHandler;
 import fr.dynamx.utils.optimization.Vector3fPool;
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
@@ -66,7 +63,7 @@ public class AutopilotModule {
         this.state = state;
     }
 
-    public boolean makePathToNode(PathNode target, boolean direct) {
+    public byte makePathToNode(PathNode target, boolean direct) {
         if (navigating) {
             stopNavigation(0);
         }
@@ -76,16 +73,11 @@ public class AutopilotModule {
             setState("lost_no_start");
             stopNavigation(15 * 20);
             lastTargetNode = null;
-            return false;
+            return -1;
         }
         Queue<PathNode> path = direct ? new ArrayDeque<>(Collections.singleton(target)) : CarPathNodes.getInstance().createPathToNode(start, target);
         if (path == null) {
-            //System.out.println("No path to " + target + " " + start + " " + nodeBlacklist);
-            // TODO ATTEMPTS COUNTER AND BLACKLIST (target blacklist, not start blacklist)
-            setState("lost_no_path");
-            stopNavigation(5 * 20);
-            lastTargetNode = null;
-            return false;
+            return 0;
         }
         //TODO
         /*
@@ -110,12 +102,12 @@ public class AutopilotModule {
         if (tare == null) {
             setState("reached_target_0");
             stopNavigation(0);
-            return true;
+            return 1;
         }
         navigationTarget = tare;
         //System.out.println("Launching to " + target + " at " + tare);
         navigating = true;
-        return true;
+        return 1;
     }
 
     protected void startNavigation() {
@@ -124,13 +116,14 @@ public class AutopilotModule {
         //TODO MIN MAX VALUES TO SET
         //com.jme3.math.Vector3f look = DynamXGeometry.rotateVectorByQuaternion(com.jme3.math.Vector3f.UNIT_Z, entity.physicsRotation);
         //com.jme3.math.Vector3f pos = Vector3fPool.get(entity.physicsPosition);
+        List<PathNode> targetBlackList = new ArrayList<>();
         Predicate<PathNode> predicate = node -> {
            /* com.jme3.math.Vector3f dir = pos.subtractLocal(node.getPosition().x, node.getPosition().y, node.getPosition().z);
             dir = dir.normalize();
             float dot = dir.dot(look);
             //System.out.println("Dot: " + dot + " " + node + " " + look + " " + dir + " " + pos + " " + entity.getPositionVector() + " " + node.getPosition());
             return dot < 0.2f;*/
-            return true;
+            return !targetBlackList.contains(node);
         };
         PathNode target = CarPathNodes.getInstance().selectRandomPathNode(entity.world, entity.getPositionVector(), 40, 3000, predicate);
         /*if (target == null) {
@@ -145,7 +138,26 @@ public class AutopilotModule {
             lastTargetNode = null;
             return;
         }
-        makePathToNode(target, false);
+        short attempts = 0;
+        while (makePathToNode(target, false) == -1) {
+            targetBlackList.add(target);
+            target = CarPathNodes.getInstance().selectRandomPathNode(entity.world, entity.getPositionVector(), 40, 3000, predicate);
+            attempts++;
+            if (target == null) {
+                System.out.println("No target attempt 2");
+                setState("lost_no_target_attempt_2");
+                stopNavigation(30 * 20);
+                lastTargetNode = null;
+                return;
+            }
+            if(attempts > 30) {
+                System.out.println("No target attempt 3");
+                setState("lost_no_target_attempt_3");
+                stopNavigation(30 * 20);
+                lastTargetNode = null;
+                return;
+            }
+        }
     }
 
     public void readFromNBT(NBTTagCompound tag) {
@@ -185,7 +197,7 @@ public class AutopilotModule {
         if (!navigating) {
             if (cooldown > 40)
                 cooldown = 40;
-            if (cooldown-- == 0) {
+            if (cooldown-- <= 0) {
                 startNavigation();
             }
             if (!navigating) {
@@ -414,7 +426,7 @@ public class AutopilotModule {
     public void setControls(int controls) {
         //System.out.println("Setting controls " + controls);
         engineModule.setControls(controls);
-        if(entity.getPhysicsHandler() != null) {
+        if (entity.getPhysicsHandler() != null) {
             entity.getPhysicsHandler().setForceActivation(true);
         }
     }

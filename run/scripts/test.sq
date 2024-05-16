@@ -45,3 +45,14 @@ on player2 attacking gtwnpcmod:entity_gtw_npc:
             set wanted level of attacker to {wt_level} + 1
         print "Wanted level: %wanted level of attacker%"
         send "Your wanted level is now %wanted level of attacker%" to attacker
+
+on npc killed:
+    print "npc died %victim%"
+    print "%attacker%"
+    print "%type of attacker%"
+    set {wt_level} to wanted level of attacker
+    if {wt_level} < 5:
+        set wanted level of attacker to {wt_level} + 1
+    print "Wanted level: %wanted level of attacker%"
+    send "Your wanted level is now %wanted level of attacker%" to attacker
+
