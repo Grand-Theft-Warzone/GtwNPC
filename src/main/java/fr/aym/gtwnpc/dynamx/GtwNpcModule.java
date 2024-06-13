@@ -87,6 +87,11 @@ public class GtwNpcModule extends CarEngineModule {
         return entity;
     }
 
+    @Override
+    protected void playStartingSound() {
+        if(!hasAutopilot())
+            super.playStartingSound();
+    }
 
     public boolean isStealable() {
         return vehicleType.get() != VehicleType.CIVILIAN || stealable;

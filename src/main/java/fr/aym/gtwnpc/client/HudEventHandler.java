@@ -53,6 +53,8 @@ public class HudEventHandler {
             int size = 20;
             int x = event.getResolution().getScaledWidth() - 5 - size;
             int y = 260+5;
+            int frameHeight = event.getResolution().getScaledHeight();
+
             for (int i = 0; i < 5; i++) {
                 boolean full = i < info.getWantedLevel() && (int) counter % 2 == 0;
                 ClientEventHandler.MC.getTextureManager().bindTexture(full ? STAR_FULL : STAR_EMPTY);

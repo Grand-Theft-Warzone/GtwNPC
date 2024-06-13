@@ -50,7 +50,7 @@ public class GtwNpcsConfig {
         }
         if (config == null) { //Error or not existing: create default
             citizenSpawningConfig = new SpawningConfig.CitizenSpawningConfig(60, 20, 1, 20, 42, 128);
-            policeSpawningConfig = new SpawningConfig.PoliceSpawningConfig(80, 10, 1, new int[]{1, 40, 50, 60, 70, 80}, 40, 100, new int[]{4, 8, 14, 20, 30});
+            policeSpawningConfig = new SpawningConfig.PoliceSpawningConfig(80, 10, 1, new int[]{1, 40, 50, 60, 70, 80}, 40, 100, new int[]{4, 8, 14, 20, 30, 36});
             vehiclesSpawningRules = new VehiclesSpawningRules(true, 100, 100, 20, 50, 40);
             vehiclesSpawningRatios = new VehiclesSpawningRatios();
             config = new BaseConfig(1, true, 60000, 1000, 0.45f, 0.60f,

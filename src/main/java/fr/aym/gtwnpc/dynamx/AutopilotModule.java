@@ -69,7 +69,7 @@ public class AutopilotModule {
         }
         PathNode start = lastTargetNode != null ? lastTargetNode : CarPathNodes.getInstance().findNearestNode(entity.getPositionVector(), nodeBlacklist);
         if (start == null) {
-            System.out.println("No start");
+            //System.out.println("No start");
             setState("lost_no_start");
             stopNavigation(15 * 20);
             lastTargetNode = null;
@@ -132,7 +132,7 @@ public class AutopilotModule {
         //CarPathNodes.getInstance().getNode(UUID.fromString("e75bb806-5fa7-4c3e-a78c-bb6ca06942a4"));
         GEntityAIMoveToNodes.BIG_TARGET = target;
         if (target == null) {
-            System.out.println("No target");
+           // System.out.println("No target");
             setState("lost_no_target");
             stopNavigation(30 * 20);
             lastTargetNode = null;
@@ -144,14 +144,14 @@ public class AutopilotModule {
             target = CarPathNodes.getInstance().selectRandomPathNode(entity.world, entity.getPositionVector(), 40, 3000, predicate);
             attempts++;
             if (target == null) {
-                System.out.println("No target attempt 2");
+               // System.out.println("No target attempt 2");
                 setState("lost_no_target_attempt_2");
                 stopNavigation(30 * 20);
                 lastTargetNode = null;
                 return;
             }
             if(attempts > 30) {
-                System.out.println("No target attempt 3");
+             //   System.out.println("No target attempt 3");
                 setState("lost_no_target_attempt_3");
                 stopNavigation(30 * 20);
                 lastTargetNode = null;
@@ -171,7 +171,7 @@ public class AutopilotModule {
                 if (node != null) {
                     this.path.add(node);
                 } else {
-                    System.out.println("READ: Node not found: " + path.getStringTagAt(i));
+                  //  System.out.println("READ: Node not found: " + path.getStringTagAt(i));
                     stopNavigation(10 * 20);
                     setState("failed_nbt_load");
                     break;
