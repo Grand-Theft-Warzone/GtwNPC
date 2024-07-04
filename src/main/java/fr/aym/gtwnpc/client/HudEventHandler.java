@@ -19,6 +19,7 @@ public class HudEventHandler {
     public static final ResourceLocation STAR_FULL = new ResourceLocation(GtwNpcConstants.ID, "textures/hud/star_full.png");
 
     private static float counter;
+    private static double money = Double.MIN_VALUE;
 
     @SubscribeEvent
     public static void tickHud(TickEvent.ClientTickEvent event) {
