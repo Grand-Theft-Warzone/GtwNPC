@@ -250,10 +250,15 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
         return dataManager.get(IS_FRIENDLY);
     }
 
+    @Override
+    public Iterable<ItemStack> getArmorInventoryList() {
+        return super.getArmorInventoryList();
+    }
+
     private ResourceLocation skin;
 
     public ResourceLocation getSkinRes() {
-        if (skin == null)
+        if (skin == null || !skin.toString().equals(getSkin()))
             skin = new ResourceLocation(getSkin());
         return skin;
     }
@@ -335,8 +340,6 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
     @Override
     public void onUpdate() {
         super.onUpdate();
-        if (skin != null && !skin.toString().equals(getSkin()))
-            skin = new ResourceLocation(getSkin());
     }
 
     @Override

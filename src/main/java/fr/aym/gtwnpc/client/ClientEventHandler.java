@@ -5,7 +5,7 @@ import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.block.TETrafficLight;
 import fr.aym.gtwnpc.client.render.NodesRenderer;
 import fr.aym.gtwnpc.client.render.NpcSeatNode;
-import fr.aym.gtwnpc.client.render.NpcSeatsPadre;
+import fr.aym.gtwnpc.client.render.NpcSeatsRoot;
 import fr.aym.gtwnpc.common.GtwNpcsItems;
 import fr.aym.gtwnpc.dynamx.AutopilotModule;
 import fr.aym.gtwnpc.dynamx.GtwNpcModule;
@@ -17,16 +17,28 @@ import fr.aym.gtwnpc.player.PlayerManager;
 import fr.aym.gtwnpc.utils.AIRaycast;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.aym.gtwnpc.utils.GtwNpcsUtils;
+import fr.dynamx.api.events.DynamXBlockEvent;
 import fr.dynamx.api.events.PhysicsEntityEvent;
 import fr.dynamx.api.events.client.BuildSceneGraphEvent;
 import fr.dynamx.client.renders.RenderPhysicsEntity;
+import fr.dynamx.client.renders.model.renderer.DxModelRenderer;
+import fr.dynamx.client.renders.model.renderer.GltfModelRenderer;
+import fr.dynamx.client.renders.model.renderer.ObjModelRenderer;
 import fr.dynamx.client.renders.scene.node.SceneNode;
 import fr.dynamx.client.renders.vehicle.RenderBaseVehicle;
+import fr.dynamx.common.DynamXContext;
+import fr.dynamx.common.blocks.TEDynamXBlock;
 import fr.dynamx.common.contentpack.parts.PartEntitySeat;
 import fr.dynamx.common.contentpack.type.vehicle.ModularVehicleInfo;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import fr.dynamx.common.physics.entities.BaseVehiclePhysicsHandler;
+import fr.dynamx.utils.DynamXUtils;
+import fr.dynamx.utils.client.ClientDynamXUtils;
+import fr.dynamx.utils.client.DynamXRenderUtils;
 import fr.dynamx.utils.debug.renderer.DebugRenderer;
+import fr.dynamx.utils.optimization.GlQuaternionPool;
+import fr.dynamx.utils.optimization.QuaternionPool;
+import fr.dynamx.utils.optimization.Vector3fPool;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
@@ -34,16 +46,19 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
+import org.joml.Matrix4f;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import javax.vecmath.Vector3f;
+import javax.vecmath.Vector4f;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -218,7 +233,7 @@ public class ClientEventHandler {
         List<PartEntitySeat> seats = ((ModularVehicleInfo) event.getPackInfo()).getPartsByType(PartEntitySeat.class);
         if (seats.isEmpty())
             return;
-        event.addSceneNode("npc.seats", (scale, list) -> (SceneNode) new NpcSeatsPadre(scale, seats.stream().map(seat -> new NpcSeatNode(seat, scale)).collect(Collectors.toList())));
+        event.addSceneNode("npc.seats", (scale, list) -> (SceneNode) new NpcSeatsRoot(scale, seats.stream().map(seat -> new NpcSeatNode(seat, scale)).collect(Collectors.toList())));
     }
 
     @SubscribeEvent
@@ -231,6 +246,11 @@ public class ClientEventHandler {
     @SubscribeEvent
     public static void worldUnload(WorldEvent.Unload event) {
         PlayerManager.clear();
+    }
+
+    @SubscribeEvent
+    public static void renderTE(DynamXBlockEvent.RenderTileEntity entity) {
+        GlStateManager.disableCull();
     }
 
     /*@SubscribeEvent

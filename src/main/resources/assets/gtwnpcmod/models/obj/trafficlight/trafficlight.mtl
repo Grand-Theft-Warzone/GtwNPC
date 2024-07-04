@@ -2,8 +2,8 @@
 # Material Count: 4
 
 newmtl orange_off
-Ka 0.5 0.5 0.5
-Kd 0.5 0.5 0.5
+Ka 0.200000 0.200000 0.200000
+Kd 0.200000 0.200000 0.200000
 Ni 1.450000
 map_Kd yellow_concrete.png
 
@@ -25,8 +25,8 @@ illum 1
 map_Kd cauldron_inner.png
 
 newmtl red_off
-Ka 0.500000 0.500000 0.500000
-Kd 0.500000 0.500000 0.500000
+Ka 0.200000 0.200000 0.200000
+Kd 0.200000 0.200000 0.200000
 Ni 1.450000
 map_Kd red_concrete.png
 
@@ -37,8 +37,8 @@ Ni 1.450000
 map_Kd red_concrete.png
 
 newmtl green_off
-Ka 0.500000 0.500000 0.500000
-Kd 0.500000 0.500000 0.500000
+Ka 0.200000 0.200000 0.200000
+Kd 0.200000 0.200000 0.200000
 Ni 1.450000
 map_Kd lime_concrete.png
 

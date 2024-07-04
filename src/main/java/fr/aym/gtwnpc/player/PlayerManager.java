@@ -19,12 +19,15 @@ public class PlayerManager
 
     @Nonnull
     public static PlayerInformation getPlayerInformation(EntityPlayer player) {
-        if(!playerInfos.containsKey(player.getUniqueID()))
+        if(!playerInfos.containsKey(player.getUniqueID())) {
+            //System.out.println("Creating player info for " + player.getUniqueID());
             playerInfos.put(player.getUniqueID(), new PlayerInformation(player));
+        }
         return playerInfos.get(player.getUniqueID());
     }
 
     public static void removePlayerInformation(UUID uuid) {
+        //System.out.println("Removing player info for " + uuid);
         playerInfos.remove(uuid);
     }
 

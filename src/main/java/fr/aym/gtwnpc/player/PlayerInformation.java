@@ -33,23 +33,23 @@ public class PlayerInformation {
     }
 
     public void update() {
-        if (playerIn.world.isRemote) {
+       /* if (playerIn.world.isRemote) {
             if (wantedLevel > 0 && hiddenTime > 0)
                 hiddenTime++;
             return;
-        }
+        }*/
         if (wantedLevel > 0 && playerIn.ticksExisted % 10 == 0) {
             //trackingPolicemen.removeIf(npc -> (npc.isDead || !npc.getState().equals("tracking_wanted")));
             trackingVehicles.removeIf(vehicle -> !vehicle.isTrackingWanted());
             int trackingPolicemenCount = getSeeingPolicemenCount();
             if (trackingPolicemenCount > 0) {
                 if (hiddenTime > 0) {
-                    GtwNpcMod.network.sendTo(new SCMessagePlayerInformation(wantedLevel, 0), (EntityPlayerMP) playerIn);
+                    //GtwNpcMod.network.sendTo(new SCMessagePlayerInformation(wantedLevel, 0), (EntityPlayerMP) playerIn);
                 }
                 hiddenTime = 0;
             } else {
                 if (hiddenTime == 0) {
-                    GtwNpcMod.network.sendTo(new SCMessagePlayerInformation(wantedLevel, 1), (EntityPlayerMP) playerIn);
+                   // GtwNpcMod.network.sendTo(new SCMessagePlayerInformation(wantedLevel, 1), (EntityPlayerMP) playerIn);
                 }
                 hiddenTime++;
                 if (hiddenTime > GtwNpcsConfig.config.getPlayerHideCooldown() * 2) {

@@ -1,5 +1,7 @@
 package fr.aym.gtwnpc;
 
+import fr.aym.acsguis.api.ACsGuiApi;
+import fr.aym.acsguis.cssengine.CssGuisManager;
 import fr.aym.acslib.ACsLib;
 import fr.aym.acslib.api.services.mps.ModProtectionConfig;
 import fr.aym.acslib.api.services.mps.ModProtectionContainer;
@@ -23,6 +25,9 @@ import fr.dynamx.api.network.sync.EntityVariableSerializer;
 import fr.dynamx.api.network.sync.EntityVariableTypes;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -40,6 +45,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.awt.*;
 import java.io.File;
+import java.lang.reflect.Type;
 
 import static fr.aym.gtwnpc.utils.GtwNpcConstants.*;
 
@@ -57,6 +63,7 @@ public class GtwNpcMod {
     public static final Logger log = LogManager.getLogger("GtwNpcMod");
 
     public static Block trafficLight;
+    public static Block pedTrafficLight;
 
     public GtwNpcMod() {
         GtwNpcsItems.registerItems();
@@ -64,7 +71,10 @@ public class GtwNpcMod {
 
     @DynamXAddon.AddonEventSubscriber
     public static void initAddon() {
-        trafficLight = new BlockTrafficLight();
+        trafficLight = new BlockTrafficLight(false, "trafficlight");
+        pedTrafficLight = new BlockTrafficLight(true, "ped_trafficlight");
+
+        ACsGuiApi.registerStyleSheetToPreload(new ResourceLocation(ID, "fonts/hud.css"));
     }
 
     @Mod.EventHandler
@@ -72,7 +82,7 @@ public class GtwNpcMod {
         log.info("Loading protection class");
         ModProtectionConfig config = new BasicMpsConfig(VERSION, MPS_ACCESS_KEY, MPS_SERVER_VERSION, MPS_URL, new String[]{MPS_AUX_URL}, new String[0], "fr.aym.gtwnpc.impl.ProtectionStarter");
         ModProtectionContainer container = ACsLib.getPlatform().provideService(ModProtectionService.class).createNewMpsContainer(ID, config, false);
-        container.setup(NAME);
+        //FIXME container.setup(NAME);
 
         log.info("Loading GtwNpcMod");
         EntityRegistry.registerModEntity(new ResourceLocation(ID, "entity_gtw_npc"), EntityGtwNpc.class, "entity_gtw_npc", 1, this, 80, 3, false, new Color(0, 255, 0).getRGB(), new Color(255, 0, 0).getRGB());
@@ -123,6 +133,30 @@ public class GtwNpcMod {
                 return VehicleType.values()[byteBuf.readInt()];
             }
         });
+        EntityVariableTypes.registerSerializer(new EntityVariableTypes.CustomType(new Type[]{ItemStack.class}, NonNullList.class),
+                new EntityVariableSerializer<NonNullList<ItemStack>>() {
+                    @Override
+                    public void writeObject(ByteBuf byteBuf, NonNullList<ItemStack> itemStacks) {
+                        byteBuf.writeInt(itemStacks == null ? -1 : itemStacks.size());
+                        if(itemStacks == null)
+                            return;
+                        for (ItemStack itemStack : itemStacks) {
+                            ByteBufUtils.writeItemStack(new PacketBuffer(byteBuf), itemStack);
+                        }
+                    }
+
+                    @Override
+                    public NonNullList<ItemStack> readObject(ByteBuf byteBuf) {
+                        int size = byteBuf.readInt();
+                        if(size == -1)
+                            return null;
+                        NonNullList<ItemStack> itemStacks = NonNullList.withSize(size, ItemStack.EMPTY);
+                        for (int i = 0; i < size; i++) {
+                            itemStacks.set(i, ByteBufUtils.readItemStack(new PacketBuffer(byteBuf)));
+                        }
+                        return itemStacks;
+                    }
+                });
     }
 
     @Mod.EventHandler

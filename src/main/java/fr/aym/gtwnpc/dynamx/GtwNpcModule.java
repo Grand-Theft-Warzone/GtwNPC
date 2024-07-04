@@ -2,8 +2,8 @@ package fr.aym.gtwnpc.dynamx;
 
 import com.jme3.bullet.objects.PhysicsVehicle;
 import com.jme3.math.Vector3f;
-import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
+import fr.aym.gtwnpc.sqript.EventGNpcInit;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.dynamx.addons.basics.common.modules.FuelTankModule;
 import fr.dynamx.api.network.sync.EntityVariable;
@@ -19,17 +19,23 @@ import fr.dynamx.common.physics.entities.BaseVehiclePhysicsHandler;
 import fr.dynamx.common.physics.entities.modules.EnginePhysicsHandler;
 import fr.dynamx.utils.maths.DynamXGeometry;
 import fr.dynamx.utils.optimization.Vector3fPool;
+import fr.nico.sqript.ScriptManager;
 import lombok.Getter;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.EntityEquipmentSlot;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fml.relauncher.Side;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 @SynchronizedEntityVariable.SynchronizedPhysicsModule(
@@ -70,8 +76,13 @@ public class GtwNpcModule extends CarEngineModule {
         }
     }, SynchronizationRules.SERVER_TO_CLIENTS, VehicleType.CIVILIAN);
 
+    private final List<EntityGtwNpc> ridingNpcs = new ArrayList<>();
+
     @SynchronizedEntityVariable(name = "npcSkin")
     private final EntityVariable<String[]> npcSkins = new EntityVariable<>(SynchronizationRules.SERVER_TO_CLIENTS, new String[0]);
+
+    @SynchronizedEntityVariable(name = "npcInventory")
+    private final EntityVariable<NonNullList<ItemStack>> npcInventories = new EntityVariable<>(SynchronizationRules.SERVER_TO_CLIENTS, null);
 
     @SynchronizedEntityVariable(name = "effectiveSteer")
     private final EntityVariable<Float> effectiveSteer = new EntityVariable<>(SynchronizationRules.SERVER_TO_CLIENTS, -10f);
@@ -89,7 +100,7 @@ public class GtwNpcModule extends CarEngineModule {
 
     @Override
     protected void playStartingSound() {
-        if(!hasAutopilot())
+        if (!hasAutopilot())
             super.playStartingSound();
     }
 
@@ -102,12 +113,25 @@ public class GtwNpcModule extends CarEngineModule {
             autopilotModule = new AutopilotModule(entity, this);
         }
         hasAutopilot.set(true);
+        ridingNpcs.clear();
         String[] skins = new String[passengerCount];
+        NonNullList<ItemStack> invs = NonNullList.withSize(passengerCount * 6, ItemStack.EMPTY);
         for (int i = 0; i < passengerCount; i++) {
-            skins[i] = SkinRepository.getRandomSkin(vehicleType.getNpcType(), entity.world.rand).toString();
+            EntityGtwNpc npc = new EntityGtwNpc(entity.world);
+            npc.setNpcType(vehicleType.getNpcType());
+            ScriptManager.callEvent(new EventGNpcInit(npc));
+            skins[i] = npc.getSkin();
+            invs.set(i * 6 + 0, npc.getHeldItemMainhand());
+            invs.set(i * 6 + 1, npc.getHeldItemOffhand());
+            invs.set(i * 6 + 2, npc.getItemStackFromSlot(EntityEquipmentSlot.HEAD));
+            invs.set(i * 6 + 3, npc.getItemStackFromSlot(EntityEquipmentSlot.CHEST));
+            invs.set(i * 6 + 4, npc.getItemStackFromSlot(EntityEquipmentSlot.LEGS));
+            invs.set(i * 6 + 5, npc.getItemStackFromSlot(EntityEquipmentSlot.FEET));
+            ridingNpcs.add(npc);
         }
-        //System.out.println("Autopilot:enable. Skins: " + Arrays.toString(skins));
+        System.out.println("Autopilot:enable. Skins: " + Arrays.toString(skins));
         npcSkins.set(skins);
+        npcInventories.set(invs);
         setVehicleType(vehicleType);
     }
 
@@ -117,6 +141,10 @@ public class GtwNpcModule extends CarEngineModule {
 
     public String[] getNpcSkins() {
         return npcSkins.get();
+    }
+
+    public NonNullList<ItemStack> getNpcInventories() {
+        return npcInventories.get();
     }
 
     public VehicleType getVehicleType() {
@@ -194,12 +222,25 @@ public class GtwNpcModule extends CarEngineModule {
             autopilotModule.readFromNBT(tag);
         }
         vehicleType.set(VehicleType.values()[tag.getInteger("vehicleType")]);
-        NBTTagList skins = tag.getTagList("npcSkins", Constants.NBT.TAG_STRING);
-        String[] npcSkins = new String[skins.tagCount()];
-        for (int i = 0; i < skins.tagCount(); i++) {
-            npcSkins[i] = skins.getStringTagAt(i);
+        NBTTagList ridingNpcs = tag.getTagList("ridingNpcs", Constants.NBT.TAG_COMPOUND);
+        this.ridingNpcs.clear();
+        String[] skins = new String[ridingNpcs.tagCount()];
+        NonNullList<ItemStack> invs = NonNullList.withSize(ridingNpcs.tagCount() * 6, ItemStack.EMPTY);
+        for (int i = 0; i < ridingNpcs.tagCount(); i++) {
+            EntityGtwNpc npc = new EntityGtwNpc(entity.world);
+            npc.readFromNBT(ridingNpcs.getCompoundTagAt(i));
+            skins[i] = npc.getSkin();
+            invs.set(i * 6 + 0, npc.getHeldItemMainhand());
+            invs.set(i * 6 + 1, npc.getHeldItemOffhand());
+            invs.set(i * 6 + 2, npc.getItemStackFromSlot(EntityEquipmentSlot.HEAD));
+            invs.set(i * 6 + 3, npc.getItemStackFromSlot(EntityEquipmentSlot.CHEST));
+            invs.set(i * 6 + 4, npc.getItemStackFromSlot(EntityEquipmentSlot.LEGS));
+            invs.set(i * 6 + 5, npc.getItemStackFromSlot(EntityEquipmentSlot.FEET));
+            this.ridingNpcs.add(npc);
         }
-        this.npcSkins.set(npcSkins);
+        //System.out.println("Autopilot:enable. Skins: " + Arrays.toString(skins));
+        npcSkins.set(skins);
+        npcInventories.set(invs);
         stolenTime.set(tag.getInteger("stolenTime"));
     }
 
@@ -210,11 +251,13 @@ public class GtwNpcModule extends CarEngineModule {
         if (autopilotModule != null)
             autopilotModule.writeToNBT(tag);
         tag.setInteger("vehicleType", vehicleType.get().ordinal());
-        NBTTagList skins = new NBTTagList();
-        for (String skin : npcSkins.get()) {
-            skins.appendTag(new NBTTagString(skin));
+        NBTTagList ridingNpcs = new NBTTagList();
+        for (EntityGtwNpc npc : this.ridingNpcs) {
+            NBTTagCompound npcTag = new NBTTagCompound();
+            npc.writeToNBT(npcTag);
+            ridingNpcs.appendTag(npcTag);
         }
-        tag.setTag("npcSkins", skins);
+        tag.setTag("ridingNpcs", ridingNpcs);
         tag.setInteger("stolenTime", stolenTime.get());
     }
 
@@ -300,11 +343,9 @@ public class GtwNpcModule extends CarEngineModule {
     }
 
     public void dismountNpcPassengers(float rotationYaw) {
-        String[] skins = getNpcSkins();
-        for (int i = 0; i < skins.length; i++) {
-            String skin = skins[i];
+        for (int i = 0; i < ridingNpcs.size(); i++) {
             PartEntitySeat seat = entity.getPackInfo().getPartByTypeAndId(PartEntitySeat.class, (byte) i);
-            EntityGtwNpc npc = new EntityGtwNpc(entity.world);
+            EntityGtwNpc npc = ridingNpcs.get(i);
             npc.rotationYaw = rotationYaw;
             Vector3fPool.openPool();
             Vector3f dismountPosition = DynamXGeometry.rotateVectorByQuaternion(seat.getPosition().add(Vector3fPool.get(seat.getPosition().x > 0.0F ? 1.0F : -1.0F, 0.0F, 0.0F)), entity.physicsRotation).addLocal(entity.physicsPosition);
@@ -317,21 +358,35 @@ public class GtwNpcModule extends CarEngineModule {
                 npc.setPositionAndUpdate(dismountPosition.x, collisionDetectionBox.minY, dismountPosition.z);
             }
             Vector3fPool.closePool();
-            npc.setSkin(skin);
-            npc.setNpcType(getVehicleType().getNpcType());
             npc.setOwnerVehicle(entity);
             npc.world.spawnEntity(npc);
         }
+        ridingNpcs.clear();
         npcSkins.set(new String[0]);
+        npcInventories.set(null);
     }
 
     public boolean mountNpcPassenger(EntityGtwNpc passenger) {
         String[] skins = getNpcSkins();
         if (skins.length + 1 < entity.getPackInfo().getPartsByType(PartEntitySeat.class).size()) {
-            String[] newSkins = new String[skins.length + 1];
+            ridingNpcs.add(passenger);
+            String[] newSkins = new String[ridingNpcs.size()];
             System.arraycopy(skins, 0, newSkins, 0, skins.length);
             newSkins[skins.length] = passenger.getSkin();
             npcSkins.set(newSkins);
+            NonNullList<ItemStack> invs = NonNullList.withSize(ridingNpcs.size() * 6, ItemStack.EMPTY);
+            if(this.npcInventories.get() != null && this.ridingNpcs.size() > 0) {
+                for (int i = 0; i < this.npcInventories.get().size(); i++) {
+                    invs.set(i, this.npcInventories.get().get(i));
+                }
+            }
+            invs.set(ridingNpcs.size() - 1 + 0, passenger.getHeldItemMainhand());
+            invs.set(ridingNpcs.size() - 1 + 1, passenger.getHeldItemOffhand());
+            invs.set(ridingNpcs.size() - 1 + 2, passenger.getItemStackFromSlot(EntityEquipmentSlot.HEAD));
+            invs.set(ridingNpcs.size() - 1 + 3, passenger.getItemStackFromSlot(EntityEquipmentSlot.CHEST));
+            invs.set(ridingNpcs.size() - 1 + 4, passenger.getItemStackFromSlot(EntityEquipmentSlot.LEGS));
+            invs.set(ridingNpcs.size() - 1 + 5, passenger.getItemStackFromSlot(EntityEquipmentSlot.FEET));
+            npcInventories.set(invs);
             restoreAi();
             return true;
         }

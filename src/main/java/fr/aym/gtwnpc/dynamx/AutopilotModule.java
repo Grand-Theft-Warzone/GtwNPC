@@ -22,10 +22,6 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class AutopilotModule {
-    //TODO CLEAN
-    //TODO DIMS OF VEHICLE
-    //TODO SAVE STATE (TARGET...) + ensure path still exists on load
-
     private final BaseVehicleEntity<?> entity;
     private final GtwNpcModule engineModule;
 
@@ -273,17 +269,30 @@ public class AutopilotModule {
         }
 
         float speed = target.getNodeType().getMaxSpeed();
-        if (engineModule.getVehicleType().isPolice()) {
-            speed += 15;
-        }
         if (Math.abs(steerForce) > 0.5f && speed > 12) {
             speed = 12;
+            if (isPoliceTracking()) {
+                speed += 6;
+            }
         } else if (Math.abs(steerForce) > 0.25f && speed > 20) {
             speed = 20;
+            if (isPoliceTracking()) {
+                speed += 8;
+            }
         } else if (Math.abs(steerForce) > 0.1f && speed > 30) {
             speed = 30;
+            if (isPoliceTracking()) {
+                speed += 10;
+            }
         } else if (Math.abs(steerForce) > 0.06f && speed > 40) {
             speed = 40;
+            if (isPoliceTracking()) {
+                speed += 15;
+            }
+        } else {
+            if (isPoliceTracking()) {
+                speed += 20;
+            }
         }
 
         float nextAngle = 0;
@@ -300,36 +309,60 @@ public class AutopilotModule {
                 if (nextAngle >= Math.PI / 2) {
                     if (speed > 30 && target.getDistance(entity.getPositionVector()) < 25) {
                         speed = 30;
+                        if (isPoliceTracking()) {
+                            speed += 10;
+                        }
                     }
                     if (speed > 20 && target.getDistance(entity.getPositionVector()) < 16) {
                         speed = 20;
+                        if (isPoliceTracking()) {
+                            speed += 8;
+                        }
                     }
                     if (speed > 10 && target.getDistance(entity.getPositionVector()) < 8) {
                         speed = 10;
+                        if (isPoliceTracking()) {
+                            speed += 6;
+                        }
                     }
                 } else {
                     if (speed > 35 && target.getDistance(entity.getPositionVector()) < 22) {
                         speed = 35;
+                        if (isPoliceTracking()) {
+                            speed += 11;
+                        }
                     }
                     if (speed > 25 && target.getDistance(entity.getPositionVector()) < 16) {
                         speed = 25;
+                        if (isPoliceTracking()) {
+                            speed += 9;
+                        }
                     }
                     if (speed > 15 && target.getDistance(entity.getPositionVector()) < 8) {
                         speed = 15;
+                        if (isPoliceTracking()) {
+                            speed += 7;
+                        }
                     }
                 }
             } else {
                 if (speed > 40 && target.getDistance(entity.getPositionVector()) < 16) {
                     speed = 40;
+                    if (isPoliceTracking()) {
+                        speed += 20;
+                    }
                 }
                 if (speed > 30 && target.getDistance(entity.getPositionVector()) < 8) {
                     speed = 30;
+                    if (isPoliceTracking()) {
+                        speed += 10;
+                    }
                 }
             }
         }
 
         //  System.out.println("Target " + target);
-        if (target instanceof TrafficLightNode && !engineModule.getVehicleType().isPolice()) {
+        if (target instanceof TrafficLightNode && !isPoliceTracking()) {
             if (!target.canPassThrough(entity)) {
                 float dist = target.getDistance(entity.getPositionVector());
                 //   System.out.println("Light IS RED ! " + dist);

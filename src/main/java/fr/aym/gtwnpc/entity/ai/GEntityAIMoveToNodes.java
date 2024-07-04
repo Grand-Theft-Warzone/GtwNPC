@@ -1,5 +1,6 @@
 package fr.aym.gtwnpc.entity.ai;
 
+import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.dynamx.GtwNpcModule;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.path.PathNode;
@@ -218,7 +219,7 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
                         return false;
                     }
                 }
-                if (target instanceof TrafficLightNode && path.size() >= 2) {
+                if (target instanceof TrafficLightNode && path.size() >= 2 && entity.getRevengeTarget() == null && entity.getAttackTarget() == null) {
                     if (!target.canPassThrough(entity) && path.stream().skip(1).findFirst().orElse(null) instanceof TrafficLightNode) {
                         float speed = entity.getMoveSpeed();
                         if (dist < 2f) {
@@ -273,7 +274,7 @@ public class GEntityAIMoveToNodes extends EntityAIBase {
             }
             return false;
         }
-        if (target instanceof TrafficLightNode && path.size() >= 2) {
+        if (target instanceof TrafficLightNode && path.size() >= 2 && entity.getRevengeTarget() == null && entity.getAttackTarget() == null) {
             if (!target.canPassThrough(entity) && path.stream().skip(1).findFirst().orElse(null) instanceof TrafficLightNode) {
                 float speed = entity.getMoveSpeed();
                 double dist = target.getDistance(entity.getPositionVector());
