@@ -74,7 +74,10 @@ public class TrafficLightNode extends PathNode {
         TileEntity te = entity.world.getTileEntity(trafficLightPos);
         if (!(te instanceof TETrafficLight)) {
             trafficLightPos = new BlockPos(trafficLightPos.getX(), 1080, trafficLightPos.getZ());
-            CarPathNodes.getInstance().markDirty2();
+            if(getNodeType() == NodeType.PEDESTRIAN)
+                PedestrianPathNodes.getInstance().markDirty2();
+            else
+                CarPathNodes.getInstance().markDirty2();
             return super.canPassThrough(entity);
         }
         byte state = ((TETrafficLight) te).getLightState();
@@ -87,7 +90,10 @@ public class TrafficLightNode extends PathNode {
         TileEntity te = world.getTileEntity(trafficLightPos);
         if (!(te instanceof TETrafficLight)) {
             trafficLightPos = new BlockPos(trafficLightPos.getX(), 1080, trafficLightPos.getZ());
-            CarPathNodes.getInstance().markDirty2();
+            if(getNodeType() == NodeType.PEDESTRIAN)
+                PedestrianPathNodes.getInstance().markDirty2();
+            else
+                CarPathNodes.getInstance().markDirty2();
             return 0;
         }
         return ((TETrafficLight) te).getLightState();

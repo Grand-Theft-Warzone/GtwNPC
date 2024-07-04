@@ -25,6 +25,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -60,11 +61,16 @@ public class VehicleSpawningSystem {
     public static VehicleType getSpawnVehicleType(Random random, VehicleSpawnConfigs spawnConfigs, int wantedLevel) {
         VehiclesSpawningRatios ratios = GtwNpcsConfig.vehiclesSpawningRatios;
         List<VehiclesSpawningRatios.SpawnRatio> weightedRandoms = ratios.getVehicleRatios(wantedLevel);
-        if(weightedRandoms == null) {
-            System.out.println("Fils de pute " + weightedRandoms+" "+wantedLevel+" "+ratios.getRatios());
+        if (weightedRandoms == null) {
+            System.out.println("Fils de pute " + weightedRandoms + " " + wantedLevel + " " + ratios.getRatios());
         }
-        weightedRandoms.removeIf(ratio -> spawnConfigs.getVehicleSpawnConfig(random, ratio.getType()) == null);
-        if(weightedRandoms.isEmpty())
+        if(weightedRandoms.stream().anyMatch(ratio -> spawnConfigs.getVehicleSpawnConfig(random, ratio.getType()) == null)) {
+            weightedRandoms = new ArrayList<>(weightedRandoms); //copy before removing elements
+            weightedRandoms.removeIf(ratio -> spawnConfigs.getVehicleSpawnConfig(random, ratio.getType()) == null);
+        }
+        System.out.println("Ratios : " + weightedRandoms + " " + wantedLevel + " " + ratios.getRatios());
+        weightedRandoms.forEach(ratio -> System.out.println("Ratio : " + ratio + " : " + spawnConfigs.getVehicleSpawnConfig(random, ratio.getType()) + " " + ratio.getType() + " " + ratio.itemWeight));
+        if (weightedRandoms.isEmpty())
             return VehicleType.CIVILIAN;
         return WeightedRandom.getRandomItem(random, weightedRandoms).getType();
     }
@@ -86,13 +92,13 @@ public class VehicleSpawningSystem {
         if (vehiclesAround.size() < maxVehicleCount) {
             VehicleType type = getSpawnVehicleType(world.rand, spawnConfigs, wantedLevel);
             VehicleSpawnConfig config = spawnConfigs.getVehicleSpawnConfig(world.rand, type);
-           //System.out.println("Spawning " + type + " at " + player.getPositionVector() + " : " + config + " !");
+            System.out.println("Spawning " + type + " at " + player.getPositionVector() + " : " + config + " !");
             if (config == null)
                 return;
             PathNode spawnNode = findEligibleSpawnNode(world, player.getPositionVector());
             if (spawnNode == null)
                 return;
-            //System.out.println("Spawning " + config + " at " + spawnNode + " !");
+            System.out.println("Spawning " + config + " at " + spawnNode + " ! WtLevel: " + wantedLevel);
             int rotationYaw = spawnNode.estimateTargetRotationYaw();
             BaseVehicleEntity<?> vehicle = config.createVehicle(world, player,
                     new Vector3f(spawnNode.getPosition().x, spawnNode.getPosition().y, spawnNode.getPosition().z), rotationYaw);

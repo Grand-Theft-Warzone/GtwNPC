@@ -17,12 +17,14 @@ public class TETrafficLight extends TEDynamXBlock implements ITickable {
     @Getter
     private byte lightState;
     private byte mode = 4;
+    private boolean isPed;
 
     public TETrafficLight() {
     }
 
-    public TETrafficLight(BlockObject<?> packInfo) {
+    public TETrafficLight(BlockObject<?> packInfo, boolean isPed) {
         super(packInfo);
+        this.isPed = isPed;
     }
 
     @Override
@@ -79,8 +81,8 @@ public class TETrafficLight extends TEDynamXBlock implements ITickable {
                 lights.setLightOn("green", false);
                 break;
             case 0:
-                lights.setLightOn("red", false);
-                lights.setLightOn("orange", true);
+                lights.setLightOn("red", isPed && mode != 4);
+                lights.setLightOn("orange", !isPed);
                 lights.setLightOn("green", false);
                 break;
             case 1:
@@ -101,6 +103,7 @@ public class TETrafficLight extends TEDynamXBlock implements ITickable {
         super.readFromNBT(compound);
         setLightState(compound.getByte("LightState"));
         this.mode = compound.getByte("Mode");
+        this.isPed = compound.getBoolean("IsPed");
     }
 
     @Override
@@ -108,6 +111,7 @@ public class TETrafficLight extends TEDynamXBlock implements ITickable {
         super.writeToNBT(compound);
         compound.setByte("LightState", this.lightState);
         compound.setByte("Mode", this.mode);
+        compound.setBoolean("IsPed", this.isPed);
         return compound;
     }
 

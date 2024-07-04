@@ -21,6 +21,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.entity.Entity;
+import net.minecraft.inventory.EntityEquipmentSlot;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.AxisAlignedBB;
 
 import javax.annotation.Nonnull;
@@ -51,6 +54,22 @@ public class NpcSeatNode extends SimpleNode<BaseRenderContext.EntityRenderContex
             return;
         }
         gtwNpc.setSkin(autopilot.getNpcSkins()[seat.getId()]);
+        NonNullList<ItemStack> inv = autopilot.getNpcInventories();
+        if (inv != null && inv.size() > seat.getId() * 6 + 5) {
+            gtwNpc.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, inv.get(seat.getId() * 6 + 0));
+            gtwNpc.setItemStackToSlot(EntityEquipmentSlot.OFFHAND, inv.get(seat.getId() * 6 + 1));
+            gtwNpc.setItemStackToSlot(EntityEquipmentSlot.HEAD, inv.get(seat.getId() * 6 + 2));
+            gtwNpc.setItemStackToSlot(EntityEquipmentSlot.CHEST, inv.get(seat.getId() * 6 + 3));
+            gtwNpc.setItemStackToSlot(EntityEquipmentSlot.LEGS, inv.get(seat.getId() * 6 + 4));
+            gtwNpc.setItemStackToSlot(EntityEquipmentSlot.FEET, inv.get(seat.getId() * 6 + 5));
+        } else {
+            gtwNpc.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, ItemStack.EMPTY);
+            gtwNpc.setItemStackToSlot(EntityEquipmentSlot.OFFHAND, ItemStack.EMPTY);
+            gtwNpc.setItemStackToSlot(EntityEquipmentSlot.HEAD, ItemStack.EMPTY);
+            gtwNpc.setItemStackToSlot(EntityEquipmentSlot.CHEST, ItemStack.EMPTY);
+            gtwNpc.setItemStackToSlot(EntityEquipmentSlot.LEGS, ItemStack.EMPTY);
+            gtwNpc.setItemStackToSlot(EntityEquipmentSlot.FEET, ItemStack.EMPTY);
+        }
         gtwNpc.setRidingHack(entity);
         Entity seatRider = gtwNpc;
         seatRider.setPosition(entity.posX, entity.posY, entity.posZ);

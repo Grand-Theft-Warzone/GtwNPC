@@ -12,8 +12,8 @@ import net.minecraftforge.client.MinecraftForgeClient;
 import javax.annotation.Nonnull;
 import java.util.List;
 
-public class NpcSeatsPadre extends SimpleNode<BaseRenderContext.EntityRenderContext, IModelPackObject> {
-    public NpcSeatsPadre(@Nonnull Vector3f scale, List<NpcSeatNode> linkedChildren) {
+public class NpcSeatsRoot extends SimpleNode<BaseRenderContext.EntityRenderContext, IModelPackObject> {
+    public NpcSeatsRoot(@Nonnull Vector3f scale, List<NpcSeatNode> linkedChildren) {
         super(null, null, Vector3f.UNIT_XYZ, (List) linkedChildren);
     }
 

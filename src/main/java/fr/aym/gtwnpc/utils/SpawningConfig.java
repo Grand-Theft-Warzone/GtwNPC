@@ -118,7 +118,7 @@ public abstract class SpawningConfig {
                 int minSpawnRadius = 0;
                 int maxSpawnRadius = 0;
                 int[] npcSpawnChances = new int[6];
-                int[] maxTrackingPolicemen = new int[5];
+                int[] maxTrackingPolicemen = new int[6];
                 while (in.hasNext()) {
                     switch (in.nextName()) {
                         case "npcsLimit":
@@ -145,7 +145,7 @@ public abstract class SpawningConfig {
                             break;
                         case "maxTrackingPolicemen":
                             in.beginArray();
-                            for (int i = 0; i < 5; i++) {
+                            for (int i = 0; i < 6; i++) {
                                 maxTrackingPolicemen[i] = in.nextInt();
                             }
                             in.endArray();
