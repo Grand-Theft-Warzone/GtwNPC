@@ -17,6 +17,7 @@ import fr.aym.gtwnpc.entity.EntityGtwPoliceNpc;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
 import fr.aym.gtwnpc.network.CSMessageSetNodeMode;
 import fr.aym.gtwnpc.network.SCMessagePlayerInformation;
+import fr.aym.gtwnpc.network.SCMessagePlayerMoney;
 import fr.aym.gtwnpc.server.command.CommandGtwNpcMod;
 import fr.aym.gtwnpc.utils.GtwNpcsConfig;
 import fr.aym.mps.core.BasicMpsConfig;
@@ -65,6 +66,8 @@ public class GtwNpcMod {
     public static Block trafficLight;
     public static Block pedTrafficLight;
 
+    public static boolean isValidConfig;
+
     public GtwNpcMod() {
         GtwNpcsItems.registerItems();
     }
@@ -82,7 +85,7 @@ public class GtwNpcMod {
         log.info("Loading protection class");
         ModProtectionConfig config = new BasicMpsConfig(VERSION, MPS_ACCESS_KEY, MPS_SERVER_VERSION, MPS_URL, new String[]{MPS_AUX_URL}, new String[0], "fr.aym.gtwnpc.impl.ProtectionStarter");
         ModProtectionContainer container = ACsLib.getPlatform().provideService(ModProtectionService.class).createNewMpsContainer(ID, config, false);
-        //FIXME container.setup(NAME);
+        container.setup(NAME);
 
         log.info("Loading GtwNpcMod");
         EntityRegistry.registerModEntity(new ResourceLocation(ID, "entity_gtw_npc"), EntityGtwNpc.class, "entity_gtw_npc", 1, this, 80, 3, false, new Color(0, 255, 0).getRGB(), new Color(255, 0, 0).getRGB());
@@ -95,11 +98,16 @@ public class GtwNpcMod {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
+        if(!isValidConfig) {
+            throw new IllegalStateException("Invalid minecraft configuration. Unsupported launcher. Stopping.");
+        }
+
         network = NetworkRegistry.INSTANCE.newSimpleChannel(ID + ".ch");
         network.registerMessage(BBMessagePathNodes.HandlerClient.class, BBMessagePathNodes.class, 1, Side.CLIENT);
         network.registerMessage(BBMessagePathNodes.HandlerServer.class, BBMessagePathNodes.class, 2, Side.SERVER);
         network.registerMessage(CSMessageSetNodeMode.Handler.class, CSMessageSetNodeMode.class, 3, Side.SERVER);
         network.registerMessage(SCMessagePlayerInformation.Handler.class, SCMessagePlayerInformation.class, 4, Side.CLIENT);
+        network.registerMessage(SCMessagePlayerMoney.Handler.class, SCMessagePlayerMoney.class, 5, Side.CLIENT);
 
         SkinRepository.loadSkins(new File("GtwNpc", "skins"));
 

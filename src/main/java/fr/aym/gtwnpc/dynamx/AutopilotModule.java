@@ -3,7 +3,7 @@ package fr.aym.gtwnpc.dynamx;
 import com.jme3.math.FastMath;
 import com.jme3.math.Matrix3f;
 import com.jme3.math.Quaternion;
-import fr.aym.gtwnpc.entity.ai.GEntityAIMoveToNodes;
+import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.path.CarPathNodes;
 import fr.aym.gtwnpc.path.PathNode;
 import fr.aym.gtwnpc.path.TrafficLightNode;
@@ -19,9 +19,12 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import javax.vecmath.Vector3f;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 public class AutopilotModule {
+    public static BiFunction<BaseVehicleEntity<?>, AutopilotModule, IObstacleDetection> obstacleDetectionFactory;
+
     private final BaseVehicleEntity<?> entity;
     private final GtwNpcModule engineModule;
 
@@ -39,7 +42,7 @@ public class AutopilotModule {
     private float steerForce;
 
     @Getter
-    private final ObstacleDetection obstacleDetection;
+    private final IObstacleDetection obstacleDetection;
     @Getter
     @Setter
     private int forcedSteeringTime;
@@ -50,7 +53,7 @@ public class AutopilotModule {
     public AutopilotModule(BaseVehicleEntity<?> vehicleEntity, GtwNpcModule engineModule) {
         this.entity = vehicleEntity;
         this.engineModule = engineModule;
-        this.obstacleDetection = new ObstacleDetection(entity, this);
+        this.obstacleDetection = obstacleDetectionFactory.apply(entity, this);
         //System.out.println("Autopilot module ignited !");
     }
 
@@ -93,7 +96,7 @@ public class AutopilotModule {
             lastTargetNode = null;
             hasReachedStartPoint = false;
         }
-        GEntityAIMoveToNodes.INTERMEDIATE_TARGET = target;
+        EntityGtwNpc.INTERMEDIATE_TARGET = target;
         Vector3f tare = target == null ? null : target.getPosition();
         if (tare == null) {
             setState("reached_target_0");
@@ -126,9 +129,9 @@ public class AutopilotModule {
             target = CarPathNodes.getInstance().selectRandomPathNode(entity.world, entity.getPositionVector(), 40, 3000, n -> true);
         }*/
         //CarPathNodes.getInstance().getNode(UUID.fromString("e75bb806-5fa7-4c3e-a78c-bb6ca06942a4"));
-        GEntityAIMoveToNodes.BIG_TARGET = target;
+        EntityGtwNpc.BIG_TARGET = target;
         if (target == null) {
-           // System.out.println("No target");
+            // System.out.println("No target");
             setState("lost_no_target");
             stopNavigation(30 * 20);
             lastTargetNode = null;
@@ -140,14 +143,14 @@ public class AutopilotModule {
             target = CarPathNodes.getInstance().selectRandomPathNode(entity.world, entity.getPositionVector(), 40, 3000, predicate);
             attempts++;
             if (target == null) {
-               // System.out.println("No target attempt 2");
+                // System.out.println("No target attempt 2");
                 setState("lost_no_target_attempt_2");
                 stopNavigation(30 * 20);
                 lastTargetNode = null;
                 return;
             }
-            if(attempts > 30) {
-             //   System.out.println("No target attempt 3");
+            if (attempts > 30) {
+                //   System.out.println("No target attempt 3");
                 setState("lost_no_target_attempt_3");
                 stopNavigation(30 * 20);
                 lastTargetNode = null;
@@ -167,7 +170,7 @@ public class AutopilotModule {
                 if (node != null) {
                     this.path.add(node);
                 } else {
-                  //  System.out.println("READ: Node not found: " + path.getStringTagAt(i));
+                    //  System.out.println("READ: Node not found: " + path.getStringTagAt(i));
                     stopNavigation(10 * 20);
                     setState("failed_nbt_load");
                     break;
@@ -225,7 +228,7 @@ public class AutopilotModule {
             }
             target = path.peek();
         }
-        GEntityAIMoveToNodes.INTERMEDIATE_TARGET = target;
+        EntityGtwNpc.INTERMEDIATE_TARGET = target;
         Vector3f tare = target == null ? null : target.getPosition();
         if (tare == null) {
             setState("reached_target_2");

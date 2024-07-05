@@ -9,7 +9,7 @@ import fr.aym.gtwnpc.client.render.NpcSeatsRoot;
 import fr.aym.gtwnpc.common.GtwNpcsItems;
 import fr.aym.gtwnpc.dynamx.AutopilotModule;
 import fr.aym.gtwnpc.dynamx.GtwNpcModule;
-import fr.aym.gtwnpc.dynamx.ObstacleDetection;
+import fr.aym.gtwnpc.dynamx.IObstacleDetection;
 import fr.aym.gtwnpc.item.ItemNodes;
 import fr.aym.gtwnpc.network.CSMessageSetNodeMode;
 import fr.aym.gtwnpc.path.*;
@@ -21,24 +21,13 @@ import fr.dynamx.api.events.DynamXBlockEvent;
 import fr.dynamx.api.events.PhysicsEntityEvent;
 import fr.dynamx.api.events.client.BuildSceneGraphEvent;
 import fr.dynamx.client.renders.RenderPhysicsEntity;
-import fr.dynamx.client.renders.model.renderer.DxModelRenderer;
-import fr.dynamx.client.renders.model.renderer.GltfModelRenderer;
-import fr.dynamx.client.renders.model.renderer.ObjModelRenderer;
 import fr.dynamx.client.renders.scene.node.SceneNode;
 import fr.dynamx.client.renders.vehicle.RenderBaseVehicle;
-import fr.dynamx.common.DynamXContext;
-import fr.dynamx.common.blocks.TEDynamXBlock;
 import fr.dynamx.common.contentpack.parts.PartEntitySeat;
 import fr.dynamx.common.contentpack.type.vehicle.ModularVehicleInfo;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import fr.dynamx.common.physics.entities.BaseVehiclePhysicsHandler;
-import fr.dynamx.utils.DynamXUtils;
-import fr.dynamx.utils.client.ClientDynamXUtils;
-import fr.dynamx.utils.client.DynamXRenderUtils;
 import fr.dynamx.utils.debug.renderer.DebugRenderer;
-import fr.dynamx.utils.optimization.GlQuaternionPool;
-import fr.dynamx.utils.optimization.QuaternionPool;
-import fr.dynamx.utils.optimization.Vector3fPool;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
@@ -46,19 +35,16 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
-import org.joml.Matrix4f;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import javax.vecmath.Vector3f;
-import javax.vecmath.Vector4f;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -153,7 +139,7 @@ public class ClientEventHandler {
                     GlStateManager.translate(-x, -y, -z);
 
                     AutopilotModule mod = entity.getModuleByType(GtwNpcModule.class).getAutopilotModule();
-                    ObstacleDetection detection = mod.getObstacleDetection();
+                    IObstacleDetection detection = mod.getObstacleDetection();
                     float mySpeed = entity.getPhysicsHandler() != null && entity.ticksExisted > 10 ? entity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
                     int rayDistance = mySpeed > 35 ? 16 : mySpeed > 20 ? 9 : mySpeed > 5 ? 7 : mySpeed > 2 ? 4 : 3;
 
@@ -162,7 +148,7 @@ public class ClientEventHandler {
 
                     //com.jme3.math.Vector3f rayOrigin = new com.jme3.math.Vector3f((float) entity.posX, (float) entity.posY, (float) entity.posZ);
                     //List<AIRaycast> rayVecs = detection.createRayVectors(rayDistance * 2);
-                    List<AIRaycast> rayVecs = detection.lastVectors;
+                    List<AIRaycast> rayVecs = detection.getLastVectors();
                     if (rayVecs != null) {
                         for (AIRaycast raycast : rayVecs) {
                             //System.out.println("Raycast " + raycast.getRayVec() + " " + raycast.getOrigin() + " " + raycast.lastVehicleHit + " " + raycast.lastEntityHit);

@@ -2,7 +2,8 @@ package fr.aym.gtwnpc.utils;
 
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
-import fr.aym.gtwnpc.dynamx.ObstacleDetection;
+import fr.aym.gtwnpc.dynamx.IObstacleDetection;
+import fr.aym.gtwnpc.dynamx.ObstacleAction;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import fr.dynamx.common.physics.entities.BaseVehiclePhysicsHandler;
 import lombok.Getter;
@@ -26,9 +27,9 @@ public class AIRaycast {
     private final Vector3f rayVec;
     private final RayCastType type;
 
-    public HitInfo rayTraceLineOnEntities(ObstacleDetection obstacleDetection, List<Entity> entities, float rayDistance, int frontSize) {
+    public HitInfo rayTraceLineOnEntities(IObstacleDetection obstacleDetection, List<Entity> entities, float rayDistance, int frontSize) {
         if (type == RayCastType.RIGHT)
-            return new HitInfo(null, null, 0, ObstacleDetection.ObstacleAction.IGNORE);
+            return new HitInfo(null, null, 0, ObstacleAction.IGNORE);
         Vec3d origin = new Vec3d(this.origin.x, this.origin.y, this.origin.z);
         Vec3d rayVec = new Vec3d(this.rayVec.x, this.rayVec.y, this.rayVec.z);
         Vec3d hitVec = null;
@@ -66,13 +67,13 @@ public class AIRaycast {
         //if (hitEntity != null)
         //    System.out.println("Hit entity: " + hitEntity + " at " + hitVec + " " + rayDistance + " " + hitDistance);
         if (hitEntity == null)
-            return new HitInfo(null, null, 0, ObstacleDetection.ObstacleAction.IGNORE);
+            return new HitInfo(null, null, 0, ObstacleAction.IGNORE);
         if (hitDistance - frontSize > 4 || hitDistance < 1)
-            return new HitInfo(hitEntity, new Vector3f((float) hitVec.x, (float) hitVec.y, (float) hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.SLOW_DOWN);
-        return new HitInfo(hitEntity, new Vector3f((float) hitVec.x, (float) hitVec.y, (float) hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.STOP);
+            return new HitInfo(hitEntity, new Vector3f((float) hitVec.x, (float) hitVec.y, (float) hitVec.z), (float) hitDistance, ObstacleAction.SLOW_DOWN);
+        return new HitInfo(hitEntity, new Vector3f((float) hitVec.x, (float) hitVec.y, (float) hitVec.z), (float) hitDistance, ObstacleAction.STOP);
     }
 
-    public HitInfo rayTraceLineOnVehicles(ObstacleDetection obstacleDetection, List<BaseVehicleEntity<?>> vehicles, float rayDistance, int frontSize) {
+    public HitInfo rayTraceLineOnVehicles(IObstacleDetection obstacleDetection, List<BaseVehicleEntity<?>> vehicles, float rayDistance, int frontSize) {
         org.joml.Vector3f hitVec = null;
         BaseVehicleEntity<?> hitEntity = null;
         double hitDistance = rayDistance;
@@ -94,7 +95,7 @@ public class AIRaycast {
                 if (di > dr) {
                     intersection = null;
                     //if (!entity.getPassengers().isEmpty())
-                      //  System.out.println("Enculé de GPT");
+                    //  System.out.println("Enculé de GPT");
                 }
                 if (!entity.getPassengers().isEmpty())
                     System.out.println("From " + origin + " to " + rayVec + " " + intersection + " " + di + " " + dr);
@@ -134,7 +135,7 @@ public class AIRaycast {
         // else
         //   System.out.println("No hit entity");
         if (hitEntity == null)
-            return new HitInfo(null, null, 0, ObstacleDetection.ObstacleAction.IGNORE);
+            return new HitInfo(null, null, 0, ObstacleAction.IGNORE);
         // check relative angle of the two vehicles to check if we are following the other
         Quaternion myRot = entity.physicsRotation;
         Quaternion otherRot = hitEntity.physicsRotation;
@@ -143,38 +144,38 @@ public class AIRaycast {
             if (dot > 0.5f) {
                 if (!entity.getPassengers().isEmpty())
                     System.out.println("Following vehicle " + hitEntity);
-                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.SLOW_DOWN);
+                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleAction.SLOW_DOWN);
             }
             if (hitDistance - frontSize > 12 /*&& type != RayCastType.RIGHT*/) {
                 if (!entity.getPassengers().isEmpty())
                     System.out.println("Staying away from vehicle " + hitEntity);
-                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.SLOW_DOWN);
+                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleAction.SLOW_DOWN);
             }
             if (!entity.getPassengers().isEmpty())
                 System.out.println("Collided2 with vehicle " + hitEntity + " " + hitDistance + " " + hitVec + " " + type);
             if (type == RayCastType.FRONT_LEFT && dot < 0.5f)
-                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.STEER_RIGHT);
+                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleAction.STEER_RIGHT);
             if (type == RayCastType.FRONT_RIGHT && dot < 0.5f)
-                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.STEER_LEFT);
-            return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.STOP);
+                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleAction.STEER_LEFT);
+            return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleAction.STOP);
         }
         if (type == RayCastType.RIGHT) {
             float otherSpeed = hitEntity.getPhysicsHandler() != null && hitEntity.ticksExisted > 10 ? hitEntity.getPhysicsHandler().getSpeed(BaseVehiclePhysicsHandler.SpeedUnit.KMH) : 0;
             if (otherSpeed < 0.1f) {
                 if (!entity.getPassengers().isEmpty())
                     System.out.println("Passing in front of stopped entity " + hitEntity);
-                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.SLOW_DOWN);
+                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleAction.SLOW_DOWN);
             }
         }
         if (!entity.getPassengers().isEmpty())
             System.out.println("Collided1 with vehicle " + hitEntity + " " + hitDistance + " " + hitVec + " " + type);
         if (hitDistance - frontSize > -1 && dot < 0.6f) {
             if (type == RayCastType.FRONT_LEFT)
-                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.STEER_RIGHT);
+                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleAction.STEER_RIGHT);
             if (type == RayCastType.FRONT_RIGHT)
-                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.STEER_LEFT);
+                return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleAction.STEER_LEFT);
         }
-        return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleDetection.ObstacleAction.STOP);
+        return new HitInfo(hitEntity, new Vector3f(hitVec.x, hitVec.y, hitVec.z), (float) hitDistance, ObstacleAction.STOP);
         //return hitEntity != null ? ((hitDistance - frontSize) > 4 ? ObstacleDetection.ObstacleAction.SLOW_DOWN : ObstacleDetection.ObstacleAction.STOP) : needsSlow ? ObstacleDetection.ObstacleAction.SLOW_DOWN : ObstacleDetection.ObstacleAction.IGNORE;
     }
 
@@ -184,7 +185,7 @@ public class AIRaycast {
         private final Entity hitEntity;
         private final Vector3f hitPos;
         private final float hitDistance;
-        private final ObstacleDetection.ObstacleAction action;
+        private final ObstacleAction action;
 
         @Override
         public String toString() {

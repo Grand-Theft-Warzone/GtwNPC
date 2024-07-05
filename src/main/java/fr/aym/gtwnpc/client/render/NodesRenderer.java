@@ -1,7 +1,7 @@
 package fr.aym.gtwnpc.client.render;
 
 import fr.aym.gtwnpc.common.GtwNpcsItems;
-import fr.aym.gtwnpc.entity.ai.GEntityAIMoveToNodes;
+import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.path.*;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.aym.gtwnpc.utils.GtwNpcsUtils;
@@ -178,9 +178,9 @@ public class NodesRenderer {
                     }
                 }
                 GlStateManager.translate(center.x, center.y, center.z);
-                if (GEntityAIMoveToNodes.BIG_TARGET != null && node.getId().equals(GEntityAIMoveToNodes.BIG_TARGET.getId())) {
+                if (EntityGtwNpc.BIG_TARGET != null && node.getId().equals(EntityGtwNpc.BIG_TARGET.getId())) {
                     NodeColor.IDLE_90.apply();
-                } else if (GEntityAIMoveToNodes.INTERMEDIATE_TARGET != null && node.getId().equals(GEntityAIMoveToNodes.INTERMEDIATE_TARGET.getId())) {
+                } else if (EntityGtwNpc.INTERMEDIATE_TARGET != null && node.getId().equals(EntityGtwNpc.INTERMEDIATE_TARGET.getId())) {
                     NodeColor.IDLE_70.apply();
                 }
                 sphere.draw(0.9f, 30, 30);

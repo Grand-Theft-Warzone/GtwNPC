@@ -3,6 +3,7 @@ package fr.aym.gtwnpc.entity;
 import com.modularwarfare.common.guns.ItemGun;
 import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.entity.ai.*;
+import fr.aym.gtwnpc.path.PathNode;
 import fr.aym.gtwnpc.sqript.EventOnNpcKilled;
 import fr.aym.gtwnpc.utils.GtwNpcsConfig;
 import fr.aym.gtwnpc.utils.ShotHelper;
@@ -11,6 +12,7 @@ import fr.nico.sqript.ScriptManager;
 import lombok.Getter;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.*;
+import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.ai.EntityAIOpenDoor;
 import net.minecraft.entity.ai.EntityAISwimming;
 import net.minecraft.entity.ai.EntityAIWatchClosest2;
@@ -30,12 +32,17 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.function.Function;
 
 public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackMob {
+    public static Function<EntityGtwNpc, EntityAIBase> moveToNodesAiFactory;
+
     private static final DataParameter<String> STATE = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.STRING);
     private static final DataParameter<Boolean> IS_FRIENDLY = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.BOOLEAN);
     private static final DataParameter<String> SKIN = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.STRING);
     private static final DataParameter<Boolean> SWINGING_ARMS = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.BOOLEAN);
+    public static PathNode BIG_TARGET;
+    public static PathNode INTERMEDIATE_TARGET;
 
     protected EntityLivingBase entityToFollow;
     protected GEntityAIFollowPlayer followPlayerAI; //TODO
@@ -104,7 +111,7 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
         //this.tasks.addTask(5, attackAI);
         //this.tasks.addTask(5, new EntityAIMoveTowardsRestriction(this, 0.3D));
         this.tasks.addTask(9, new EntityAIWatchClosest2(this, EntityPlayer.class, 3.0F, 1.0F));
-        this.tasks.addTask(9, new GEntityAIMoveToNodes(this));
+        this.tasks.addTask(9, moveToNodesAiFactory.apply(this));
         //this.tasks.addTask(10, new EntityAIWatchClosest(this, EntityLiving.class, 8.0F));
 
         this.targetTasks.addTask(1, new GEntityAIHurtByTarget(this, false));
@@ -139,9 +146,9 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
 
     @Override
     public boolean attackEntityFrom(DamageSource source, float amount) {
-        if(source.getTrueSource() instanceof EntityGtwNpc)
+        if (source.getTrueSource() instanceof EntityGtwNpc)
             return false;
-        if(source.isProjectile() && source.getTrueSource() instanceof EntityPlayer) {
+        if (source.isProjectile() && source.getTrueSource() instanceof EntityPlayer) {
             //assume it's a gun: all npcs near should panic
             List<EntityGtwNpc> npcsNear = world.getEntitiesWithinAABB(EntityGtwNpc.class, getEntityBoundingBox().grow(20));
             npcsNear.addAll(world.getEntitiesWithinAABB(EntityGtwNpc.class, source.getTrueSource().getEntityBoundingBox().grow(10)));
@@ -432,7 +439,7 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
     @Override
     public void onDeath(DamageSource cause) {
         super.onDeath(cause);
-        if(!world.isRemote && cause.getTrueSource() instanceof EntityPlayer) {
+        if (!world.isRemote && cause.getTrueSource() instanceof EntityPlayer) {
             //System.out.println("Npc killed");
             ScriptManager.callEvent(new EventOnNpcKilled(this, (EntityPlayer) cause.getTrueSource()));
         }

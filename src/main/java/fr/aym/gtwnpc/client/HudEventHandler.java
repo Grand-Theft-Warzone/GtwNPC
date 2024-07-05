@@ -1,6 +1,8 @@
 package fr.aym.gtwnpc.client;
 
+import com.grandtheftwarzone.gtwclient.mod.GTWClient;
 import fr.aym.acsguis.cssengine.font.CssFontHelper;
+import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.player.PlayerInformation;
 import fr.aym.gtwnpc.player.PlayerManager;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
@@ -31,6 +33,19 @@ public class HudEventHandler {
     private static float counter;
     private static double money = Double.MIN_VALUE;
 
+    private static boolean hasGTWClient;
+
+    static {
+        try {
+            Class.forName("com.grandtheftwarzone.gtwclient.mod.GTWClient");
+            hasGTWClient = true;
+            GtwNpcMod.log.info("GTWClient found, enabling GTW Client hud integration");
+        } catch (ClassNotFoundException e) {
+            hasGTWClient = false;
+            GtwNpcMod.log.warn("GTWClient not found, disabling GTW Client hud integration");
+        }
+    }
+
     @SubscribeEvent
     public static void tickHud(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.END && ClientEventHandler.MC.player != null) {
@@ -57,21 +72,21 @@ public class HudEventHandler {
         Gui.drawScaledCustomSizeModalRect(x, y, 0, 0, 209, 191, 20, 20, 209, 191);
         x += 22;
         GlStateManager.scale(0.5, 0.5, 1);
-        CssFontHelper.getBoundFont().draw(x * 2 + 4, y * 2, String.format("%d", (int) ClientEventHandler.MC.player.getHealth()), 0xE94F21);
+        CssFontHelper.getBoundFont().draw(x * 2 + 4, y * 2 + 3, String.format("%d", (int) ClientEventHandler.MC.player.getHealth()), 0xE94F21);
         GlStateManager.scale(2, 2, 1);
         x += 22;
         ClientEventHandler.MC.getTextureManager().bindTexture(ARMOR);
         Gui.drawScaledCustomSizeModalRect(x, y, 0, 0, 51, 59, 20, 20, 51, 59);
         x += 22;
         GlStateManager.scale(0.5, 0.5, 1);
-        CssFontHelper.getBoundFont().draw(x * 2 + 4, y * 2, String.format("%d", (int) ClientEventHandler.MC.player.getTotalArmorValue() * 5), 0xBFBFBF);
+        CssFontHelper.getBoundFont().draw(x * 2 + 4, y * 2 + 3, String.format("%d", (int) ClientEventHandler.MC.player.getTotalArmorValue() * 5), 0xBFBFBF);
         GlStateManager.scale(2, 2, 1);
         x += 32;
         ClientEventHandler.MC.getTextureManager().bindTexture(FOOD);
         Gui.drawScaledCustomSizeModalRect(x, y, 0, 0, 63, 56, 20, 20, 63, 56);
         x += 22;
         GlStateManager.scale(0.5, 0.5, 1);
-        CssFontHelper.getBoundFont().draw(x * 2 + 4, y * 2, String.format("%d", (int) ClientEventHandler.MC.player.getFoodStats().getFoodLevel()), 0xC55A11);
+        CssFontHelper.getBoundFont().draw(x * 2 + 4, y * 2 + 3, String.format("%d", (int) ClientEventHandler.MC.player.getFoodStats().getFoodLevel()), 0xC55A11);
         GlStateManager.scale(2, 2, 1);
     }
 
@@ -80,7 +95,8 @@ public class HudEventHandler {
         Gui.drawScaledCustomSizeModalRect(x, y, 0, 0, 212, 195, 20, 20, 212, 195);
         x += 22;
         GlStateManager.scale(0.5, 0.5, 1);
-        CssFontHelper.getBoundFont().draw(x * 2 + 4, y * 2, "-", 0xA9D18E);
+        String s = money == Double.MIN_VALUE ? "--" : String.format("%.2f", money);
+        CssFontHelper.getBoundFont().draw(x * 2 + 4, y * 2 + 3, s, 0xA9D18E);
         GlStateManager.scale(2, 2, 1);
     }
 
@@ -88,13 +104,14 @@ public class HudEventHandler {
         ClientEventHandler.MC.getTextureManager().bindTexture(LEVEL);
         Gui.drawScaledCustomSizeModalRect(x, y, 0, 0, 216, 213, 20, 20, 216, 213);
         GlStateManager.scale(0.4, 0.4, 1);
-        String s = "?";
+
+        String s = "" + GTWClient.instance.getPlayerData().getLevel();
         int w = CssFontHelper.getBoundFont().getWidth(s);
         int h = CssFontHelper.getBoundFont().getHeight(s);
-        CssFontHelper.getBoundFont().draw(x / 0.4f + 10 / 0.4f - w * 0.4f, y / 0.4f - 5 / 0.4f + h * 0.4f, s, 0xFFFFFF);
+        CssFontHelper.getBoundFont().draw(x / 0.4f + 10 / 0.4f - w * 0.4f, y / 0.4f - 5 / 0.4f + h * 0.4f + 12, s, 0xFFFFFF);
         GlStateManager.scale(0.5f / 0.4, 0.5f / 0.4, 1);
         x += 22;
-        CssFontHelper.getBoundFont().draw(x * 2 + 4, y * 2, ClientEventHandler.MC.player.getDisplayNameString(), 0xF6A123);
+        CssFontHelper.getBoundFont().draw(x * 2 + 4, y * 2 + 3, ClientEventHandler.MC.player.getDisplayNameString(), 0xF6A123);
         GlStateManager.scale(2, 2, 1);
     }
 
@@ -133,7 +150,8 @@ public class HudEventHandler {
             int x = event.getResolution().getScaledWidth() - 5 - size;
             drawFirstLine(x, 5);
             drawMoney(x, 30);
-            drawLevel(x, 55);
+            if (hasGTWClient)
+                drawLevel(x, 55);
             drawWantedLevel(x, 80);
             CssFontHelper.popDrawing();
         }

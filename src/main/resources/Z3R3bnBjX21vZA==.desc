@@ -1,0 +1,3 @@
+Id=gtwnpcmod
+Main=fr.aym.gtwnpc.impl.ProtectionStarter
+ResourcesDomains=gtwnpcmod
