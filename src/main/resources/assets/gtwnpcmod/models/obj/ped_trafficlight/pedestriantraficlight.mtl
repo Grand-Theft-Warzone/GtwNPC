@@ -1,0 +1,31 @@
+# Blender 4.1.1 MTL File: 'pedestriantraficlight.blend'
+# www.blender.org
+
+newmtl green_off
+Ka 0.200000 0.200000 0.200000
+Kd 0.200000 0.200000 0.200000
+Ni 1.450000
+map_Kd lime_concrete.png
+
+newmtl green_on
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ni 1.450000
+map_Kd lime_concrete.png
+
+newmtl m_b8a893b1-1c88-bf26-9bfd-b7717e728f6c
+Ka 1.000000 1.000000 1.000000
+Ni 1.450000
+map_Kd cauldron_inner.png
+
+newmtl red_off
+Ka 0.200000 0.200000 0.200000
+Kd 0.200000 0.200000 0.200000
+Ni 1.450000
+map_Kd red_concrete.png
+
+newmtl red_on
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ni 1.450000
+map_Kd red_concrete.png
