@@ -67,11 +67,12 @@ dependencies {
     implementation ":Furenikus_Roads-1.2.5:deobf"
     compileOnly 'org.projectlombok:lombok:1.18.24'
     implementation ":ACsGuis:1.2.13-all"
-    implementation ":DynamX:4.1.0-dev25-all-deobf"
+    implementation ":DynamX:4.1.0-dev30-all-deobf"
     implementation ":BasicsAddon:1.0.10-for-DynamX-4.1.0b21"
     implementation ":DynamXGarageAddon:1546-1.1.5-dev3"
     implementation ":GTWClient:0.2alpha 2"
     implementation ":AtumModCore:1.0.0 2"
+    implementation ":GtwMap:0.0.1-dev1"
 
     implementation 'org.joml:joml:1.10.5'
 

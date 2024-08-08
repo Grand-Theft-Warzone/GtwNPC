@@ -14,6 +14,7 @@ import fr.aym.gtwnpc.common.GtwNpcsItems;
 import fr.aym.gtwnpc.dynamx.VehicleType;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.entity.EntityGtwPoliceNpc;
+import fr.aym.gtwnpc.impl.ProtectionStarter;
 import fr.aym.gtwnpc.network.BBMessagePathNodes;
 import fr.aym.gtwnpc.network.CSMessageSetNodeMode;
 import fr.aym.gtwnpc.network.SCMessagePlayerInformation;
@@ -21,6 +22,7 @@ import fr.aym.gtwnpc.network.SCMessagePlayerMoney;
 import fr.aym.gtwnpc.server.command.CommandGtwNpcMod;
 import fr.aym.gtwnpc.utils.GtwNpcsConfig;
 import fr.aym.mps.core.BasicMpsConfig;
+import fr.aym.mps.utils.MpsUrlFactory;
 import fr.dynamx.api.contentpack.DynamXAddon;
 import fr.dynamx.api.network.sync.EntityVariableSerializer;
 import fr.dynamx.api.network.sync.EntityVariableTypes;
@@ -83,9 +85,10 @@ public class GtwNpcMod {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         log.info("Loading protection class");
-        ModProtectionConfig config = new BasicMpsConfig(VERSION, MPS_ACCESS_KEY, MPS_SERVER_VERSION, MPS_URL, new String[]{MPS_AUX_URL}, new String[0], "fr.aym.gtwnpc.impl.ProtectionStarter");
+        ModProtectionConfig config = new BasicMpsConfig(VERSION, MPS_ACCESS_KEY, MPS_SERVER_VERSION, new MpsUrlFactory.DefaultUrlFactory(MPS_URL, new String[]{MPS_AUX_URL}), new String[0], "fr.aym.gtwnpc.impl.ProtectionStarter");
         ModProtectionContainer container = ACsLib.getPlatform().provideService(ModProtectionService.class).createNewMpsContainer(ID, config, false);
         container.setup(NAME);
+        //new ProtectionStarter(null);
 
         log.info("Loading GtwNpcMod");
         EntityRegistry.registerModEntity(new ResourceLocation(ID, "entity_gtw_npc"), EntityGtwNpc.class, "entity_gtw_npc", 1, this, 80, 3, false, new Color(0, 255, 0).getRGB(), new Color(255, 0, 0).getRGB());
