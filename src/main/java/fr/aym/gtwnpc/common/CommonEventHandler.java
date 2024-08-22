@@ -19,6 +19,7 @@ import fr.dynamx.api.events.PhysicsEvent;
 import fr.dynamx.api.events.VehicleEntityEvent;
 import fr.dynamx.common.entities.BaseVehicleEntity;
 import fr.dynamx.common.entities.modules.engines.CarEngineModule;
+import fr.dynamx.common.handlers.TaskScheduler;
 import fr.nico.sqript.ScriptManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -32,9 +33,13 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public class CommonEventHandler {
     @SubscribeEvent
     public static void onConnected(net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent event) {
-        //System.out.println("Sending nodes to " + event.player.getName());
-        GtwNpcMod.network.sendTo(new BBMessagePathNodes(NodeType.PEDESTRIAN, PedestrianPathNodes.getInstance().getNodes()), (EntityPlayerMP) event.player);
-        GtwNpcMod.network.sendTo(new BBMessagePathNodes(NodeType.CAR_CITY, CarPathNodes.getInstance().getNodes()), (EntityPlayerMP) event.player);
+        TaskScheduler.schedule(new TaskScheduler.ScheduledTask((short) 20) { // Wait for world load on client side
+            @Override
+            public void run() {
+                GtwNpcMod.network.sendTo(new BBMessagePathNodes(NodeType.PEDESTRIAN, PedestrianPathNodes.getInstance().getNodes()), (EntityPlayerMP) event.player);
+                GtwNpcMod.network.sendTo(new BBMessagePathNodes(NodeType.CAR_CITY, CarPathNodes.getInstance().getNodes()), (EntityPlayerMP) event.player);
+            }
+        });
     }
 
     @SubscribeEvent
@@ -128,9 +133,9 @@ public class CommonEventHandler {
 
     @SubscribeEvent
     public static void putVehicleInGarage(GarageEvent.PutVehicleInside event) {
-        if(event.getVehicle().hasModuleOfType(GtwNpcModule.class)) {
+        if (event.getVehicle().hasModuleOfType(GtwNpcModule.class)) {
             GtwNpcModule module = event.getVehicle().getModuleByType(GtwNpcModule.class);
-            if(module.hasAutopilot())
+            if (module.hasAutopilot())
                 event.setCanceled(true);
         }
     }
@@ -138,6 +143,6 @@ public class CommonEventHandler {
     @SubscribeEvent
     public static void getInWorldVehicles(GarageEvent.ListInWorldVehicles listInWorldVehicles) {
         listInWorldVehicles.getInWorldVehicles().removeIf(vehicle -> vehicle.hasModuleOfType(GtwNpcModule.class)
-                        && vehicle.getModuleByType(GtwNpcModule.class).hasAutopilot());
+                && vehicle.getModuleByType(GtwNpcModule.class).hasAutopilot());
     }
 }

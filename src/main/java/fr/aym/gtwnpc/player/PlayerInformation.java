@@ -42,17 +42,17 @@ public class PlayerInformation {
             //trackingPolicemen.removeIf(npc -> (npc.isDead || !npc.getState().equals("tracking_wanted")));
             trackingVehicles.removeIf(vehicle -> !vehicle.isTrackingWanted());
             int trackingPolicemenCount = getSeeingPolicemenCount();
-            if (trackingPolicemenCount > 0) {
-                if (hiddenTime > 0) {
-                    //GtwNpcMod.network.sendTo(new SCMessagePlayerInformation(wantedLevel, 0), (EntityPlayerMP) playerIn);
+            if (trackingPolicemenCount > 0 || (playerIn.world.isRemote && hiddenTime == 0)) {
+                if (!playerIn.world.isRemote && hiddenTime > 0) {
+                    GtwNpcMod.network.sendTo(new SCMessagePlayerInformation(wantedLevel, 0), (EntityPlayerMP) playerIn);
                 }
                 hiddenTime = 0;
             } else {
                 if (hiddenTime == 0) {
-                   // GtwNpcMod.network.sendTo(new SCMessagePlayerInformation(wantedLevel, 1), (EntityPlayerMP) playerIn);
+                    GtwNpcMod.network.sendTo(new SCMessagePlayerInformation(wantedLevel, 1), (EntityPlayerMP) playerIn);
                 }
                 hiddenTime++;
-                if (hiddenTime > GtwNpcsConfig.config.getPlayerHideCooldown() * 2) {
+                if (!playerIn.world.isRemote && hiddenTime > GtwNpcsConfig.config.getPlayerHideCooldown() * 2) {
                     setWantedLevel(0);
                 }
             }
@@ -79,7 +79,7 @@ public class PlayerInformation {
     }
 
     public int getSeeingPolicemenCount() {
-        return (int) trackingPolicemen.stream().filter(npc -> npc.getDistance(playerIn) < 40 && npc.getEntitySenses().canSee(playerIn)).count() +
-                (int) trackingVehicles.stream().filter(vehicle -> vehicle.getEntity().getDistance(playerIn) < 100).count();
+        return (int) trackingPolicemen.stream().filter(npc -> npc.getDistance(playerIn) < 30 && npc.getEntitySenses().canSee(playerIn)).count() +
+                (int) trackingVehicles.stream().filter(vehicle -> vehicle.getEntity().getDistance(playerIn) < 60).count();
     }
 }

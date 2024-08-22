@@ -35,7 +35,6 @@ public class BlockTrafficLight extends DynamXBlock<BlockObject<?>> {
         setCreativeTab(DynamXItemRegistry.objectTab);
         setLightLevel(0.5f);
         SimplePartLightSource redSource = new SimplePartLightSource((ISubInfoTypeOwner<ILightOwner<?>>) blockObjectInfo, "Light_Red");
-        //TODO SET ID WITH NEW DYNAMX VERSION
         redSource.setLightId("red");
         redSource.setObjectName("red");
         redSource.setBaseMaterial("red_off");

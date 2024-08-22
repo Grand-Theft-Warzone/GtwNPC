@@ -1,6 +1,7 @@
 package fr.aym.gtwnpc.entity;
 
 import com.modularwarfare.common.guns.ItemGun;
+import fr.aym.gtwmap.api.GtwMapApi;
 import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.entity.ai.*;
 import fr.aym.gtwnpc.path.PathNode;
@@ -37,6 +38,7 @@ import java.util.function.Function;
 public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackMob {
     public static Function<EntityGtwNpc, EntityAIBase> moveToNodesAiFactory;
 
+    private static final DataParameter<Integer> NPC_TYPE = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.VARINT);
     private static final DataParameter<String> STATE = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.STRING);
     private static final DataParameter<Boolean> IS_FRIENDLY = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.BOOLEAN);
     private static final DataParameter<String> SKIN = EntityDataManager.createKey(EntityGtwNpc.class, DataSerializers.STRING);
@@ -70,6 +72,7 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
 
     public void setNpcType(SkinRepository.NpcType npcType) {
         this.npcType = npcType;
+        dataManager.set(NPC_TYPE, npcType.ordinal());
         setSkin(SkinRepository.getRandomSkin(npcType, world.rand).toString());
     }
 
@@ -94,6 +97,7 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
     @Override
     protected void entityInit() {
         super.entityInit();
+        this.dataManager.register(NPC_TYPE, SkinRepository.NpcType.NPC.ordinal());
         this.dataManager.register(STATE, "wandering");
         this.dataManager.register(IS_FRIENDLY, rand.nextInt(100) < GtwNpcsConfig.config.getAttackBackChance());
         this.dataManager.register(SKIN, SkinRepository.getRandomSkin(SkinRepository.NpcType.NPC, world.rand).toString());
@@ -363,6 +367,7 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
         super.writeEntityToNBT(compound);
         compound.setString("skin", getSkin());
         compound.setString("state", getState());
+        compound.setString("npcType", npcType.name());
     }
 
     @Override
@@ -370,6 +375,7 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
         super.readEntityFromNBT(compound);
         setSkin(compound.getString("skin"));
         setState(compound.getString("state"));
+        setNpcType(SkinRepository.NpcType.valueOf(compound.getString("npcType")));
         this.setCombatTask();
     }
 
@@ -442,6 +448,17 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
         if (!world.isRemote && cause.getTrueSource() instanceof EntityPlayer) {
             //System.out.println("Npc killed");
             ScriptManager.callEvent(new EventOnNpcKilled(this, (EntityPlayer) cause.getTrueSource()));
+        }
+        if (world.isRemote) {
+            GtwMapApi.removeTrackedObject(this);
+        }
+    }
+
+    @Override
+    public void notifyDataManagerChange(DataParameter<?> key) {
+        super.notifyDataManagerChange(key);
+        if (world.isRemote && key.equals(NPC_TYPE)) {
+            npcType = SkinRepository.NpcType.values()[dataManager.get(NPC_TYPE)];
         }
     }
 }

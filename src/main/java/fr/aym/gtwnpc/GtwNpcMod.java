@@ -1,7 +1,6 @@
 package fr.aym.gtwnpc;
 
 import fr.aym.acsguis.api.ACsGuiApi;
-import fr.aym.acsguis.cssengine.CssGuisManager;
 import fr.aym.acslib.ACsLib;
 import fr.aym.acslib.api.services.mps.ModProtectionConfig;
 import fr.aym.acslib.api.services.mps.ModProtectionContainer;
@@ -32,6 +31,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -79,7 +79,9 @@ public class GtwNpcMod {
         trafficLight = new BlockTrafficLight(false, "trafficlight");
         pedTrafficLight = new BlockTrafficLight(true, "ped_trafficlight");
 
-        ACsGuiApi.registerStyleSheetToPreload(new ResourceLocation(ID, "fonts/hud.css"));
+        if (FMLCommonHandler.instance().getSide().isClient()) {
+            ACsGuiApi.registerStyleSheetToPreload(new ResourceLocation(ID, "fonts/hud.css"));
+        }
     }
 
     @Mod.EventHandler
@@ -101,7 +103,7 @@ public class GtwNpcMod {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        if(!isValidConfig) {
+        if (!isValidConfig) {
             throw new IllegalStateException("Invalid minecraft configuration. Unsupported launcher. Stopping.");
         }
 
@@ -149,7 +151,7 @@ public class GtwNpcMod {
                     @Override
                     public void writeObject(ByteBuf byteBuf, NonNullList<ItemStack> itemStacks) {
                         byteBuf.writeInt(itemStacks == null ? -1 : itemStacks.size());
-                        if(itemStacks == null)
+                        if (itemStacks == null)
                             return;
                         for (ItemStack itemStack : itemStacks) {
                             ByteBufUtils.writeItemStack(new PacketBuffer(byteBuf), itemStack);
@@ -159,7 +161,7 @@ public class GtwNpcMod {
                     @Override
                     public NonNullList<ItemStack> readObject(ByteBuf byteBuf) {
                         int size = byteBuf.readInt();
-                        if(size == -1)
+                        if (size == -1)
                             return null;
                         NonNullList<ItemStack> itemStacks = NonNullList.withSize(size, ItemStack.EMPTY);
                         for (int i = 0; i < size; i++) {

@@ -62,5 +62,9 @@ public class SkinRepository {
             this.name = name;
             SKINS.put(this, new ArrayList<>());
         }
+
+        public boolean isPolice() {
+            return this != NPC;
+        }
     }
 }
