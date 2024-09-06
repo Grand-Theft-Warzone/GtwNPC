@@ -25,6 +25,7 @@ import fr.aym.mps.utils.MpsUrlFactory;
 import fr.dynamx.api.contentpack.DynamXAddon;
 import fr.dynamx.api.network.sync.EntityVariableSerializer;
 import fr.dynamx.api.network.sync.EntityVariableTypes;
+import fr.dynamx.utils.DynamXMpsConfig;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
@@ -53,7 +54,7 @@ import java.lang.reflect.Type;
 import static fr.aym.gtwnpc.utils.GtwNpcConstants.*;
 
 @DynamXAddon(modid = ID, name = NAME, version = VERSION)
-@Mod(modid = ID, name = NAME, version = VERSION, dependencies = "required-before:sqript@1.0; required-before: dynamxmod")
+@Mod(modid = ID, name = NAME, version = VERSION, dependencies = "required-before:sqript@1.0; required-before: dynamxmod; required-after: gtwmapmod;")
 public class GtwNpcMod {
     @Mod.Instance(value = ID)
     public static GtwNpcMod instance;
@@ -87,7 +88,7 @@ public class GtwNpcMod {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         log.info("Loading protection class");
-        ModProtectionConfig config = new BasicMpsConfig(VERSION, MPS_ACCESS_KEY, MPS_SERVER_VERSION, new MpsUrlFactory.DefaultUrlFactory(MPS_URL, new String[]{MPS_AUX_URL}), new String[0], "fr.aym.gtwnpc.impl.ProtectionStarter");
+        ModProtectionConfig config = new BasicMpsConfig(VERSION, MPS_ACCESS_KEY, MPS_SERVER_VERSION, new DynamXMpsConfig.DynamXMpsUrlFactory(MPS_URL, new String[]{MPS_AUX_URL}), new String[0], "fr.aym.gtwnpc.impl.ProtectionStarter");
         ModProtectionContainer container = ACsLib.getPlatform().provideService(ModProtectionService.class).createNewMpsContainer(ID, config, false);
         container.setup(NAME);
         //new ProtectionStarter(null);
