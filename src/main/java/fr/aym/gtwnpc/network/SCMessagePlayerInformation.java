@@ -1,21 +1,14 @@
 package fr.aym.gtwnpc.network;
 
-import fr.aym.gtwmap.api.GtwMapApi;
-import fr.aym.gtwmap.api.ITrackableObject;
 import fr.aym.gtwnpc.client.ClientEventHandler;
-import fr.aym.gtwnpc.dynamx.GtwNpcModule;
-import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.player.PlayerInformation;
 import fr.aym.gtwnpc.player.PlayerManager;
-import fr.dynamx.common.entities.BaseVehicleEntity;
 import io.netty.buffer.ByteBuf;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-
-import java.util.List;
 
 public class SCMessagePlayerInformation implements IMessage {
     private int wantedLevel;
@@ -56,7 +49,7 @@ public class SCMessagePlayerInformation implements IMessage {
             PlayerInformation info = PlayerManager.getPlayerInformation(ClientEventHandler.MC.player);
             boolean wasTracked = info.getWantedLevel() > 0;
           //  System.out.println("Received wanted level " + message.getWantedLevel() + " and hidden time " + message.getHiddenTime() + " Was: " + wasTracked);
-            if (message.getWantedLevel() > 0) {
+           /* if (message.getWantedLevel() > 0) {
                 GtwMapApi.setRenderPoliceBlinking(message.getHiddenTime() == 0);
                 if (!wasTracked) {
                     List<EntityGtwNpc> npcs = ClientEventHandler.MC.world.getEntities(EntityGtwNpc.class, e -> {
@@ -80,9 +73,9 @@ public class SCMessagePlayerInformation implements IMessage {
                     }));
                 }
             } else {
-                GtwMapApi.setRenderPoliceBlinking(false);
+           //     GtwMapApi.setRenderPoliceBlinking(false);
                 GtwMapApi.getTrackedObjects().removeIf(o -> o.getDisplayName().equals("Police"));
-            }
+            }*/
          //   System.out.println("Tracked objects: " + GtwMapApi.getTrackedObjects());
             info.setWantedLevel(message.getWantedLevel());
             info.setHiddenTime(message.getHiddenTime());

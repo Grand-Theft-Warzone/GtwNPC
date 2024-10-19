@@ -1,8 +1,6 @@
 package fr.aym.gtwnpc.client;
 
 import com.mia.props.common.entities.TileMountable;
-import fr.aym.gtwmap.api.GtwMapApi;
-import fr.aym.gtwmap.api.ITrackableObject;
 import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.block.TETrafficLight;
 import fr.aym.gtwnpc.client.render.NodesRenderer;
@@ -12,18 +10,15 @@ import fr.aym.gtwnpc.common.GtwNpcsItems;
 import fr.aym.gtwnpc.dynamx.AutopilotModule;
 import fr.aym.gtwnpc.dynamx.GtwNpcModule;
 import fr.aym.gtwnpc.dynamx.IObstacleDetection;
-import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import fr.aym.gtwnpc.item.ItemNodes;
 import fr.aym.gtwnpc.network.CSMessageSetNodeMode;
 import fr.aym.gtwnpc.path.*;
-import fr.aym.gtwnpc.player.PlayerInformation;
 import fr.aym.gtwnpc.player.PlayerManager;
 import fr.aym.gtwnpc.utils.AIRaycast;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import fr.aym.gtwnpc.utils.GtwNpcsUtils;
 import fr.dynamx.api.events.DynamXBlockEvent;
 import fr.dynamx.api.events.PhysicsEntityEvent;
-import fr.dynamx.api.events.PhysicsEvent;
 import fr.dynamx.api.events.client.BuildSceneGraphEvent;
 import fr.dynamx.client.renders.RenderPhysicsEntity;
 import fr.dynamx.client.renders.scene.node.SceneNode;
@@ -41,8 +36,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.client.event.MouseEvent;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -246,7 +239,7 @@ public class ClientEventHandler {
         GlStateManager.disableCull();
     }
 
-    @SubscribeEvent
+  /*  @SubscribeEvent
     public static void entityJoinWorld(EntityJoinWorldEvent event) {
         if (MC.player == null) {
             return;
@@ -264,9 +257,9 @@ public class ClientEventHandler {
                 }
             });
         }
-    }
+    }*/
 
-    @SubscribeEvent
+    /*@SubscribeEvent
     public static void vehicleEntityInit(PhysicsEntityEvent.Init event) {
         if (event.getEntity() instanceof BaseVehicleEntity && event.getEntity().hasModuleOfType(GtwNpcModule.class) && event.getEntity().getModuleByType(GtwNpcModule.class).getVehicleType().isPolice()) {
             BaseVehicleEntity<?> vehicle = (BaseVehicleEntity<?>) event.getEntity();
@@ -277,7 +270,7 @@ public class ClientEventHandler {
                 }
             });
         }
-    }
+    }*/
 
     /*@SubscribeEvent
     public static void npcDeathEvent(LivingDeathEvent event) {
@@ -286,12 +279,12 @@ public class ClientEventHandler {
         }
     }*/
 
-    @SubscribeEvent
+  /*  @SubscribeEvent
     public static void vehicleRemoveEvent(PhysicsEvent.PhysicsEntityRemoved event) {
         if (event.getPhysicsEntity() instanceof BaseVehicleEntity && event.getPhysicsEntity().hasModuleOfType(GtwNpcModule.class) && event.getPhysicsEntity().getModuleByType(GtwNpcModule.class).getVehicleType().isPolice()) {
             GtwMapApi.removeTrackedObject(event.getPhysicsEntity());
         }
-    }
+    }*/
 
 
     /*@SubscribeEvent

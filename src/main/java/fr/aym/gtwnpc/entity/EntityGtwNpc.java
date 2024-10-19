@@ -1,7 +1,6 @@
 package fr.aym.gtwnpc.entity;
 
 import com.modularwarfare.common.guns.ItemGun;
-import fr.aym.gtwmap.api.GtwMapApi;
 import fr.aym.gtwnpc.client.skin.SkinRepository;
 import fr.aym.gtwnpc.entity.ai.*;
 import fr.aym.gtwnpc.path.PathNode;
@@ -449,9 +448,9 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
             //System.out.println("Npc killed");
             ScriptManager.callEvent(new EventOnNpcKilled(this, (EntityPlayer) cause.getTrueSource()));
         }
-        if (world.isRemote) {
+        /*if (world.isRemote) {
             GtwMapApi.removeTrackedObject(this);
-        }
+        }*/
     }
 
     @Override

@@ -1,31 +1,25 @@
 package fr.aym.gtwnpc.server;
 
-import fr.aym.dynamxgarageaddon.DynamXGarageAddon;
-import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.common.NpcSpawningSystem;
-import fr.aym.gtwnpc.network.SCMessagePlayerMoney;
 import fr.aym.gtwnpc.player.PlayerManager;
 import fr.aym.gtwnpc.utils.GtwNpcConstants;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 @Mod.EventBusSubscriber(modid = GtwNpcConstants.ID)
 public class ServerEventHandler {
-    private static final Map<EntityPlayer, Double> playerMoneyCache = new HashMap<>();
+   // private static final Map<EntityPlayer, Double> playerMoneyCache = new HashMap<>();
 
-    @SubscribeEvent
+   /* @SubscribeEvent
     public static void playerConnect(PlayerEvent.PlayerLoggedInEvent event) {
         if (DynamXGarageAddon.moneyAccessor != null) {
             DynamXGarageAddon.moneyAccessor.getMoney(event.player.getName()).thenAccept(money -> {
@@ -37,15 +31,15 @@ public class ServerEventHandler {
                 return null;
             });
         }
-    }
+    }*/
 
-    @SubscribeEvent
+   /* @SubscribeEvent
     public static void playerDisconnect(PlayerEvent.PlayerLoggedOutEvent event) {
         PlayerManager.removePlayerInformation(event.player.getUniqueID());
         playerMoneyCache.remove(event.player);
-    }
+    }*/
 
-    @SubscribeEvent
+    /*@SubscribeEvent
     public static void playerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase == TickEvent.Phase.END && event.player.ticksExisted % 600 == 0) { // Each 30 seconds
             if (DynamXGarageAddon.moneyAccessor != null) {
@@ -65,7 +59,7 @@ public class ServerEventHandler {
                 }
             }
         }
-    }
+    }*/
 
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {

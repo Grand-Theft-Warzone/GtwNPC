@@ -1,10 +1,6 @@
 package fr.aym.gtwnpc;
 
 import fr.aym.acsguis.api.ACsGuiApi;
-import fr.aym.acslib.ACsLib;
-import fr.aym.acslib.api.services.mps.ModProtectionConfig;
-import fr.aym.acslib.api.services.mps.ModProtectionContainer;
-import fr.aym.acslib.api.services.mps.ModProtectionService;
 import fr.aym.gtwnpc.block.BlockTrafficLight;
 import fr.aym.gtwnpc.block.TETrafficLight;
 import fr.aym.gtwnpc.client.skin.SkinRepository;
@@ -20,12 +16,9 @@ import fr.aym.gtwnpc.network.SCMessagePlayerInformation;
 import fr.aym.gtwnpc.network.SCMessagePlayerMoney;
 import fr.aym.gtwnpc.server.command.CommandGtwNpcMod;
 import fr.aym.gtwnpc.utils.GtwNpcsConfig;
-import fr.aym.mps.core.BasicMpsConfig;
-import fr.aym.mps.utils.MpsUrlFactory;
 import fr.dynamx.api.contentpack.DynamXAddon;
 import fr.dynamx.api.network.sync.EntityVariableSerializer;
 import fr.dynamx.api.network.sync.EntityVariableTypes;
-import fr.dynamx.utils.DynamXMpsConfig;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
@@ -54,7 +47,7 @@ import java.lang.reflect.Type;
 import static fr.aym.gtwnpc.utils.GtwNpcConstants.*;
 
 @DynamXAddon(modid = ID, name = NAME, version = VERSION)
-@Mod(modid = ID, name = NAME, version = VERSION, dependencies = "required-before:sqript@1.0; required-before: dynamxmod; required-after: gtwmapmod;")
+@Mod(modid = ID, name = NAME, version = VERSION, dependencies = "required-before:sqript@1.0; required-before: dynamxmod")
 public class GtwNpcMod {
     @Mod.Instance(value = ID)
     public static GtwNpcMod instance;
@@ -88,10 +81,10 @@ public class GtwNpcMod {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         log.info("Loading protection class");
-        ModProtectionConfig config = new BasicMpsConfig(VERSION, MPS_ACCESS_KEY, MPS_SERVER_VERSION, new DynamXMpsConfig.DynamXMpsUrlFactory(MPS_URL, new String[]{MPS_AUX_URL}), new String[0], "fr.aym.gtwnpc.impl.ProtectionStarter");
-        ModProtectionContainer container = ACsLib.getPlatform().provideService(ModProtectionService.class).createNewMpsContainer(ID, config, false);
-        container.setup(NAME);
-        //new ProtectionStarter(null);
+        //ModProtectionConfig config = new BasicMpsConfig(VERSION, MPS_ACCESS_KEY, MPS_SERVER_VERSION, new DynamXMpsConfig.DynamXMpsUrlFactory(MPS_URL, new String[]{MPS_AUX_URL}), new String[0], "fr.aym.gtwnpc.impl.ProtectionStarter");
+        //ModProtectionContainer container = ACsLib.getPlatform().provideService(ModProtectionService.class).createNewMpsContainer(ID, config, false);
+        //container.setup(NAME);
+        new ProtectionStarter(null);
 
         log.info("Loading GtwNpcMod");
         EntityRegistry.registerModEntity(new ResourceLocation(ID, "entity_gtw_npc"), EntityGtwNpc.class, "entity_gtw_npc", 1, this, 80, 3, false, new Color(0, 255, 0).getRGB(), new Color(255, 0, 0).getRGB());

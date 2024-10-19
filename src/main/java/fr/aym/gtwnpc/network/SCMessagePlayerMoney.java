@@ -28,7 +28,7 @@ public class SCMessagePlayerMoney implements IMessage {
     public static class Handler implements IMessageHandler<SCMessagePlayerMoney, IMessage> {
         @Override
         public IMessage onMessage(SCMessagePlayerMoney message, MessageContext ctx) {
-
+//TODO WTF, FORGOTTEN, CANCELLED ??
             return null;
         }
     }
