@@ -1,5 +1,6 @@
 package fr.aym.gtwnpc.common;
 
+import fr.aym.dynamxgarageaddon.api.event.GarageEvent;
 import fr.aym.gtwnpc.GtwNpcMod;
 import fr.aym.gtwnpc.dynamx.GtwNpcModule;
 import fr.aym.gtwnpc.dynamx.VehicleType;
@@ -130,7 +131,7 @@ public class CommonEventHandler {
         }
     }
 
-    /*@SubscribeEvent
+    @SubscribeEvent
     public static void putVehicleInGarage(GarageEvent.PutVehicleInside event) {
         if (event.getVehicle().hasModuleOfType(GtwNpcModule.class)) {
             GtwNpcModule module = event.getVehicle().getModuleByType(GtwNpcModule.class);
@@ -143,5 +144,5 @@ public class CommonEventHandler {
     public static void getInWorldVehicles(GarageEvent.ListInWorldVehicles listInWorldVehicles) {
         listInWorldVehicles.getInWorldVehicles().removeIf(vehicle -> vehicle.hasModuleOfType(GtwNpcModule.class)
                 && vehicle.getModuleByType(GtwNpcModule.class).hasAutopilot());
-    }*/
+    }
 }

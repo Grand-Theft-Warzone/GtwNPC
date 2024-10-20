@@ -18,7 +18,7 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import java.util.Collections;
 
-//@Mod.EventBusSubscriber(modid = GtwNpcConstants.ID, value = Side.CLIENT)
+@Mod.EventBusSubscriber(modid = GtwNpcConstants.ID, value = Side.CLIENT)
 public class HudEventHandler {
     public static final ResourceLocation FONT = new ResourceLocation(GtwNpcConstants.ID, "pricedownbl.otf");
 
