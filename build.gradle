@@ -66,10 +66,10 @@ dependencies {
     implementation ":PTRLib-1.0.5:deobf"
     implementation ":Furenikus_Roads-1.2.5:deobf"
     compileOnly 'org.projectlombok:lombok:1.18.24'
-    implementation ":ACsGuis:1.3.0-wgui-dev3-all"
+    implementation ":ACsGuis:1.3.0-wgui-dev4-all"
     implementation ":DynamX:4.1.0-dev34-acs1.3-all-deobf"
-    implementation ":BasicsAddon:1.0.10-for-DynamX-4.1.0b21"
-    implementation ":DynamXGarageAddon:1546-1.1.5-dev5"
+    implementation ":BasicsAddon:1.0.10-for-DynamX-4.1.0b35"
+    implementation ":DynamXGarageAddon:1546-1.1.5-dev7"
     implementation ":GTWClient:0.2alpha 2"
     implementation ":AtumModCore:1.0.0 2"
     implementation ":GtwMap:0.0.1-dev6"
