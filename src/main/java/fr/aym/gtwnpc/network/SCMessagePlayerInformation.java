@@ -54,7 +54,7 @@ public class SCMessagePlayerInformation implements IMessage {
         @SideOnly(Side.CLIENT)
         public IMessage onMessage(SCMessagePlayerInformation message, MessageContext ctx) {
             PlayerInformation info = PlayerManager.getPlayerInformation(ClientEventHandler.MC.player);
-            boolean wasTracked = info.getWantedLevel() > 0;
+            /*boolean wasTracked = info.getWantedLevel() > 0;
           //  System.out.println("Received wanted level " + message.getWantedLevel() + " and hidden time " + message.getHiddenTime() + " Was: " + wasTracked);
             if (message.getWantedLevel() > 0) {
                 GtwMapApi.setRenderPoliceBlinking(message.getHiddenTime() == 0);
@@ -82,7 +82,7 @@ public class SCMessagePlayerInformation implements IMessage {
             } else {
                 GtwMapApi.setRenderPoliceBlinking(false);
                 GtwMapApi.getTrackedObjects().removeIf(o -> o.getDisplayName().equals("Police"));
-            }
+            }*/
          //   System.out.println("Tracked objects: " + GtwMapApi.getTrackedObjects());
             info.setWantedLevel(message.getWantedLevel());
             info.setHiddenTime(message.getHiddenTime());

@@ -29,7 +29,8 @@ public class ProtectionStarter {
         }
         path = path.substring(path.lastIndexOf(File.separator) + File.separator.length());
         path = path.replace(".", "");
-        GtwNpcMod.isValidConfig = true;//FMLCommonHandler.instance().getSide().isServer() || path.toLowerCase().contains("die_minewache");
+        GtwNpcMod.isValidConfig = FMLCommonHandler.instance().getSide().isServer()
+                || path.toLowerCase().contains("official-grand-theft-warzone") || path.toLowerCase().contains("die_minewache");
         EntityGtwNpc.moveToNodesAiFactory = GEntityAIMoveToNodes::new;
         AutopilotModule.obstacleDetectionFactory = ObstacleDetection::new;
         GtwNpcMod.log.info("Protection loader started");

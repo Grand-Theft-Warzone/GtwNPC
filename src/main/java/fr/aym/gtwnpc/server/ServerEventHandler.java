@@ -23,7 +23,7 @@ import java.util.Objects;
 
 @Mod.EventBusSubscriber(modid = GtwNpcConstants.ID)
 public class ServerEventHandler {
-    private static final Map<EntityPlayer, Double> playerMoneyCache = new HashMap<>();
+    /*private static final Map<EntityPlayer, Double> playerMoneyCache = new HashMap<>();
 
     @SubscribeEvent
     public static void playerConnect(PlayerEvent.PlayerLoggedInEvent event) {
@@ -65,7 +65,7 @@ public class ServerEventHandler {
                 }
             }
         }
-    }
+    }*/
 
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {

@@ -245,7 +245,7 @@ public class ClientEventHandler {
         GlStateManager.disableCull();
     }
 
-    @SubscribeEvent
+    /*@SubscribeEvent
     public static void entityJoinWorld(EntityJoinWorldEvent event) {
         if (MC.player == null) {
             return;
@@ -283,7 +283,7 @@ public class ClientEventHandler {
         if (event.getEntity() instanceof EntityGtwNpc && ((EntityGtwNpc) event.getEntity()).getNpcType().isPolice()) {
             GtwMapApi.getTrackedObjects().remove(event.getEntity());
         }
-    }*/
+    }*//*
 
     @SubscribeEvent
     public static void vehicleRemoveEvent(PhysicsEvent.PhysicsEntityRemoved event) {

@@ -47,7 +47,7 @@ import java.lang.reflect.Type;
 import static fr.aym.gtwnpc.utils.GtwNpcConstants.*;
 
 @DynamXAddon(modid = ID, name = NAME, version = VERSION)
-@Mod(modid = ID, name = NAME, version = VERSION, dependencies = "required-before:sqript@1.0; required-before: dynamxmod; required-after: gtwmapmod;")
+@Mod(modid = ID, name = NAME, version = VERSION, dependencies = "required-before:sqript@1.0; required-before: dynamxmod;")
 public class GtwNpcMod {
     @Mod.Instance(value = ID)
     public static GtwNpcMod instance;

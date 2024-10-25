@@ -449,9 +449,9 @@ public class EntityGtwNpc extends EntityCreature implements INpc, IRangedAttackM
             //System.out.println("Npc killed");
             ScriptManager.callEvent(new EventOnNpcKilled(this, (EntityPlayer) cause.getTrueSource()));
         }
-        if (world.isRemote) {
+        /*if (world.isRemote) {
             GtwMapApi.removeTrackedObject(this);
-        }
+        }*/
     }
 
     @Override
