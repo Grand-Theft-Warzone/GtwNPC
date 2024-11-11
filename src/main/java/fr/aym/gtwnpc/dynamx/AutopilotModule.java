@@ -406,7 +406,6 @@ public class AutopilotModule {
 
     protected float getNextTurnAngle(PathNode nextNode, PathNode nextNextNode) {
         com.jme3.math.Vector3f entityPos = entity.physicsPosition;
-        Quaternion entityRot = entity.physicsRotation;
         com.jme3.math.Vector3f dest = Vector3fPool.get(nextNode.getPosition().x, nextNode.getPosition().y, nextNode.getPosition().z);
         com.jme3.math.Vector3f dir = dest.subtract(entityPos);
         dir = dir.normalize();

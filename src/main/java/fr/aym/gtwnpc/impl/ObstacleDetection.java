@@ -194,7 +194,6 @@ public class ObstacleDetection implements IObstacleDetection {
         List<AIRaycast> vectors = new ArrayList<>();
         float increment = 0.4f;
         increment = 0.3f;
-        //System.out.println("Fils de merde");
         PartWheel wheel1 = entity.getPackInfo().getPartByTypeAndId(PartWheel.class, (byte) 0);
         PartWheel wheel2 = entity.getPackInfo().getPartsByType(PartWheel.class).stream().filter(w -> w != wheel1 && w.getPosition().x != wheel1.getPosition().x).findFirst().orElse(null);
         float width = Math.abs(wheel1.getPosition().x - wheel2.getPosition().x);
@@ -203,7 +202,6 @@ public class ObstacleDetection implements IObstacleDetection {
         angle += steering * 0.6f;
         float xStart = -width / 2 - increment * 1.5f;
         float xEnd = width / 2 + increment * 1.5f;
-        //System.out.println("lol");
 
         com.jme3.math.Vector3f rayVecBase = com.jme3.math.Vector3f.UNIT_Z;
         com.jme3.math.Vector3f rayVec = Vector3fPool.get(rayVecBase).multLocal(rayDistance);

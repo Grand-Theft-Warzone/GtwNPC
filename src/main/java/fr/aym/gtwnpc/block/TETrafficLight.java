@@ -29,7 +29,7 @@ public class TETrafficLight extends TEDynamXBlock implements ITickable {
 
     @Override
     public void update() {
-        //FIXME super.update();
+        super.update();
         /*
          * Timings :
          * Red : 170 ticks
@@ -62,6 +62,10 @@ public class TETrafficLight extends TEDynamXBlock implements ITickable {
                 break;
         }
         return mode;
+    }
+
+    public AbstractLightsModule getLightsModule() {
+        return getModuleByType(AbstractLightsModule.class);
     }
 
     public void setLightState(byte lightState) {

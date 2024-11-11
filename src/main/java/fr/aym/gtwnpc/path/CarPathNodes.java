@@ -95,9 +95,13 @@ public class CarPathNodes extends WorldSavedData implements PathNodesManager, IS
     public PathNode selectRandomPathNode(World world, Vec3d around, float radiusMin, float radiusMax, Predicate<PathNode> nodeFilter) {
         Collection<PathNode> nodes = getNodesWithinAABB(new AxisAlignedBB(around.x - radiusMax, around.y - radiusMax, around.z - radiusMax, around.x + radiusMax, around.y + radiusMax, around.z + radiusMax));
         // System.out.println("Selecting random node from " + nodes.size() + " nodes " + nodes.stream().map(n -> n.getDistance(around )).collect(java.util.stream.Collectors.toList()));
-        nodes = nodes.stream().filter(pathNode -> pathNode.getDistance(around) >= radiusMin && pathNode.isValidSpawnNode(world, this, 2)).filter(nodeFilter).collect(java.util.stream.Collectors.toList());
-        if (!nodes.isEmpty())
-            return nodes.stream().skip(new Random().nextInt(nodes.size())).findFirst().get();
+        int maxTest = 30;
+        while (maxTest-- > 0 && !nodes.isEmpty()) {
+            PathNode node = nodes.stream().skip(new Random().nextInt(nodes.size())).findFirst().get();
+            if (node.getDistance(around) >= radiusMin && node.isValidSpawnNode(world, this, 2) && nodeFilter.test(node))
+                return node;
+            nodes.remove(node);
+        }
         return null;
     }
 

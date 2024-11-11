@@ -3,18 +3,10 @@ package fr.aym.gtwnpc.utils;
 import com.modularwarfare.ModConfig;
 import com.modularwarfare.ModularWarfare;
 import com.modularwarfare.api.WeaponFireEvent;
-import com.modularwarfare.common.entity.grenades.EntityGrenade;
 import com.modularwarfare.common.guns.*;
 import com.modularwarfare.common.hitbox.hits.BulletHit;
-import com.modularwarfare.common.hitbox.hits.OBBHit;
 import com.modularwarfare.common.hitbox.hits.PlayerHit;
 import com.modularwarfare.common.hitbox.maths.EnumHitboxType;
-import com.modularwarfare.common.hitbox.playerdata.PlayerData;
-import com.modularwarfare.common.hitbox.playerdata.PlayerDataHandler;
-import com.modularwarfare.common.vector.Matrix4f;
-import com.modularwarfare.common.vector.Vector3f;
-import com.modularwarfare.raycast.obb.OBBModelBox;
-import com.modularwarfare.raycast.obb.OBBPlayerManager;
 import com.modularwarfare.utility.RayUtil;
 import fr.aym.gtwnpc.entity.EntityGtwNpc;
 import net.minecraft.entity.Entity;
@@ -23,15 +15,9 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 public class ShotHelper {
@@ -54,13 +40,13 @@ public class ShotHelper {
             numBullets = 1;
         ArrayList<BulletHit> rayTraceList;
         boolean headshot;
-        BulletHit rayTrace;
+        List<BulletHit> rayTrace;
         WeaponFireEvent.Post postFireEvent;
         if (gunType.weaponType != WeaponType.Launcher) {
             rayTraceList = new ArrayList();
             for (int i = 0; i < numBullets; i++) {
-                rayTrace = standardEntityRayTrace(net.minecraftforge.fml.relauncher.Side.SERVER, world, rotationPitch, rotationYaw, entityPlayer, gunType.weaponEffectiveRange, itemGun, GunType.isPackAPunched(gunStack));
-                rayTraceList.add(rayTrace);
+                rayTrace = RayUtil.standardEntityRayTrace(net.minecraftforge.fml.relauncher.Side.SERVER, world, rotationPitch, rotationYaw, entityPlayer, gunType.weaponEffectiveRange, itemGun, GunType.isPackAPunched(gunStack));
+                rayTraceList.addAll(rayTrace);
             }
             headshot = false;
             //System.out.println("Raytrace: " + rayTraceList);
@@ -103,7 +89,7 @@ public class ShotHelper {
             //System.out.println("Hit: " + entities);
             if ((entities != null) && (!entities.isEmpty())) {
                 //if (entities.stream().anyMatch(e -> e instanceof EntityGtwNpc))
-                  //  return;
+                //  return;
                 for (Entity target : entities) {
                     if ((target != null) && (target != entityPlayer)) {
                         float damage = gunType.gunDamage;
@@ -156,25 +142,49 @@ public class ShotHelper {
         }
     }
 
-    @Nullable
+  /*  @Nullable
     public static BulletHit standardEntityRayTrace(Side side, World world, float rotationPitch, float rotationYaw, EntityLivingBase player, double range, ItemGun item, boolean isPunched) {
         HashSet<Entity> hashset = new HashSet(1);
         hashset.add(player);
-        float accuracy = RayUtil.calculateAccuracyServer(item, player);
+        float accuracy = RayUtil.calculateAccuracy(item, player);
         Vec3d dir = RayUtil.getGunAccuracy(rotationPitch, rotationYaw, accuracy, player.world.rand);
         double dx = dir.x * range;
         double dy = dir.y * range;
         double dz = dir.z * range;
+
+        ItemStack gunStack = player.getHeldItemMainhand();
+        ItemStack bulletStack = null;
+        String model = null;
+        String tex = null;
+        boolean glow = false;
+        if (gunStack.getItem() instanceof ItemGun) {
+            GunType gunType = ((ItemGun) gunStack.getItem()).type;
+            if (gunType.acceptedBullets != null) {
+                bulletStack = new ItemStack(gunStack.getTagCompound().getCompoundTag("bullet"));
+            } else {
+                ItemStack stackAmmo = new ItemStack(gunStack.getTagCompound().getCompoundTag("ammo"));
+                if (stackAmmo != null && !stackAmmo.isEmpty() && stackAmmo.hasTagCompound()) {
+                    bulletStack = new ItemStack(stackAmmo.getTagCompound().getCompoundTag("bullet"));
+                }
+            }
+        }
+        if (bulletStack != null && bulletStack.getItem() instanceof ItemBullet) {
+            BulletType bulletType = ((ItemBullet) bulletStack.getItem()).type;
+            model = bulletType.trailModel;
+            tex = bulletType.trailTex;
+            glow = bulletType.trailGlow;
+        }
+
         if (side.isServer()) {
-            ModularWarfare.NETWORK.sendToDimension(new com.modularwarfare.common.network.PacketGunTrail(player.posX, player.getEntityBoundingBox().minY + player.getEyeHeight() - 0.10000000149011612D, player.posZ, player.motionX, player.motionZ, dir.x, dir.y, dir.z, range, 10.0F, isPunched), player.world.provider.getDimension());
+            ModularWarfare.NETWORK.sendToDimension(new com.modularwarfare.common.network.PacketGunTrail(item.type, model, tex, glow, player.posX, player.getEntityBoundingBox().minY + player.getEyeHeight() - 0.10000000149011612D, player.posZ, player.motionX, player.motionZ, dir.x, dir.y, dir.z, range, 10.0F, isPunched), player.world.provider.getDimension());
         } else {
-            ModularWarfare.NETWORK.sendToServer(new com.modularwarfare.common.network.PacketGunTrailAskServer(player.posX, player.getEntityBoundingBox().minY + player.getEyeHeight() - 0.10000000149011612D, player.posZ, player.motionX, player.motionZ, dir.x, dir.y, dir.z, range, 10.0F, isPunched));
+            ModularWarfare.NETWORK.sendToServer(new PacketGunTrailAskServer(item.type, model, tex, glow, player.posX, player.getEntityBoundingBox().minY + (double) player.getEyeHeight() - 0.10000000149011612, player.posZ, player.motionX, player.motionZ, dir.x, dir.y, dir.z, range, 10.0F, isPunched));
         }
         Vec3d offsetVec = player.getPositionEyes(1.0F);
         return computeDetection(world, (float) offsetVec.x, (float) offsetVec.y, (float) offsetVec.z, (float) (offsetVec.x + dx), (float) (offsetVec.y + dy), (float) (offsetVec.z + dz), 0.001F, hashset, false);
     }
 
-    public static BulletHit computeDetection(World world, float x, float y, float z, float tx, float ty, float tz, float borderSize, HashSet<Entity> excluded, boolean collideablesOnly) {
+    /*public static BulletHit computeDetection(World world, float x, float y, float z, float tx, float ty, float tz, float borderSize, float maxPenetrateBlockResistance, float penetrateBlocksResistance, HashSet<Entity> excluded, boolean collideablesOnly) {
         Vec3d startVec = new Vec3d(x, y, z);
         Vec3d endVec = new Vec3d(tx, ty, tz);
         float minX = x < tx ? x : tx;
@@ -185,7 +195,7 @@ public class ShotHelper {
         float maxZ = z > tz ? z : tz;
         AxisAlignedBB bb = new AxisAlignedBB(minX, minY, minZ, maxX, maxY, maxZ).grow(borderSize, borderSize, borderSize);
         List<Entity> allEntities = world.getEntitiesWithinAABBExcludingEntity(null, bb);
-        RayTraceResult blockHit = ModularWarfare.INSTANCE.RAY_CASTING.rayTraceBlocks(world, startVec, endVec, true, true, false);
+        RayTraceResult blockHit = ModularWarfare.INSTANCE.RAY_CASTING.rayTraceBlocks(world, startVec, endVec, maxPenetrateBlockResistance, penetrateBlocksResistance, true, true, false);
         startVec = new Vec3d(x, y, z);
         endVec = new Vec3d(tx, ty, tz);
         float maxDistance = (float) endVec.distanceTo(startVec);
@@ -216,7 +226,7 @@ public class ShotHelper {
         ray.axisNormal.z = Matrix4f.transform(matrix, new Vector3f(0.0F, 0.0F, 1.0F), null);
 
         OBBPlayerManager.lines.add(new OBBPlayerManager.Line(ray));*/
-        OBBPlayerManager.lines.add(new OBBPlayerManager.Line(new Vector3f(startVec), new Vector3f(endVec)));
+    /*   OBBPlayerManager.lines.add(new OBBPlayerManager.Line(new Vector3f(startVec), new Vector3f(endVec)));
 
         Entity closestHitEntity = null;
         Vec3d hit = null;
@@ -264,7 +274,7 @@ public class ShotHelper {
             blockHit = new RayTraceResult(closestHitEntity, hit);
         }
         return new BulletHit(blockHit);
-    }
+    }*/
     
     /*
     public static void shoot(EntityGtwNpc npc, EntityPlayer target, ItemStack gunStack) {
