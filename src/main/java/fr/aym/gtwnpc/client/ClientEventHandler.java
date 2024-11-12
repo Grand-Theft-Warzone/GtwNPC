@@ -247,7 +247,7 @@ public class ClientEventHandler {
 
     @SubscribeEvent
     public static void entityJoinWorld(EntityJoinWorldEvent event) {
-        if (MC.player == null) {
+        if (!event.getWorld().isRemote || MC.player == null) {
             return;
         }
         PlayerInformation info = PlayerManager.getPlayerInformation(MC.player);

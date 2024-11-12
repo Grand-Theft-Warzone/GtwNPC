@@ -14,7 +14,6 @@ import java.lang.reflect.InvocationTargetException;
 public class ProtectionStarter {
     public ProtectionStarter(IMpsClassLoader loader) {
         GtwNpcMod.log.info("Protection loader starting");
-        //TODO FILTER DIRECTORIES
         //GtwNpcMod.isValidConfig = true;
         //Get MC's game dir
         File f = null;
